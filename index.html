@@ -372,6 +372,23 @@ header {
 .pack-tag.p2 { background: #b04a8a; color: #fff; }
 .pack-tag.both { background: #4a7c59; color: #fff; }
 .sync-badge { font-size: 11px; color: var(--green); text-align: center; margin-bottom: 8px; }
+.ai-generate-box { text-align: center; padding: 40px 24px; }
+.ai-generate-box .big { font-size: 48px; margin-bottom: 16px; }
+.ai-generate-box h3 { font-size: 18px; margin-bottom: 8px; }
+.ai-generate-box p { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+.ai-btn { background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; }
+.ai-btn:disabled { opacity: 0.6; }
+.phrase-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+.phrase-he { font-size: 15px; font-weight: 600; }
+.phrase-local { font-size: 17px; color: var(--accent-2); margin-top: 4px; direction: ltr; text-align: right; }
+.phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: ltr; text-align: right; }
+.phrase-category { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; margin: 18px 0 8px; }
+.emergency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+.emergency-icon { font-size: 26px; flex-shrink: 0; }
+.emergency-info { flex: 1; }
+.emergency-label { font-size: 14px; font-weight: 600; }
+.emergency-num { font-size: 18px; color: var(--accent-2); direction: ltr; text-align: right; font-weight: 700; }
+.emergency-call { background: var(--green); color: #fff; border-radius: 8px; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -437,6 +454,16 @@ header {
 <!-- Prep View -->
 <section class="view" id="view-prep">
   <div id="prepContent"></div>
+</section>
+
+<!-- Phrases View -->
+<section class="view" id="view-phrases">
+  <div id="phrasesContent"></div>
+</section>
+
+<!-- Emergency View -->
+<section class="view" id="view-emergency">
+  <div id="emergencyContent"></div>
 </section>
 
 <!-- New/Edit Trip Modal -->
@@ -578,6 +605,8 @@ function navigate(view, skipHistory) {
   else if (view === 'currency') renderCurrency(tour);
   else if (view === 'packing') renderPacking(tour);
   else if (view === 'prep') renderPrep(tour);
+  else if (view === 'phrases') renderPhrases(tour);
+  else if (view === 'emergency') renderEmergency(tour);
 }
 
 // ---------- Trip status helper ----------
@@ -724,6 +753,8 @@ async function loadTripHome() {
       '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div><div class="sub">' + (tour.currency || 'המרה') + '</div></div>' +
       '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div><div class="sub">רשימת ציוד</div></div>' +
       '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div><div class="sub">משימות לפני</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div><div class="sub">ביטויים שימושיים</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div><div class="sub">טלפונים חשובים</div></div>' +
     '</div>' +
     (tour.driveFolder ?
       '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
@@ -1514,6 +1545,124 @@ async function delPrep(idx) {
   tour.prep.splice(idx, 1);
   renderPrep(tour);
   await window.DB.saveTour(tour.id, { prep: tour.prep });
+}
+
+// ---------- AI Helper ----------
+async function callClaude(prompt, maxTokens) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens || 2000,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+  return text.replace(/```json|```/g, '').trim();
+}
+
+// ---------- Phrases ----------
+function renderPhrases(tour) {
+  const container = document.getElementById('phrasesContent');
+  const phrases = tour.phrases || [];
+
+  if (!phrases.length) {
+    container.innerHTML = '<div class="section-title">שיחון</div>' +
+      '<div class="ai-generate-box"><div class="big">💬</div>' +
+      '<h3>שיחון ל' + (tour.destination || 'יעד') + '</h3>' +
+      '<p>Claude ייצר עבורך ביטויים שימושיים בשפה המקומית - ברכות, מסעדה, קניות, מצבי חירום.</p>' +
+      '<button class="ai-btn" onclick="generatePhrases()"><span>✨</span> צור שיחון עם AI</button></div>';
+    return;
+  }
+
+  let html = '<div class="section-title">שיחון</div>';
+  const cats = {};
+  phrases.forEach(p => { (cats[p.category] = cats[p.category] || []).push(p); });
+  Object.keys(cats).forEach(cat => {
+    html += '<div class="phrase-category">' + cat + '</div>';
+    cats[cat].forEach(p => {
+      html += '<div class="phrase-card">' +
+        '<div class="phrase-he">' + p.he + '</div>' +
+        '<div class="phrase-local">' + p.local + '</div>' +
+        (p.translit ? '<div class="phrase-translit">' + p.translit + '</div>' : '') +
+        '</div>';
+    });
+  });
+  html += '<div style="text-align:center;margin-top:20px;"><button class="ai-btn" onclick="generatePhrases()"><span>🔄</span> צור מחדש</button></div>';
+  container.innerHTML = html;
+}
+
+async function generatePhrases() {
+  const tour = curTour();
+  const container = document.getElementById('phrasesContent');
+  container.innerHTML = '<div class="ai-generate-box"><div class="spinner"></div><p>Claude מייצר שיחון ל' + tour.destination + '...</p></div>';
+
+  const prompt = 'צור שיחון ל-15 ביטויים שימושיים לתייר ב' + tour.destination + '. ' +
+    'החזר אך ורק JSON תקין (ללא טקסט נוסף) במבנה: ' +
+    '[{"category":"ברכות","he":"שלום","local":"...בשפה המקומית...","translit":"תעתיק עברי לקריאה"}]. ' +
+    'קטגוריות: ברכות, מסעדה, קניות, תחבורה, חירום. השתמש בשפה המקומית של היעד.';
+
+  try {
+    const json = await callClaude(prompt, 2500);
+    const phrases = JSON.parse(json);
+    tour.phrases = phrases;
+    await window.DB.saveTour(tour.id, { phrases });
+    renderPhrases(tour);
+  } catch (e) {
+    container.innerHTML = '<div class="ai-generate-box"><div class="big">⚠️</div><p>שגיאה ביצירת שיחון. נסה שוב.</p>' +
+      '<button class="ai-btn" onclick="generatePhrases()">נסה שוב</button></div>';
+  }
+}
+
+// ---------- Emergency ----------
+function renderEmergency(tour) {
+  const container = document.getElementById('emergencyContent');
+  const contacts = tour.emergency || [];
+
+  if (!contacts.length) {
+    container.innerHTML = '<div class="section-title">חירום וקשר</div>' +
+      '<div class="ai-generate-box"><div class="big">🆘</div>' +
+      '<h3>מספרי חירום ל' + (tour.destination || 'יעד') + '</h3>' +
+      '<p>Claude ייצר רשימת טלפוני חירום - משטרה, אמבולנס, שגרירות ישראל, ומידע שימושי.</p>' +
+      '<button class="ai-btn" onclick="generateEmergency()"><span>✨</span> צור עם AI</button></div>';
+    return;
+  }
+
+  let html = '<div class="section-title">חירום וקשר</div>';
+  contacts.forEach(c => {
+    html += '<div class="emergency-card">' +
+      '<span class="emergency-icon">' + (c.icon || '📞') + '</span>' +
+      '<div class="emergency-info"><div class="emergency-label">' + c.label + '</div>' +
+      '<div class="emergency-num">' + c.number + '</div></div>' +
+      '<a class="emergency-call" href="tel:' + c.number.replace(/[^0-9+]/g,'') + '">חייג</a></div>';
+  });
+  html += '<div style="text-align:center;margin-top:20px;"><button class="ai-btn" onclick="generateEmergency()"><span>🔄</span> צור מחדש</button></div>';
+  container.innerHTML = html;
+}
+
+async function generateEmergency() {
+  const tour = curTour();
+  const container = document.getElementById('emergencyContent');
+  container.innerHTML = '<div class="ai-generate-box"><div class="spinner"></div><p>Claude מייצר מספרי חירום ל' + tour.destination + '...</p></div>';
+
+  const prompt = 'צור רשימת מספרי חירום וקשר חשובים לתייר ישראלי ב' + tour.destination + '. ' +
+    'החזר אך ורק JSON תקין (ללא טקסט נוסף): ' +
+    '[{"icon":"🚓","label":"משטרה","number":"..."}]. ' +
+    'כלול: משטרה, אמבולנס, מכבי אש, מספר חירום כללי, שגרירות/קונסוליה ישראלית (עם המספר האמיתי אם ידוע). ' +
+    'השתמש באימוג\'י מתאים לכל שורה.';
+
+  try {
+    const json = await callClaude(prompt, 1500);
+    const contacts = JSON.parse(json);
+    tour.emergency = contacts;
+    await window.DB.saveTour(tour.id, { emergency: contacts });
+    renderEmergency(tour);
+  } catch (e) {
+    container.innerHTML = '<div class="ai-generate-box"><div class="big">⚠️</div><p>שגיאה. נסה שוב.</p>' +
+      '<button class="ai-btn" onclick="generateEmergency()">נסה שוב</button></div>';
+  }
 }
 
 // ---------- Init ----------
