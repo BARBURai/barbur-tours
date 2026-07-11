@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<title>Barbur Tours</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Barbur%20Tours%22,%22short_name%22:%22Barbur%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f1117%22,%22theme_color%22:%22%230f1117%22}">
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW5nyrKYKXPMNFMt8z9YdwJqV-Csy5KXM",
+  authDomain: "barbur-tours.firebaseapp.com",
+  projectId: "barbur-tours",
+  storageBucket: "barbur-tours.firebasestorage.app",
+  messagingSenderId: "380802642444",
+  appId: "1:380802642444:web:e3e26c1c0302c70c777429"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ---- Firestore API (global) ----
+window.DB = {
+  async listTours() {
+    const snap = await getDocs(collection(db, 'tours'));
+    const tours = [];
+    snap.forEach(d => tours.push({ id: d.id, ...d.data() }));
+    return tours;
+  },
+  async getTour(id) {
+    const snap = await getDoc(doc(db, 'tours', id));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  },
+  async saveTour(id, data) {
+    await setDoc(doc(db, 'tours', id), data, { merge: true });
+  },
+  async deleteTour(id) {
+    await deleteDoc(doc(db, 'tours', id));
+  },
+  watchTour(id, cb) {
+    return onSnapshot(doc(db, 'tours', id), snap => {
+      if (snap.exists()) cb({ id: snap.id, ...snap.data() });
+    });
+  }
+};
+
+window.dispatchEvent(new Event('db-ready'));
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface-2: #22263a;
+  --accent: #f97316;
+  --accent-2: #fb923c;
+  --text: #f1f5f9;
+  --text-dim: #94a3b8;
+  --text-faint: #475569;
+  --border: #2d3148;
+  --red: #ef4444;
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Rubik, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Header ---------- */
+header {
+  padding: calc(env(safe-area-inset-top) + 16px) 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+.hamburger {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.hamburger svg { width: 22px; height: 22px; stroke: var(--text); }
+.header-titles { flex: 1; min-width: 0; }
+.header-trip-name { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header-trip-dates { font-size: 13px; color: var(--text-dim); }
+.header-flag { font-size: 30px; flex-shrink: 0; }
+
+/* ---------- Drawer ---------- */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: -320px; bottom: 0;
+  width: 300px; max-width: 85vw;
+  background: var(--surface);
+  z-index: 201;
+  transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 20px) 0 20px;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.4);
+}
+.drawer.open { right: 0; }
+.drawer-header {
+  padding: 0 20px 18px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.drawer-brand { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.drawer-brand span { color: var(--accent); }
+.drawer-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.drawer-scroll { flex: 1; overflow-y: auto; padding: 8px 0; }
+.drawer-section-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-faint);
+  padding: 12px 20px 6px;
+}
+.trip-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; cursor: pointer;
+  transition: background 0.15s;
+}
+.trip-item:active, .trip-item.active { background: var(--surface-2); }
+.trip-item.active { border-right: 3px solid var(--accent); }
+.trip-item-flag { font-size: 26px; flex-shrink: 0; }
+.trip-item-info { flex: 1; min-width: 0; }
+.trip-item-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trip-item-dates { font-size: 12px; color: var(--text-dim); }
+.trip-item-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  background: var(--accent); color: #fff; font-weight: 600; flex-shrink: 0;
+}
+.trip-item-badge.past { background: var(--text-faint); }
+.drawer-footer { padding: 14px 20px 0; border-top: 1px solid var(--border); }
+.new-trip-btn {
+  width: 100%;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 13px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit;
+}
+
+/* ---------- Views ---------- */
+.view { display: none; padding: 0 18px; }
+.view.active { display: block; }
+
+.hero {
+  border-radius: var(--radius); overflow: hidden;
+  position: relative; min-height: 200px;
+  display: flex; align-items: flex-end;
+  background: var(--surface-2);
+  margin-bottom: 20px;
+}
+.hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,17,23,0.95) 0%, rgba(15,17,23,0.3) 60%, transparent 100%); }
+.hero-content { position: relative; padding: 20px; width: 100%; }
+.hero-eyebrow { font-size: 13px; color: var(--accent-2); font-weight: 600; margin-bottom: 4px; }
+.hero-title { font-size: 22px; font-weight: 800; }
+.hero-count { font-size: clamp(28px, 9vw, 44px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.hero-sub { font-size: 14px; color: var(--text-dim); }
+
+.section-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-faint);
+  margin: 22px 0 12px;
+}
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.quick-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 16px;
+  cursor: pointer; transition: transform 0.15s;
+}
+.quick-card:active { transform: scale(0.97); }
+.quick-card .icon { font-size: 28px; margin-bottom: 8px; }
+.quick-card .label { font-size: 15px; font-weight: 600; }
+.quick-card .sub { font-size: 12px; color: var(--text-dim); }
+
+/* ---------- Empty state ---------- */
+.empty-state {
+  text-align: center; padding: 60px 24px;
+}
+.empty-state .big { font-size: 56px; margin-bottom: 16px; }
+.empty-state h2 { font-size: 20px; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; color: var(--text-dim); margin-bottom: 24px; }
+.empty-cta {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 13px 28px;
+  font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+
+/* ---------- Modal / Form ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 300; display: none; align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg); width: 100%; max-width: 680px; margin: 0 auto;
+  border-radius: 20px 20px 0 0; max-height: 92vh; overflow-y: auto;
+  padding: 8px 20px calc(30px + env(safe-area-inset-bottom));
+  animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 8px auto 16px; }
+.modal-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-dim); }
+.field input, .field textarea, .field select {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  color: var(--text); font-size: 15px; font-family: inherit; outline: none;
+}
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1; }
+.field-hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+.emoji-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.emoji-opt {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.emoji-opt.selected { border-color: var(--accent); background: var(--surface-2); }
+
+.modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+.btn-primary {
+  flex: 1; background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius-sm); padding: 14px; font-size: 15px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-secondary {
+  background: var(--surface); color: var(--text-dim); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 20px; font-size: 15px;
+  cursor: pointer; font-family: inherit;
+}
+.btn-danger-text {
+  background: none; border: none; color: var(--red); font-size: 13px;
+  cursor: pointer; font-family: inherit; padding: 8px; margin-top: 8px;
+}
+
+/* ---------- Bottom nav ---------- */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface-2);
+  display: flex; justify-content: space-around;
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index: 100; max-width: 680px; margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+.nav-btn {
+  background: none; border: none; color: var(--text-dim);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; font-family: inherit; padding: 6px 10px;
+  border-radius: var(--radius-sm); flex: 1;
+}
+.nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
+.nav-btn span { font-size: 11px; }
+.nav-btn.active { color: var(--accent); background: rgba(249,115,22,0.12); }
+
+/* ---------- Loading ---------- */
+.loader { text-align: center; padding: 80px 24px; color: var(--text-dim); }
+.spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  margin: 0 auto 16px; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.placeholder-view { text-align: center; padding: 60px 24px; color: var(--text-faint); }
+.placeholder-view .big { font-size: 44px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="hamburger" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </div>
+  <div class="header-titles">
+    <div class="header-trip-name" id="headerTripName">Barbur Tours</div>
+    <div class="header-trip-dates" id="headerTripDates">טוען...</div>
+  </div>
+  <div class="header-flag" id="headerFlag">🧳</div>
+</header>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-brand">Barbur <span>Tours</span></div>
+    <div class="drawer-sub">הטיולים שלי</div>
+  </div>
+  <div class="drawer-scroll" id="drawerScroll">
+    <div class="loader"><div class="spinner"></div>טוען טיולים...</div>
+  </div>
+  <div class="drawer-footer">
+    <button class="new-trip-btn" onclick="openNewTripForm()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      טיול חדש
+    </button>
+  </div>
+</div>
+
+<!-- Home View -->
+<section class="view active" id="view-home">
+  <div id="homeContent">
+    <div class="loader"><div class="spinner"></div>טוען...</div>
+  </div>
+</section>
+
+<!-- Itinerary View -->
+<section class="view" id="view-itinerary">
+  <div class="placeholder-view">
+    <div class="big">📅</div>
+    <div>יומן המסע - יתווסף בשלב הבא</div>
+  </div>
+</section>
+
+<!-- Bookings View -->
+<section class="view" id="view-bookings">
+  <div class="placeholder-view">
+    <div class="big">🎫</div>
+    <div>הזמנות - יתווסף בשלב הבא</div>
+  </div>
+</section>
+
+<!-- Currency View -->
+<section class="view" id="view-currency">
+  <div class="placeholder-view">
+    <div class="big">💱</div>
+    <div>מטבע - יתווסף בשלב הבא</div>
+  </div>
+</section>
+
+<!-- Packing View -->
+<section class="view" id="view-packing">
+  <div class="placeholder-view">
+    <div class="big">🧳</div>
+    <div>מה לקחת - יתווסף בשלב הבא</div>
+  </div>
+</section>
+
+<!-- New/Edit Trip Modal -->
+<div class="modal-overlay" id="tripFormOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="tripFormTitle">טיול חדש</div>
+    <div class="modal-sub">מלא את הפרטים הבסיסיים. תוכל להוסיף ימים ופעילויות אחר כך.</div>
+
+    <div class="field">
+      <label>שם הטיול</label>
+      <input type="text" id="f_title" placeholder="למשל: דרום קוריאה" dir="auto">
+    </div>
+    <div class="field">
+      <label>תת-כותרת</label>
+      <input type="text" id="f_subtitle" placeholder="למשל: הילה ורון" dir="auto">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>תאריך התחלה</label>
+        <input type="date" id="f_start">
+      </div>
+      <div class="field">
+        <label>תאריך סיום</label>
+        <input type="date" id="f_end">
+      </div>
+    </div>
+    <div class="field">
+      <label>יעד (מדינה/עיר)</label>
+      <input type="text" id="f_destination" placeholder="למשל: סיאול, קוריאה" dir="auto">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>מטבע מקומי (קוד)</label>
+        <input type="text" id="f_currency" placeholder="KRW" dir="ltr" maxlength="3" style="text-transform:uppercase;">
+        <div class="field-hint">3 אותיות: KRW, GEL, EUR, USD</div>
+      </div>
+      <div class="field">
+        <label>סמל מטבע</label>
+        <input type="text" id="f_currencySymbol" placeholder="₩" dir="ltr" maxlength="3">
+      </div>
+    </div>
+    <div class="field">
+      <label>דגל / אימוג'י</label>
+      <div class="emoji-picker" id="flagPicker"></div>
+    </div>
+    <div class="field">
+      <label>תמונת נושא (לינק מ-Google Drive)</label>
+      <input type="text" id="f_coverImage" placeholder="https://drive.google.com/..." dir="ltr">
+      <div class="field-hint">אופציונלי - לינק לתמונה שתופיע במסך הבית</div>
+    </div>
+    <div class="field">
+      <label>ערים לתחזית מזג אוויר</label>
+      <input type="text" id="f_weatherCities" placeholder="Seoul, Incheon, Jeju" dir="ltr">
+      <div class="field-hint">מופרד בפסיקים - באנגלית</div>
+    </div>
+    <div class="field">
+      <label>תיקיית Google Drive של הטיול</label>
+      <input type="text" id="f_driveFolder" placeholder="https://drive.google.com/drive/folders/..." dir="ltr">
+      <div class="field-hint">אופציונלי - לינק לתיקייה עם כרטיסים, קבלות ומסמכים</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeTripForm()">ביטול</button>
+      <button class="btn-primary" id="saveTripBtn" onclick="saveTripForm()">שמור טיול</button>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn-danger-text" id="deleteTripBtn" onclick="deleteCurrentTrip()" style="display:none;">🗑️ מחק טיול זה</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-view="home" onclick="navigate('home')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1V9.5z"/></svg>
+    <span>בית</span>
+  </button>
+  <button class="nav-btn" data-view="itinerary" onclick="navigate('itinerary')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>יומן</span>
+  </button>
+  <button class="nav-btn" data-view="bookings" onclick="navigate('bookings')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2v2z"/></svg>
+    <span>הזמנות</span>
+  </button>
+  <button class="nav-btn" data-view="currency" onclick="navigate('currency')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.5 9.5h5M9.5 14.5h5M12 7v10"/></svg>
+    <span>מטבע</span>
+  </button>
+  <button class="nav-btn" data-view="packing" onclick="navigate('packing')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    <span>מה לקחת</span>
+  </button>
+</nav>
+
+<script>
+const STATE = {
+  currentView: 'home',
+  currentTripId: null,
+  tours: [],
+  editingTripId: null,
+  selectedFlag: '🧳'
+};
+
+const FLAG_OPTIONS = ['🇰🇷','🇬🇪','🇮🇹','🇬🇷','🇯🇵','🇹🇭','🇫🇷','🇪🇸','🇵🇹','🇹🇷','🇦🇪','🇺🇸','🇬🇧','🇩🇪','🧳','✈️','🏔️','🏖️'];
+
+// ---------- Drawer ----------
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// ---------- Navigation ----------
+function navigate(view, skipHistory) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const viewEl = document.getElementById('view-' + view);
+  if (viewEl) viewEl.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-btn[data-view="' + view + '"]');
+  if (navBtn) navBtn.classList.add('active');
+  STATE.currentView = view;
+  window.scrollTo(0, 0);
+  if (!skipHistory) history.pushState({ view: view }, '');
+}
+
+// ---------- Trip status helper ----------
+function getTripStatus(tour) {
+  const now = new Date();
+  const start = new Date(tour.startDate + 'T00:00:00');
+  const end = new Date(tour.endDate + 'T23:59:59');
+  if (now < start) {
+    const days = Math.ceil((start - now) / (1000*60*60*24));
+    return { status: 'before', days };
+  } else if (now > end) {
+    return { status: 'past' };
+  } else {
+    return { status: 'during' };
+  }
+}
+
+function formatDates(tour) {
+  const fmt = (d) => {
+    const parts = d.split('-');
+    return parts[2] + '.' + parts[1];
+  };
+  return fmt(tour.startDate) + ' - ' + fmt(tour.endDate) + '.' + tour.endDate.split('-')[0];
+}
+
+// ---------- Render drawer trip list ----------
+function renderDrawer() {
+  const scroll = document.getElementById('drawerScroll');
+  if (STATE.tours.length === 0) {
+    scroll.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-faint);font-size:14px;">אין טיולים עדיין.<br>לחץ "טיול חדש" להתחיל.</div>';
+    return;
+  }
+
+  // Sort: upcoming/during first (by start date asc), then past (by start date desc)
+  const withStatus = STATE.tours.map(t => ({ ...t, _status: getTripStatus(t) }));
+  const upcoming = withStatus.filter(t => t._status.status !== 'past')
+    .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+  const past = withStatus.filter(t => t._status.status === 'past')
+    .sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+
+  let html = '';
+  if (upcoming.length) {
+    html += '<div class="drawer-section-label">קרובים ונוכחיים</div>';
+    upcoming.forEach(t => html += drawerTripItem(t));
+  }
+  if (past.length) {
+    html += '<div class="drawer-section-label">טיולים שהיו</div>';
+    past.forEach(t => html += drawerTripItem(t));
+  }
+  scroll.innerHTML = html;
+}
+
+function drawerTripItem(t) {
+  const active = t.id === STATE.currentTripId ? ' active' : '';
+  let badge = '';
+  if (t._status.status === 'during') badge = '<span class="trip-item-badge">עכשיו</span>';
+  else if (t._status.status === 'before') badge = '<span class="trip-item-badge">בעוד ' + t._status.days + 'י</span>';
+  else badge = '<span class="trip-item-badge past">היה</span>';
+
+  return '<div class="trip-item' + active + '" onclick="selectTrip(\'' + t.id + '\')">' +
+    '<div class="trip-item-flag">' + (t.flag || '🧳') + '</div>' +
+    '<div class="trip-item-info">' +
+      '<div class="trip-item-name">' + t.title + '</div>' +
+      '<div class="trip-item-dates">' + formatDates(t) + '</div>' +
+    '</div>' + badge +
+  '</div>';
+}
+
+// ---------- Select trip ----------
+async function selectTrip(id) {
+  STATE.currentTripId = id;
+  localStorage.setItem('lastTripId', id);
+  closeDrawer();
+  renderDrawer();
+  await loadTripHome();
+}
+
+async function loadTripHome() {
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  if (!tour) return;
+
+  document.getElementById('headerTripName').textContent = tour.title;
+  document.getElementById('headerTripDates').textContent = (tour.subtitle ? tour.subtitle + ' | ' : '') + formatDates(tour);
+  document.getElementById('headerFlag').textContent = tour.flag || '🧳';
+
+  const status = getTripStatus(tour);
+  const content = document.getElementById('homeContent');
+
+  let heroBg = '';
+  if (tour.coverImage) {
+    const imgUrl = convertDriveUrl(tour.coverImage);
+    heroBg = '<div class="hero-bg" style="background-image:url(\'' + imgUrl + '\')"></div>';
+  }
+
+  let heroText = '';
+  if (status.status === 'before') {
+    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+      '<div class="hero-title">הטיול מתחיל בעוד</div>' +
+      '<div class="hero-count">' + status.days + '</div>' +
+      '<div class="hero-sub">' + (status.days === 1 ? 'יום' : 'ימים') + '</div>';
+  } else if (status.status === 'during') {
+    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+      '<div class="hero-title">🎉 הטיול קורה עכשיו!</div>' +
+      '<div class="hero-sub">' + formatDates(tour) + '</div>';
+  } else {
+    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+      '<div class="hero-title">✨ טיול שהיה</div>' +
+      '<div class="hero-sub">' + formatDates(tour) + '</div>';
+  }
+
+  content.innerHTML =
+    '<div class="hero">' + heroBg + '<div class="hero-content">' + heroText + '</div></div>' +
+    '<div class="section-title">גישה מהירה</div>' +
+    '<div class="quick-grid">' +
+      '<div class="quick-card" onclick="navigate(\'itinerary\')"><div class="icon">📅</div><div class="label">יומן המסע</div><div class="sub">תוכנית יומית</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'bookings\')"><div class="icon">🎫</div><div class="label">הזמנות</div><div class="sub">טיסות, מלונות</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div><div class="sub">' + (tour.currency || 'המרה') + '</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div><div class="sub">רשימת ציוד</div></div>' +
+    '</div>' +
+    (tour.driveFolder ?
+      '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
+      : '') +
+    '<div style="text-align:center;margin-top:24px;">' +
+      '<button class="btn-secondary" onclick="editCurrentTrip()">✏️ ערוך פרטי טיול</button>' +
+    '</div>';
+}
+
+function convertDriveUrl(url) {
+  // Convert Google Drive share link to direct image link
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w1000';
+  return url;
+}
+
+// ---------- Empty state ----------
+function renderEmptyHome() {
+  document.getElementById('headerTripName').textContent = 'Barbur Tours';
+  document.getElementById('headerTripDates').textContent = 'אין טיול נבחר';
+  document.getElementById('headerFlag').textContent = '🧳';
+  document.getElementById('homeContent').innerHTML =
+    '<div class="empty-state">' +
+      '<div class="big">🧳</div>' +
+      '<h2>ברוך הבא ל-Barbur Tours</h2>' +
+      '<p>עדיין אין טיולים. צור את הטיול הראשון שלך כדי להתחיל לתכנן.</p>' +
+      '<button class="empty-cta" onclick="openNewTripForm()">+ צור טיול ראשון</button>' +
+    '</div>';
+}
+
+// ---------- Trip form ----------
+function renderFlagPicker() {
+  const picker = document.getElementById('flagPicker');
+  picker.innerHTML = FLAG_OPTIONS.map(f =>
+    '<div class="emoji-opt' + (f === STATE.selectedFlag ? ' selected' : '') + '" onclick="selectFlag(\'' + f + '\')">' + f + '</div>'
+  ).join('');
+}
+function selectFlag(f) {
+  STATE.selectedFlag = f;
+  renderFlagPicker();
+}
+
+function openNewTripForm() {
+  STATE.editingTripId = null;
+  STATE.selectedFlag = '🧳';
+  document.getElementById('tripFormTitle').textContent = 'טיול חדש';
+  document.getElementById('f_title').value = '';
+  document.getElementById('f_subtitle').value = '';
+  document.getElementById('f_start').value = '';
+  document.getElementById('f_end').value = '';
+  document.getElementById('f_destination').value = '';
+  document.getElementById('f_currency').value = '';
+  document.getElementById('f_currencySymbol').value = '';
+  document.getElementById('f_coverImage').value = '';
+  document.getElementById('f_weatherCities').value = '';
+  document.getElementById('f_driveFolder').value = '';
+  document.getElementById('deleteTripBtn').style.display = 'none';
+  renderFlagPicker();
+  closeDrawer();
+  document.getElementById('tripFormOverlay').classList.add('open');
+}
+
+function editCurrentTrip() { openEditTripForm(STATE.currentTripId); }
+
+function openEditTripForm(id) {
+  const tour = STATE.tours.find(t => t.id === id);
+  if (!tour) return;
+  STATE.editingTripId = id;
+  STATE.selectedFlag = tour.flag || '🧳';
+  document.getElementById('tripFormTitle').textContent = 'עריכת טיול';
+  document.getElementById('f_title').value = tour.title || '';
+  document.getElementById('f_subtitle').value = tour.subtitle || '';
+  document.getElementById('f_start').value = tour.startDate || '';
+  document.getElementById('f_end').value = tour.endDate || '';
+  document.getElementById('f_destination').value = tour.destination || '';
+  document.getElementById('f_currency').value = tour.currency || '';
+  document.getElementById('f_currencySymbol').value = tour.currencySymbol || '';
+  document.getElementById('f_coverImage').value = tour.coverImage || '';
+  document.getElementById('f_weatherCities').value = (tour.weatherCities || []).join(', ');
+  document.getElementById('f_driveFolder').value = tour.driveFolder || '';
+  document.getElementById('deleteTripBtn').style.display = 'inline-block';
+  renderFlagPicker();
+  closeDrawer();
+  document.getElementById('tripFormOverlay').classList.add('open');
+}
+
+function closeTripForm() {
+  document.getElementById('tripFormOverlay').classList.remove('open');
+}
+
+async function saveTripForm() {
+  const title = document.getElementById('f_title').value.trim();
+  const start = document.getElementById('f_start').value;
+  const end = document.getElementById('f_end').value;
+
+  if (!title || !start || !end) {
+    alert('חובה למלא: שם טיול, תאריך התחלה ותאריך סיום');
+    return;
+  }
+
+  const btn = document.getElementById('saveTripBtn');
+  btn.textContent = 'שומר...';
+  btn.disabled = true;
+
+  const id = STATE.editingTripId || slugify(title) + '-' + start.split('-')[0];
+  const weatherCities = document.getElementById('f_weatherCities').value
+    .split(',').map(s => s.trim()).filter(s => s);
+
+  const tourData = {
+    title,
+    subtitle: document.getElementById('f_subtitle').value.trim(),
+    startDate: start,
+    endDate: end,
+    destination: document.getElementById('f_destination').value.trim(),
+    currency: document.getElementById('f_currency').value.trim().toUpperCase(),
+    currencySymbol: document.getElementById('f_currencySymbol').value.trim(),
+    coverImage: document.getElementById('f_coverImage').value.trim(),
+    weatherCities,
+    driveFolder: document.getElementById('f_driveFolder').value.trim(),
+    flag: STATE.selectedFlag,
+    updatedAt: new Date().toISOString()
+  };
+
+  // Preserve existing sub-data when editing
+  if (STATE.editingTripId) {
+    const existing = STATE.tours.find(t => t.id === id);
+    if (existing) {
+      if (existing.days) tourData.days = existing.days;
+      if (existing.bookings) tourData.bookings = existing.bookings;
+      if (existing.prep) tourData.prep = existing.prep;
+      if (existing.packingList) tourData.packingList = existing.packingList;
+    }
+  } else {
+    tourData.createdAt = new Date().toISOString();
+    tourData.days = [];
+    tourData.bookings = { flights: [], hotels: [], cars: [] };
+    tourData.prep = [];
+    tourData.packingList = [];
+  }
+
+  try {
+    await window.DB.saveTour(id, tourData);
+    STATE.tours = await window.DB.listTours();
+    STATE.currentTripId = id;
+    localStorage.setItem('lastTripId', id);
+    closeTripForm();
+    renderDrawer();
+    await loadTripHome();
+    navigate('home');
+  } catch (e) {
+    alert('שגיאה בשמירה: ' + e.message);
+  } finally {
+    btn.textContent = 'שמור טיול';
+    btn.disabled = false;
+  }
+}
+
+async function deleteCurrentTrip() {
+  if (!STATE.editingTripId) return;
+  const tour = STATE.tours.find(t => t.id === STATE.editingTripId);
+  if (!confirm('למחוק את הטיול "' + (tour ? tour.title : '') + '"? פעולה זו לא ניתנת לביטול.')) return;
+
+  try {
+    await window.DB.deleteTour(STATE.editingTripId);
+    STATE.tours = await window.DB.listTours();
+    if (STATE.currentTripId === STATE.editingTripId) {
+      STATE.currentTripId = STATE.tours.length ? STATE.tours[0].id : null;
+      localStorage.setItem('lastTripId', STATE.currentTripId || '');
+    }
+    closeTripForm();
+    renderDrawer();
+    if (STATE.currentTripId) await loadTripHome();
+    else renderEmptyHome();
+  } catch (e) {
+    alert('שגיאה במחיקה: ' + e.message);
+  }
+}
+
+// ---------- Helpers ----------
+function slugify(str) {
+  return str.toLowerCase()
+    .replace(/[^\w\u0590-\u05FF]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 30) || 'trip';
+}
+
+// ---------- Init ----------
+async function init() {
+  // History for back button
+  history.replaceState({ view: 'home' }, '');
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.view) navigate(e.state.view, true);
+    else navigate('home', true);
+  });
+
+  try {
+    STATE.tours = await window.DB.listTours();
+  } catch (e) {
+    document.getElementById('homeContent').innerHTML =
+      '<div class="empty-state"><div class="big">⚠️</div><h2>שגיאת חיבור</h2><p>' + e.message + '</p></div>';
+    return;
+  }
+
+  renderDrawer();
+
+  if (STATE.tours.length === 0) {
+    renderEmptyHome();
+    return;
+  }
+
+  // Pick last used trip, or the nearest upcoming one
+  let tripId = localStorage.getItem('lastTripId');
+  if (!tripId || !STATE.tours.find(t => t.id === tripId)) {
+    const withStatus = STATE.tours.map(t => ({ ...t, _status: getTripStatus(t) }));
+    const upcoming = withStatus.filter(t => t._status.status !== 'past')
+      .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+    const during = withStatus.find(t => t._status.status === 'during');
+    tripId = during ? during.id : (upcoming.length ? upcoming[0].id : STATE.tours[0].id);
+  }
+  STATE.currentTripId = tripId;
+  await loadTripHome();
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    const swCode = "const CACHE='barbur-tours-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+  }
+}
+
+if (window.DB) init();
+else window.addEventListener('db-ready', init);
+</script>
+</body>
+</html>
