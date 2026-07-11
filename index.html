@@ -337,6 +337,13 @@ header {
 .inline-edit { display: flex; gap: 6px; align-items: center; width: 100%; }
 .inline-edit input { background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 12px; font-family: inherit; outline: none; }
 .countdown-hero { font-size: clamp(28px,9vw,44px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.home-alert { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius); margin: 16px 0; cursor: pointer; }
+.home-alert.alert-critical { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.home-alert.alert-warning { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+.home-alert-icon { font-size: 24px; }
+.home-alert-body { flex: 1; color: #fff; }
+.home-alert-title { font-size: 14px; font-weight: 600; }
+.home-alert-sub { font-size: 12px; opacity: 0.9; }
 
 /* ---------- Bookings ---------- */
 .booking-group-title { font-size: 15px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
@@ -469,6 +476,11 @@ header {
 <!-- Emergency View -->
 <section class="view" id="view-emergency">
   <div id="emergencyContent"></div>
+</section>
+
+<!-- Transport View -->
+<section class="view" id="view-transport">
+  <div id="transportContent"></div>
 </section>
 
 <!-- New/Edit Trip Modal -->
@@ -612,6 +624,7 @@ function navigate(view, skipHistory) {
   else if (view === 'prep') renderPrep(tour);
   else if (view === 'phrases') renderPhrases(tour);
   else if (view === 'emergency') renderEmergency(tour);
+  else if (view === 'transport') renderTransport(tour);
 }
 
 // ---------- Trip status helper ----------
@@ -751,6 +764,7 @@ async function loadTripHome() {
 
   content.innerHTML =
     '<div class="hero">' + heroBg + '<div class="hero-content">' + heroText + '</div></div>' +
+    buildAlertsHtml(tour) +
     '<div class="section-title">גישה מהירה</div>' +
     '<div class="quick-grid">' +
       '<div class="quick-card" onclick="navigate(\'itinerary\')"><div class="icon">📅</div><div class="label">יומן המסע</div><div class="sub">תוכנית יומית</div></div>' +
@@ -760,6 +774,7 @@ async function loadTripHome() {
       '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div><div class="sub">משימות לפני</div></div>' +
       '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div><div class="sub">ביטויים שימושיים</div></div>' +
       '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div><div class="sub">טלפונים חשובים</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div><div class="sub">מוניות ואפליקציות</div></div>' +
     '</div>' +
     (tour.driveFolder ?
       '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
@@ -767,6 +782,36 @@ async function loadTripHome() {
     '<div style="text-align:center;margin-top:24px;">' +
       '<button class="btn-secondary" onclick="editCurrentTrip()">✏️ ערוך פרטי טיול</button>' +
     '</div>';
+}
+
+function buildAlertsHtml(tour) {
+  const status = getTripStatus(tour);
+  if (status.status === 'past') return '';
+  const prep = tour.prep || [];
+  const now = new Date();
+  // Find urgent undone tasks (deadline within 10 days or passed)
+  const urgent = prep.filter(p => {
+    if (p.done || !p.deadline) return false;
+    const dl = new Date(p.deadline + 'T00:00:00');
+    const daysLeft = Math.ceil((dl - now) / (1000*60*60*24));
+    return daysLeft <= 10;
+  }).sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if (!urgent.length) return '';
+  const top = urgent[0];
+  const dl = new Date(top.deadline + 'T00:00:00');
+  const daysLeft = Math.ceil((dl - now) / (1000*60*60*24));
+  let label, cls;
+  if (daysLeft < 0) { label = 'עבר!'; cls = 'alert-critical'; }
+  else if (daysLeft === 0) { label = 'היום!'; cls = 'alert-critical'; }
+  else if (daysLeft <= 3) { label = 'בעוד ' + daysLeft + ' ימים'; cls = 'alert-critical'; }
+  else { label = 'בעוד ' + daysLeft + ' ימים'; cls = 'alert-warning'; }
+
+  return '<div class="home-alert ' + cls + '" onclick="navigate(\'prep\')">' +
+    '<span class="home-alert-icon">⏰</span>' +
+    '<div class="home-alert-body"><div class="home-alert-title">' + top.task + '</div>' +
+    '<div class="home-alert-sub">' + label + (urgent.length > 1 ? ' · +' + (urgent.length-1) + ' משימות דחופות' : '') + '</div></div>' +
+    '<span style="color:var(--text-faint);">‹</span></div>';
 }
 
 function convertDriveUrl(url) {
@@ -988,8 +1033,8 @@ window.seedGeorgia = async function() {
       {date:"7.9",flight:"El Al LY5108",route:"תביליסי → TLV",time:"10:10-11:50",terminal:"T3",pnr:"Z36FE9",passengers:"רון, הילה, הניה",note:"טיסת חזור - Sun Dor. ♿ הניה: הוזמן כיסא גלגלים (WCHR). מושבים 37A/B/C"}
     ],
     hotels: [
-      {name:"Radisson Blu Iveria",city:"תביליסי",checkin:"3.9",checkout:"5.9",nights:2,confirmation:"0F7V2KQ4",price:"2367 GEL",note:"מרכז העיר, 2 חדרים",address:"Tbilisi City Centre"},
-      {name:"Esquisse Design Hotel",city:"טלאבי",checkin:"5.9",checkout:"7.9",nights:2,confirmation:"6178.993.330",pin:"7590",price:"1938 GEL / €645",note:"2 חדרי Deluxe Suite, קרוב לציננדלי. צ'ק-אאוט 11:30. חניה חינם + WiFi",address:"19 Kurdghelauri Street, Telavi",phone:"+995 596 72 77 22"}
+      {name:"Radisson Blu Iveria",city:"תביליסי",checkin:"3.9",checkout:"5.9",nights:2,confirmation:"0F7V2KQ4",price:"2367 GEL",note:"מרכז העיר, 2 חדרים",address:"1 Rose Revolution Square, Tbilisi",phone:"+995 32 240 2200",lat:41.704023,lng:44.7933758},
+      {name:"Esquisse Design Hotel",city:"טלאבי",checkin:"5.9",checkout:"7.9",nights:2,confirmation:"6178.993.330",pin:"7590",price:"1938 GEL / €645",note:"2 חדרי Deluxe Suite, קרוב לציננדלי. צ'ק-אאוט 11:30. חניה חינם + WiFi",address:"19 Kurdghelauri Street, Telavi",phone:"+995 596 72 77 22",lat:41.9258422,lng:45.4910868}
     ],
     cars: []
   },
@@ -1002,8 +1047,8 @@ window.seedGeorgia = async function() {
     ],notes:["ויזה לגאורגיה: ישראלים פטורים עד 365 יום","מטבע: לארי גאורגי (GEL). כרטיסי אשראי מקובלים"]},
     {date:"4.9",day_of_week:"שישי",title:"תביליסי - העיר העתיקה",location:"תביליסי",summary:"יום מלא בתביליסי - עיר עתיקה, מבצר, גופרית, אופטיקה",items:[
       {time:"09:00",activity:"ארוחת בוקר במלון",type:"food"},
-      {time:"10:00",activity:"👓 Alain Afflelou GPC - 30 Charchavadze St (פתוח 08:30-23:45)",type:"sightseeing"},
-      {time:"11:30",activity:"👓 Alain Afflelou Axis Tower - 37m Ilia Chavchavadze ave (פתוח 08:00-22:00)",type:"sightseeing"},
+      {time:"10:00",activity:"👓 Alain Afflelou GPC - 30 Charchavadze St (פתוח 08:30-23:45)",type:"sightseeing",lat:41.7235977,lng:44.737921},
+      {time:"11:30",activity:"👓 Alain Afflelou Axis Tower - 37m Ilia Chavchavadze ave (פתוח 08:00-22:00)",type:"sightseeing",lat:41.7096,lng:44.7516},
       {time:"13:00",activity:"העיר העתיקה של תביליסי",type:"sightseeing"},
       {time:"15:00",activity:"מבצר נאריקאלה (רכבל)",type:"sightseeing"},
       {time:"16:30",activity:"מרחצאות הגופרית אבנוטובני",type:"sightseeing"},
@@ -1017,11 +1062,11 @@ window.seedGeorgia = async function() {
     ],notes:["אחוזת ציננדלי קרובה למלון בטלאבי","מחר בערב - ההופעה בפסטיבל ציננדלי"]},
     {date:"6.9",day_of_week:"ראשון",title:"חבל קאחתי + 🎵 קונצרט ציננדלי",location:"קאחתי",summary:"סיור יקבים + בערב: פינחס צוקרמן בפסטיבל ציננדלי",items:[
       {time:"09:00",activity:"ארוחת בוקר",type:"food"},
-      {time:"10:30",activity:"אחוזת ציננדלי + מוזיאון",type:"sightseeing"},
+      {time:"10:30",activity:"אחוזת ציננדלי + מוזיאון",type:"sightseeing",lat:41.8943596,lng:45.5644952},
       {time:"13:00",activity:"טעימות יין ביקבי קאחתי",type:"food"},
-      {time:"16:00",activity:"העיירה סיגנאגי (עיר האהבה)",type:"sightseeing"},
+      {time:"16:00",activity:"העיירה סיגנאגי (עיר האהבה)",type:"sightseeing",lat:41.6200278,lng:45.922355},
       {time:"18:00",activity:"חזרה למלון + התארגנות לקונצרט",type:"logistics"},
-      {time:"19:00",activity:"🎵 קונצרט: Gianandrea Noseda / Pinchas Zukerman / Pan-Caucasian Youth Orchestra - אחוזת ציננדלי (Parterre שורה 2, מושבים 23-25)",type:"sightseeing"}
+      {time:"19:00",activity:"🎵 קונצרט: Gianandrea Noseda / Pinchas Zukerman / Pan-Caucasian Youth Orchestra - אחוזת ציננדלי (Parterre שורה 2, מושבים 23-25)",type:"sightseeing",lat:41.8943596,lng:45.5644952}
     ],notes:["🎵 קונצרט ציננדלי 6.9 בשעה 19:00 - פינחס צוקרמן (כנר) + נוסדה (מנצח) + התזמורת. הזמנה Wyc9AZ5718","🎫 3 כרטיסים, Parterre שורה 2, מושבים 23-24-25, קטגוריה B","המקום: אחוזת ציננדלי (Tsinandali Estate) - קרוב למלון בטלאבי","קאחתי - חבל היין המרכזי של גאורגיה","סיגנאגי - עיירה ציורית עם נוף לרכס הקווקז"]},
     {date:"7.9",day_of_week:"שני",title:"חזרה הביתה",location:"תביליסי",summary:"נסיעה חזרה לתביליסי וטיסה לישראל",items:[
       {time:"06:00",activity:"צ'ק-אאוט + נסיעה לשדה תביליסי",type:"logistics"},
@@ -1031,10 +1076,16 @@ window.seedGeorgia = async function() {
     ],notes:["צ'ק-אאוט מוקדם - טיסה ב-10:10"]}
   ],
   prep: [
-    {task:"🎫 להדפיס כרטיסי פסטיבל ציננדלי",done:false},
-    {task:"🚗 להזמין העברות / רכב שכור לקאחתי",done:false},
-    {task:"💱 GEL - כרטיס אשראי + מעט מזומן",done:false},
-    {task:"📱 eSIM לגאורגיה",done:false}
+    {task:"✈️ צ'ק-אין אונליין Israir (הלוך) - נפתח 48 שעות לפני",done:false,deadline:"2026-09-01",note:"6H891, 3.9 - צ'ק-אין נפתח ~1.9"},
+    {task:"✈️ צ'ק-אין אונליין El Al (חזור)",done:false,deadline:"2026-09-05",note:"LY5108, 7.9"},
+    {task:"🛡️ ביטוח נסיעות לכל המטיילים (כולל הניה)",done:false,deadline:"2026-08-27",note:"לוודא כיסוי רפואי + ביטול. הניה - לבדוק גיל/מצב רפואי"},
+    {task:"🎫 להדפיס כרטיסי קונצרט ציננדלי (6.9)",done:false,deadline:"2026-09-04",note:"הזמנה Wyc9AZ5718, 3 כרטיסים Parterre שורה 2"},
+    {task:"🚗 להזמין העברות / רכב שכור לקאחתי",done:false,deadline:"2026-08-25"},
+    {task:"📱 eSIM לגאורגיה (Airalo ~$10)",done:false,deadline:"2026-09-02"},
+    {task:"💱 GEL - כרטיס אשראי + מעט מזומן",done:false,deadline:"2026-09-01"},
+    {task:"♿ לאשר כיסא גלגלים להניה בטיסות (WCHR)",done:false,deadline:"2026-08-30",note:"הוזמן בחזור, לוודא גם בהלוך"},
+    {task:"📄 לצלם דרכונים + כל ההזמנות לנייד",done:false,deadline:"2026-09-02"},
+    {task:"🔌 מתאם חשמל Type C/F (גאורגיה 220V)",done:false,deadline:"2026-08-30",note:"גאורגיה = שקע אירופאי, כמו ישראל בערך אבל לוודא"}
   ],
   packingList: [],
   phrases: [
@@ -1062,6 +1113,11 @@ window.seedGeorgia = async function() {
     {icon:"🚒",label:"מכבי אש",number:"112"},
     {icon:"🇮🇱",label:"שגרירות ישראל בתביליסי",number:"+995 32 255 5200"},
     {icon:"📞",label:"מוקד חירום אזרחים ישראלים (חו\"ל)",number:"+972 3 9553353"}
+  ],
+  transport: [
+    {icon:"🟢",name:"Bolt",recommended:true,desc:"אפליקציית המוניות המומלצת בגאורגיה (Uber לא עובד!). מחיר מראש, תשלום באשראי או מזומן. להוריד ולהירשם לפני הטיסה.",priceInfo:"משדה התעופה למרכז תביליסי: 25-35 GEL. נסיעה קצרה בעיר: ~5 GEL",androidUrl:"https://play.google.com/store/apps/details?id=ee.mtakso.client",iosUrl:"https://apps.apple.com/app/bolt-request-a-ride/id675033630"},
+    {icon:"🟡",name:"Yandex Go",desc:"חלופה זולה ב-10-20% מ-Bolt. זמינות טובה בלילה ובפרברים. כדאי להתקין את שתיהן ולהשוות.",priceInfo:"משדה התעופה: 25-30 GEL",androidUrl:"https://play.google.com/store/apps/details?id=ru.yandex.taxi",iosUrl:"https://apps.apple.com/app/yandex-go-taxi-food-delivery/id472650686"},
+    {icon:"🔵",name:"Maxim",desc:"מכסה גם ערים קטנות ואזורים כפריים שבהם Bolt לא זמין - שימושי לנסיעות לקאחתי/סיגנאגי.",androidUrl:"https://play.google.com/store/apps/details?id=com.taxsee.taxsee",iosUrl:"https://apps.apple.com/app/maxim-order-a-taxi/id579985456"}
   ]
 };
   try {
@@ -1150,7 +1206,15 @@ function renderItinerary(tour) {
         '<button class="edit-save" onclick="saveInlineItem(' + idx + ')">✓</button>' +
         '<button class="edit-mini-btn" onclick="cancelInlineItem()">✕</button></div></div>';
     } else {
-      const navBtn = '<a class="timeline-nav-btn" href="https://www.google.com/maps/search/' + encodeURIComponent(item.activity + ' ' + (day.location||'')) + '" target="_blank">🗺️ נווט</a>';
+      let navUrl;
+      if (item.lat && item.lng) {
+        navUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + item.lat + ',' + item.lng;
+      } else if (item.place_id) {
+        navUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.activity) + '&query_place_id=' + item.place_id;
+      } else {
+        navUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.activity + ' ' + (day.location||''));
+      }
+      const navBtn = '<a class="timeline-nav-btn" href="' + navUrl + '" target="_blank">🗺️ נווט</a>';
       html += '<div class="timeline-item">' +
         '<div class="timeline-time">' + (item.time||'') + '</div>' +
         '<div class="timeline-body">' +
@@ -1339,7 +1403,7 @@ function renderBookings(tour) {
         (h.pin ? '<div class="booking-detail"><strong>PIN:</strong> ' + h.pin + '</div>' : '') +
         (h.price ? '<div class="booking-detail"><strong>מחיר:</strong> ' + h.price + '</div>' : '') +
         (h.address ? '<div class="booking-detail"><strong>כתובת:</strong> ' + h.address + '</div>' : '') +
-        '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="https://www.google.com/maps/search/' + encodeURIComponent(h.name + ' ' + (h.city||'') + ' ' + (h.address||'')) + '" target="_blank">🗺️ נווט למלון</a></div>' +
+        '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="' + (h.lat && h.lng ? 'https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(h.name + ' ' + (h.city||''))) + '" target="_blank">🗺️ נווט למלון</a></div>' +
         (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + h.phone + '</div>' : '') +
         (h.note ? '<div class="booking-detail">' + h.note + '</div>' : '') +
         '</div>';
@@ -1563,9 +1627,21 @@ function renderPrep(tour) {
     const sorted = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];
     html += sorted.map(item => {
       const idx = items.indexOf(item);
+      let deadlineHtml = '';
+      if (item.deadline && !item.done) {
+        const dl = new Date(item.deadline + 'T00:00:00');
+        const daysLeft = Math.ceil((dl - new Date()) / (1000*60*60*24));
+        let color = 'var(--text-dim)';
+        let label = 'עד ' + item.deadline.split('-').reverse().slice(0,2).join('.');
+        if (daysLeft < 0) { color = 'var(--red)'; label = '⚠️ עבר!'; }
+        else if (daysLeft <= 3) { color = 'var(--red)'; label = 'בעוד ' + daysLeft + ' ימים'; }
+        else if (daysLeft <= 7) { color = '#f59e0b'; label = 'בעוד ' + daysLeft + ' ימים'; }
+        deadlineHtml = '<div style="font-size:11px;color:' + color + ';margin-top:2px;font-weight:600;">📅 ' + label + '</div>';
+      }
       return '<div class="packing-item' + (item.done?' packed':'') + '">' +
         '<div class="packing-check' + (item.done?' checked':'') + '" onclick="togglePrep(' + idx + ')"></div>' +
         '<span class="packing-item-text">' + item.task.replace(/</g,'&lt;') +
+        deadlineHtml +
         (item.note ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + item.note + '</div>' : '') +
         '</span>' +
         '<button class="packing-delete" onclick="delPrep(' + idx + ')">✕</button></div>';
@@ -1643,6 +1719,34 @@ function renderEmergency(tour) {
       '<div class="emergency-info"><div class="emergency-label">' + c.label + '</div>' +
       '<div class="emergency-num">' + c.number + '</div></div>' +
       '<a class="emergency-call" href="tel:' + c.number.replace(/[^0-9+]/g,'') + '">חייג</a></div>';
+  });
+  container.innerHTML = html;
+}
+
+// ---------- Transport ----------
+function renderTransport(tour) {
+  const container = document.getElementById('transportContent');
+  const apps = tour.transport || [];
+
+  if (!apps.length) {
+    container.innerHTML = '<div class="section-title">תחבורה</div>' +
+      '<div class="placeholder-view"><div class="big">🚕</div><div>אין מידע תחבורה לטיול זה עדיין</div></div>';
+    return;
+  }
+
+  let html = '<div class="section-title">תחבורה ומוניות</div>';
+  apps.forEach(a => {
+    html += '<div class="booking-card">' +
+      '<div class="booking-card-head"><div class="booking-card-title">' + (a.icon||'🚕') + ' ' + a.name + '</div>' +
+      (a.recommended ? '<span class="trip-item-badge">מומלץ</span>' : '') + '</div>' +
+      (a.desc ? '<div class="booking-detail">' + a.desc + '</div>' : '') +
+      (a.priceInfo ? '<div class="booking-detail"><strong>מחירים:</strong> ' + a.priceInfo + '</div>' : '') +
+      (a.androidUrl || a.iosUrl ?
+        '<div style="display:flex;gap:8px;margin-top:10px;">' +
+        (a.androidUrl ? '<a class="timeline-nav-btn" href="' + a.androidUrl + '" target="_blank">📱 Android</a>' : '') +
+        (a.iosUrl ? '<a class="timeline-nav-btn" href="' + a.iosUrl + '" target="_blank">🍎 iOS</a>' : '') +
+        '</div>' : '') +
+      '</div>';
   });
   container.innerHTML = html;
 }
