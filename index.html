@@ -314,6 +314,25 @@ header {
 .timeline-type { font-size: 18px; }
 .timeline-nav-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; color: var(--text-dim); text-decoration: none; margin-top: 6px; }
 .note-box { background: var(--surface-2); border-right: 3px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+.note-box.critical { border-right-color: var(--red); background: rgba(239,68,68,0.08); }
+.note-box.warning { border-right-color: #f59e0b; background: rgba(245,158,11,0.08); }
+.note-box.success { border-right-color: var(--green); background: rgba(34,197,94,0.08); }
+.day-edit-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 12px; padding: 5px 12px; cursor: pointer; font-family: inherit; }
+.day-edit-btn:active { border-color: var(--accent); color: var(--accent); }
+.edit-panel { background: var(--surface-2); border-radius: 12px; margin: 12px 0; padding: 14px; border: 1px solid var(--border); }
+.edit-panel h4 { font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+.edit-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.edit-row:last-child { border-bottom: none; }
+.edit-row-time { color: var(--accent); font-size: 12px; min-width: 42px; font-weight: 600; }
+.edit-row-text { flex: 1; font-size: 13px; }
+.edit-mini-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 5px; }
+.edit-add-row { display: flex; gap: 6px; margin-top: 10px; }
+.edit-time-in { width: 62px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px; color: var(--text); font-size: 13px; text-align: center; font-family: inherit; outline: none; }
+.edit-text-in { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
+.edit-save { background: var(--accent); border: none; border-radius: 8px; color: #fff; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.inline-edit { display: flex; gap: 6px; align-items: center; width: 100%; }
+.inline-edit input { background: var(--surface); border: 1px solid var(--accent); border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 12px; font-family: inherit; outline: none; }
+.countdown-hero { font-size: clamp(28px,9vw,44px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 
 /* ---------- Bookings ---------- */
 .booking-group-title { font-size: 15px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
@@ -380,7 +399,7 @@ header {
     <div class="loader"><div class="spinner"></div>טוען טיולים...</div>
   </div>
   <div class="drawer-footer">
-    <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">📥 טען טיול גאורגיה</button>
+    <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">🔄 עדכן טיול גאורגיה</button>
     <button class="new-trip-btn" onclick="openNewTripForm()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       טיול חדש
@@ -415,6 +434,11 @@ header {
   <div id="packingContent"></div>
 </section>
 
+<!-- Prep View -->
+<section class="view" id="view-prep">
+  <div id="prepContent"></div>
+</section>
+
 <!-- New/Edit Trip Modal -->
 <div class="modal-overlay" id="tripFormOverlay">
   <div class="modal">
@@ -429,6 +453,11 @@ header {
     <div class="field">
       <label>תת-כותרת</label>
       <input type="text" id="f_subtitle" placeholder="למשל: הילה ורון" dir="auto">
+    </div>
+    <div class="field">
+      <label>מטיילים</label>
+      <input type="text" id="f_travelers" placeholder="רון, הילה, הניה" dir="auto">
+      <div class="field-hint">שמות מופרדים בפסיקים. משמש לחלוקת "מה לקחת" בין המטיילים</div>
     </div>
     <div class="field-row">
       <div class="field">
@@ -548,6 +577,7 @@ function navigate(view, skipHistory) {
   else if (view === 'bookings') renderBookings(tour);
   else if (view === 'currency') renderCurrency(tour);
   else if (view === 'packing') renderPacking(tour);
+  else if (view === 'prep') renderPrep(tour);
 }
 
 // ---------- Trip status helper ----------
@@ -646,10 +676,35 @@ async function loadTripHome() {
 
   let heroText = '';
   if (status.status === 'before') {
-    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
-      '<div class="hero-title">הטיול מתחיל בעוד</div>' +
-      '<div class="hero-count">' + status.days + '</div>' +
-      '<div class="hero-sub">' + (status.days === 1 ? 'יום' : 'ימים') + '</div>';
+    if (status.days <= 7) {
+      heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+        '<div class="hero-title">✈️ עד הטיסה</div>' +
+        '<div class="hero-count" id="tripCountdown" style="font-variant-numeric:tabular-nums;">--:--:--</div>' +
+        '<div class="hero-sub">' + status.days + ' ימים · ' + formatDates(tour) + '</div>';
+      // Start countdown after render
+      const flightDateStr = tour.startDate + 'T00:00:00';
+      clearInterval(window._tripCd);
+      setTimeout(() => {
+        function pad(n){ return n<10?'0'+n:n; }
+        function upd() {
+          const diff = new Date(flightDateStr) - new Date();
+          if (diff <= 0) { clearInterval(window._tripCd); return; }
+          const d = Math.floor(diff/(1000*60*60*24));
+          const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+          const m = Math.floor((diff%(1000*60*60))/(1000*60));
+          const s = Math.floor((diff%(1000*60))/1000);
+          const el = document.getElementById('tripCountdown');
+          if (el) el.innerHTML = pad(d*24+h) + ':' + pad(m) + ':' + pad(s);
+        }
+        upd();
+        window._tripCd = setInterval(upd, 1000);
+      }, 60);
+    } else {
+      heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+        '<div class="hero-title">הטיול מתחיל בעוד</div>' +
+        '<div class="hero-count">' + status.days + '</div>' +
+        '<div class="hero-sub">' + (status.days === 1 ? 'יום' : 'ימים') + '</div>';
+    }
   } else if (status.status === 'during') {
     heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
       '<div class="hero-title">🎉 הטיול קורה עכשיו!</div>' +
@@ -668,6 +723,7 @@ async function loadTripHome() {
       '<div class="quick-card" onclick="navigate(\'bookings\')"><div class="icon">🎫</div><div class="label">הזמנות</div><div class="sub">טיסות, מלונות</div></div>' +
       '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div><div class="sub">' + (tour.currency || 'המרה') + '</div></div>' +
       '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div><div class="sub">רשימת ציוד</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div><div class="sub">משימות לפני</div></div>' +
     '</div>' +
     (tour.driveFolder ?
       '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
@@ -716,6 +772,7 @@ function openNewTripForm() {
   document.getElementById('tripFormTitle').textContent = 'טיול חדש';
   document.getElementById('f_title').value = '';
   document.getElementById('f_subtitle').value = '';
+  document.getElementById('f_travelers').value = '';
   document.getElementById('f_start').value = '';
   document.getElementById('f_end').value = '';
   document.getElementById('f_destination').value = '';
@@ -740,6 +797,7 @@ function openEditTripForm(id) {
   document.getElementById('tripFormTitle').textContent = 'עריכת טיול';
   document.getElementById('f_title').value = tour.title || '';
   document.getElementById('f_subtitle').value = tour.subtitle || '';
+  document.getElementById('f_travelers').value = (tour.travelers || []).join(', ');
   document.getElementById('f_start').value = tour.startDate || '';
   document.getElementById('f_end').value = tour.endDate || '';
   document.getElementById('f_destination').value = tour.destination || '';
@@ -779,6 +837,7 @@ async function saveTripForm() {
   const tourData = {
     title,
     subtitle: document.getElementById('f_subtitle').value.trim(),
+    travelers: document.getElementById('f_travelers').value.split(',').map(s => s.trim()).filter(s => s),
     startDate: start,
     endDate: end,
     destination: document.getElementById('f_destination').value.trim(),
@@ -860,6 +919,7 @@ window.seedGeorgia = async function() {
   const georgiaData = {
   title: "גאורגיה",
   subtitle: "רון, הילה והניה",
+  travelers: ["רון", "הילה", "הניה"],
   startDate: "2026-09-03",
   endDate: "2026-09-07",
   destination: "תביליסי וקאחתי, גאורגיה",
@@ -941,6 +1001,10 @@ window.seedGeorgia = async function() {
 // ---------- Itinerary rendering ----------
 STATE.selectedDay = 0;
 
+STATE.editingDay = null;
+STATE.editingTitle = false;
+STATE.editingItemIdx = null;
+
 function renderItinerary(tour) {
   const days = tour.days || [];
   const container = document.getElementById('itineraryContent');
@@ -959,28 +1023,72 @@ function renderItinerary(tour) {
   const day = days[STATE.selectedDay];
   let html = '<div class="day-chips">' + chips + '</div>';
 
-  html += '<div class="day-card">' +
-    '<div class="day-card-title">' + day.title + '</div>' +
-    '<div class="day-card-sub">' + day.date + ' (' + (day.day_of_week||'') + ') • ' + (day.location||'') + '</div>' +
-    (day.summary ? '<div class="day-card-summary">' + day.summary + '</div>' : '') +
-    getDayWeather(tour, day) +
-    '</div>';
+  // Day card - editable title
+  if (STATE.editingDay === STATE.selectedDay && STATE.editingTitle) {
+    html += '<div class="day-card">' +
+      '<input id="editTitle" class="edit-text-in" style="font-size:16px;font-weight:600;margin-bottom:8px;width:100%;" value="' + (day.title||'').replace(/"/g,'&quot;') + '">' +
+      '<textarea id="editSummary" class="edit-text-in" style="width:100%;margin-bottom:8px;" rows="2">' + (day.summary||'') + '</textarea>' +
+      '<div style="display:flex;gap:8px;"><button class="edit-save" onclick="saveDayTitle()">✓ שמור</button>' +
+      '<button class="day-edit-btn" onclick="cancelTitleEdit()">ביטול</button></div></div>';
+  } else {
+    html += '<div class="day-card" style="position:relative;">' +
+      '<button onclick="startTitleEdit()" style="position:absolute;top:12px;left:12px;background:none;border:none;color:var(--text-faint);font-size:14px;cursor:pointer;">✏️</button>' +
+      '<div class="day-card-title" style="padding-left:26px;">' + day.title + '</div>' +
+      '<div class="day-card-sub">' + day.date + ' (' + (day.day_of_week||'') + ') • ' + (day.location||'') + '</div>' +
+      (day.summary ? '<div class="day-card-summary">' + day.summary + '</div>' : '') +
+      getDayWeather(tour, day) +
+      '</div>';
+  }
 
-  (day.items || []).forEach(item => {
+  // Edit toggle button
+  const editing = STATE.editingDay === STATE.selectedDay && !STATE.editingTitle;
+  html += '<button class="day-edit-btn" onclick="toggleDayEdit()">' + (editing ? '✕ סגור עריכה' : '✏️ ערוך פעילויות') + '</button>';
+
+  if (editing) {
+    html += '<div class="edit-panel"><h4>עריכת פעילויות</h4>';
+    (day.items||[]).forEach((item, idx) => {
+      html += '<div class="edit-row">' +
+        '<span class="edit-row-time">' + (item.time||'') + '</span>' +
+        '<span class="edit-row-text">' + item.activity + '</span>' +
+        '<button class="edit-mini-btn" onclick="editItem(' + idx + ')">✏️</button>' +
+        '<button class="edit-mini-btn" onclick="deleteItem(' + idx + ')">🗑️</button></div>';
+    });
+    html += '<div class="edit-add-row">' +
+      '<input class="edit-time-in" id="newTime" placeholder="09:00" dir="ltr">' +
+      '<input class="edit-text-in" id="newActivity" placeholder="פעילות חדשה..." onkeydown="if(event.key===\'Enter\')addItem()">' +
+      '<button class="edit-save" onclick="addItem()">+ הוסף</button></div></div>';
+  }
+
+  // Timeline
+  (day.items || []).forEach((item, idx) => {
     const typeEmoji = { flight:'✈️', hotel:'🏨', food:'🍽️', sightseeing:'📸', logistics:'📋', rest:'😴', car:'🚗' }[item.type] || '📍';
-    const navBtn = item.activity ?
-      '<a class="timeline-nav-btn" href="https://www.google.com/maps/search/' + encodeURIComponent(item.activity + ' ' + (day.location||'')) + '" target="_blank">🗺️ נווט</a>' : '';
-    html += '<div class="timeline-item">' +
-      '<div class="timeline-time">' + (item.time||'') + '</div>' +
-      '<div class="timeline-body">' +
-        '<div class="timeline-activity"><span class="timeline-type">' + typeEmoji + '</span> ' + item.activity + '</div>' +
-        (item.type === 'sightseeing' || item.type === 'food' ? navBtn : '') +
-      '</div></div>';
+    if (STATE.editingItemIdx === idx && STATE.editingDay === STATE.selectedDay) {
+      html += '<div class="timeline-item"><div class="inline-edit">' +
+        '<input id="inlineTime" class="edit-time-in" value="' + (item.time||'') + '">' +
+        '<input id="inlineText" class="edit-text-in" value="' + item.activity.replace(/"/g,'&quot;') + '">' +
+        '<button class="edit-save" onclick="saveInlineItem(' + idx + ')">✓</button>' +
+        '<button class="edit-mini-btn" onclick="cancelInlineItem()">✕</button></div></div>';
+    } else {
+      const navBtn = '<a class="timeline-nav-btn" href="https://www.google.com/maps/search/' + encodeURIComponent(item.activity + ' ' + (day.location||'')) + '" target="_blank">🗺️ נווט</a>';
+      html += '<div class="timeline-item">' +
+        '<div class="timeline-time">' + (item.time||'') + '</div>' +
+        '<div class="timeline-body">' +
+          '<div class="timeline-activity"><span class="timeline-type">' + typeEmoji + '</span> ' + item.activity + '</div>' +
+          (item.type === 'sightseeing' || item.type === 'food' ? navBtn : '') +
+        '</div></div>';
+    }
   });
 
+  // Notes with color coding
   if (day.notes && day.notes.length) {
     html += '<div class="section-title">הערות</div>';
-    day.notes.forEach(n => html += '<div class="note-box">' + n + '</div>');
+    day.notes.forEach(n => {
+      let cls = 'note-box';
+      if (n.indexOf('🔴') >= 0 || n.indexOf('קריטי') >= 0) cls += ' critical';
+      else if (n.indexOf('⚠️') >= 0) cls += ' warning';
+      else if (n.indexOf('✅') >= 0 || n.indexOf('💡') >= 0) cls += ' success';
+      html += '<div class="' + cls + '">' + n + '</div>';
+    });
   }
 
   container.innerHTML = html;
@@ -988,8 +1096,78 @@ function renderItinerary(tour) {
 
 function setDay(i) {
   STATE.selectedDay = i;
+  STATE.editingDay = null;
+  STATE.editingItemIdx = null;
+  STATE.editingTitle = false;
   const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
   if (tour) renderItinerary(tour);
+}
+
+function curTour() { return STATE.tours.find(t => t.id === STATE.currentTripId); }
+async function saveDays(tour) { await window.DB.saveTour(tour.id, { days: tour.days }); }
+
+function toggleDayEdit() {
+  STATE.editingDay = STATE.editingDay === STATE.selectedDay ? null : STATE.selectedDay;
+  STATE.editingItemIdx = null;
+  renderItinerary(curTour());
+}
+function startTitleEdit() {
+  STATE.editingDay = STATE.selectedDay;
+  STATE.editingTitle = true;
+  renderItinerary(curTour());
+  setTimeout(() => { const e = document.getElementById('editTitle'); if (e) e.focus(); }, 50);
+}
+function cancelTitleEdit() {
+  STATE.editingTitle = false;
+  STATE.editingDay = null;
+  renderItinerary(curTour());
+}
+async function saveDayTitle() {
+  const tour = curTour();
+  const day = tour.days[STATE.selectedDay];
+  day.title = document.getElementById('editTitle').value.trim() || day.title;
+  day.summary = document.getElementById('editSummary').value.trim();
+  STATE.editingTitle = false;
+  STATE.editingDay = null;
+  renderItinerary(tour);
+  await saveDays(tour);
+}
+async function addItem() {
+  const tour = curTour();
+  const day = tour.days[STATE.selectedDay];
+  const time = document.getElementById('newTime').value.trim();
+  const text = document.getElementById('newActivity').value.trim();
+  if (!text) return;
+  day.items = day.items || [];
+  day.items.push({ time, activity: text, type: 'logistics' });
+  day.items.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  renderItinerary(tour);
+  await saveDays(tour);
+}
+async function deleteItem(idx) {
+  const tour = curTour();
+  tour.days[STATE.selectedDay].items.splice(idx, 1);
+  renderItinerary(tour);
+  await saveDays(tour);
+}
+function editItem(idx) {
+  STATE.editingItemIdx = idx;
+  renderItinerary(curTour());
+  setTimeout(() => { const e = document.getElementById('inlineText'); if (e) e.focus(); }, 50);
+}
+function cancelInlineItem() {
+  STATE.editingItemIdx = null;
+  renderItinerary(curTour());
+}
+async function saveInlineItem(idx) {
+  const tour = curTour();
+  const item = tour.days[STATE.selectedDay].items[idx];
+  item.time = document.getElementById('inlineTime').value.trim();
+  item.activity = document.getElementById('inlineText').value.trim() || item.activity;
+  tour.days[STATE.selectedDay].items.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  STATE.editingItemIdx = null;
+  renderItinerary(tour);
+  await saveDays(tour);
 }
 
 function getDayWeather(tour, day) {
@@ -1156,21 +1334,25 @@ function convertToIls() {
 }
 
 // ---------- Packing rendering ----------
-STATE.packOwner = 'both';
+STATE.packOwner = 'all';
 STATE.packFilter = 'all';
 STATE.packUnsub = null;
 
 function getTravelers(tour) {
-  // Parse subtitle like "רון, הילה והניה" → first two names
-  const sub = tour.subtitle || '';
-  const names = sub.split(/[,ו]/).map(s => s.trim()).filter(s => s && s.length > 1);
-  return { p1: names[0] || 'אני', p2: names[1] || 'שותף' };
+  // Use explicit travelers list; fall back to parsing subtitle
+  let names = tour.travelers && tour.travelers.length ? tour.travelers : [];
+  if (!names.length && tour.subtitle) {
+    names = tour.subtitle.split(/[,ו]/).map(s => s.trim()).filter(s => s && s.length > 1);
+  }
+  return names;
 }
 
 function renderPacking(tour) {
   const container = document.getElementById('packingContent');
   const items = tour.packingList || [];
-  const { p1, p2 } = getTravelers(tour);
+  const travelers = getTravelers(tour);
+  const multi = travelers.length >= 2;
+  const allLabel = travelers.length >= 3 ? 'כולם' : 'שנינו';
 
   let html = '<div class="section-title">מה לקחת</div>' +
     '<div class="sync-badge">🔄 מסונכרן בזמן אמת</div>' +
@@ -1178,28 +1360,38 @@ function renderPacking(tour) {
     '<input class="packing-input" id="packInput" placeholder="הוסף פריט..." onkeydown="if(event.key===\'Enter\')addPackItem()">' +
     '<button class="packing-add-btn" onclick="addPackItem()">+</button></div>';
 
-  // Owner selector for new item
-  html += '<div class="owner-btns">' +
-    '<button class="owner-btn' + (STATE.packOwner==='both'?' active':'') + '" onclick="setPackOwner(\'both\')">שנינו</button>' +
-    '<button class="owner-btn' + (STATE.packOwner==='p2'?' active':'') + '" onclick="setPackOwner(\'p2\')">' + p2 + '</button>' +
-    '<button class="owner-btn' + (STATE.packOwner==='p1'?' active':'') + '" onclick="setPackOwner(\'p1\')">' + p1 + '</button>' +
-    '</div>';
+  // Owner selector - only if multiple travelers
+  if (multi) {
+    html += '<div class="owner-btns"><span style="font-size:12px;color:var(--text-faint);align-self:center;margin-left:auto;">של מי:</span>' +
+      '<button class="owner-btn' + (STATE.packOwner==='all'?' active':'') + '" onclick="setPackOwner(\'all\')">' + allLabel + '</button>';
+    travelers.forEach((name, i) => {
+      html += '<button class="owner-btn' + (STATE.packOwner===('p'+i)?' active':'') + '" onclick="setPackOwner(\'p' + i + '\')">' + name + '</button>';
+    });
+    html += '</div>';
 
-  // Filter
-  html += '<div class="owner-btns" style="border-top:1px solid var(--border);padding-top:10px;">' +
-    '<button class="owner-btn' + (STATE.packFilter==='all'?' active':'') + '" onclick="setPackFilter(\'all\')">הכל</button>' +
-    '<button class="owner-btn' + (STATE.packFilter==='p2'?' active':'') + '" onclick="setPackFilter(\'p2\')">' + p2 + '</button>' +
-    '<button class="owner-btn' + (STATE.packFilter==='p1'?' active':'') + '" onclick="setPackFilter(\'p1\')">' + p1 + '</button>' +
-    '</div>';
+    // Filter
+    html += '<div class="owner-btns" style="border-top:1px solid var(--border);padding-top:10px;"><span style="font-size:12px;color:var(--text-faint);align-self:center;margin-left:auto;">סינון:</span>' +
+      '<button class="owner-btn' + (STATE.packFilter==='all'?' active':'') + '" onclick="setPackFilter(\'all\')">הכל</button>';
+    travelers.forEach((name, i) => {
+      html += '<button class="owner-btn' + (STATE.packFilter===('p'+i)?' active':'') + '" onclick="setPackFilter(\'p' + i + '\')">' + name + '</button>';
+    });
+    html += '</div>';
+  }
 
-  const filtered = STATE.packFilter === 'all' ? items :
-    items.filter(i => (i.owner||'both') === STATE.packFilter || (i.owner||'both') === 'both');
-
-  const tag = (owner) => {
-    if (owner === 'p1') return '<span class="pack-tag p1">' + p1 + '</span>';
-    if (owner === 'p2') return '<span class="pack-tag p2">' + p2 + '</span>';
-    return '<span class="pack-tag both">שנינו</span>';
+  const colorClass = (owner) => {
+    if (owner === 'all' || owner === 'both') return 'both';
+    const idx = parseInt((owner||'').replace('p','')) || 0;
+    return idx % 2 === 0 ? 'p1' : 'p2';
   };
+  const ownerName = (owner) => {
+    if (owner === 'all' || owner === 'both') return allLabel;
+    const idx = parseInt((owner||'').replace('p','')) || 0;
+    return travelers[idx] || allLabel;
+  };
+  const tag = (owner) => multi ? '<span class="pack-tag ' + colorClass(owner) + '">' + ownerName(owner) + '</span>' : '';
+
+  const filtered = (!multi || STATE.packFilter === 'all') ? items :
+    items.filter(i => (i.owner||'all') === STATE.packFilter || (i.owner||'all') === 'all');
 
   if (!items.length) {
     html += '<div class="packing-empty">🧳 הרשימה ריקה<br><span style="font-size:12px;">הוסף פריטים למעלה</span></div>';
@@ -1210,21 +1402,20 @@ function renderPacking(tour) {
     html += '<div id="packList">' + sorted.map(item =>
       '<div class="packing-item' + (item.packed?' packed':'') + '">' +
       '<div class="packing-check' + (item.packed?' checked':'') + '" onclick="togglePack(\'' + item.id + '\')"></div>' +
-      '<span class="packing-item-text">' + tag(item.owner||'both') + item.text.replace(/</g,'&lt;') + '</span>' +
+      '<span class="packing-item-text">' + tag(item.owner||'all') + item.text.replace(/</g,'&lt;') + '</span>' +
       '<button class="packing-delete" onclick="delPack(\'' + item.id + '\')">✕</button>' +
       '</div>'
     ).join('') + '</div>';
   }
   container.innerHTML = html;
 
-  // Set up real-time sync (once per trip)
+  // Real-time sync
   if (STATE.packUnsub) { STATE.packUnsub(); STATE.packUnsub = null; }
   STATE.packUnsub = window.DB.watchTour(tour.id, (updated) => {
     const local = STATE.tours.find(t => t.id === updated.id);
     if (local) {
       local.packingList = updated.packingList || [];
       if (STATE.currentView === 'packing') {
-        // Re-render without re-subscribing
         const temp = STATE.packUnsub; STATE.packUnsub = null;
         renderPacking(local);
         if (STATE.packUnsub) STATE.packUnsub();
@@ -1268,6 +1459,61 @@ async function delPack(id) {
   tour.packingList = (tour.packingList||[]).filter(i => i.id !== id);
   renderPacking(tour);
   await window.DB.saveTour(tour.id, { packingList: tour.packingList });
+}
+
+// ---------- Prep checklist ----------
+function renderPrep(tour) {
+  const container = document.getElementById('prepContent');
+  const items = tour.prep || [];
+  const done = items.filter(i => i.done).length;
+
+  let html = '<div class="section-title">הכנות לפני הטיול</div>';
+  if (items.length) {
+    html += '<div style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">' + done + '/' + items.length + ' הושלמו</div>';
+  }
+  html += '<div class="packing-add-row">' +
+    '<input class="packing-input" id="prepInput" placeholder="הוסף משימה..." onkeydown="if(event.key===\'Enter\')addPrep()">' +
+    '<button class="packing-add-btn" onclick="addPrep()">+</button></div>';
+
+  if (!items.length) {
+    html += '<div class="packing-empty">✅ אין משימות עדיין</div>';
+  } else {
+    const sorted = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];
+    html += sorted.map(item => {
+      const idx = items.indexOf(item);
+      return '<div class="packing-item' + (item.done?' packed':'') + '">' +
+        '<div class="packing-check' + (item.done?' checked':'') + '" onclick="togglePrep(' + idx + ')"></div>' +
+        '<span class="packing-item-text">' + item.task.replace(/</g,'&lt;') +
+        (item.note ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + item.note + '</div>' : '') +
+        '</span>' +
+        '<button class="packing-delete" onclick="delPrep(' + idx + ')">✕</button></div>';
+    }).join('');
+  }
+  container.innerHTML = html;
+}
+
+async function addPrep() {
+  const input = document.getElementById('prepInput');
+  const text = (input.value||'').trim();
+  if (!text) return;
+  const tour = curTour();
+  tour.prep = tour.prep || [];
+  tour.prep.push({ task: text, done: false });
+  input.value = '';
+  renderPrep(tour);
+  await window.DB.saveTour(tour.id, { prep: tour.prep });
+}
+async function togglePrep(idx) {
+  const tour = curTour();
+  tour.prep[idx].done = !tour.prep[idx].done;
+  renderPrep(tour);
+  await window.DB.saveTour(tour.id, { prep: tour.prep });
+}
+async function delPrep(idx) {
+  const tour = curTour();
+  tour.prep.splice(idx, 1);
+  renderPrep(tour);
+  await window.DB.saveTour(tour.id, { prep: tour.prep });
 }
 
 // ---------- Init ----------
