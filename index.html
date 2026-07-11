@@ -292,6 +292,59 @@ header {
 
 .placeholder-view { text-align: center; padding: 60px 24px; color: var(--text-faint); }
 .placeholder-view .big { font-size: 44px; margin-bottom: 12px; }
+
+/* ---------- Itinerary ---------- */
+.day-chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 12px; margin: 0 -18px; padding-left: 18px; padding-right: 18px; scrollbar-width: none; }
+.day-chips::-webkit-scrollbar { display: none; }
+.day-chip { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; cursor: pointer; text-align: center; min-width: 62px; }
+.day-chip.active { background: var(--accent); border-color: var(--accent); }
+.day-chip.active .day-chip-date, .day-chip.active .day-chip-day { color: #fff; }
+.day-chip-date { font-size: 15px; font-weight: 700; }
+.day-chip-day { font-size: 11px; color: var(--text-dim); }
+.day-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.day-card-title { font-size: 18px; font-weight: 700; }
+.day-card-sub { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.day-card-summary { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
+.day-weather { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface-2); border-radius: 10px; margin-top: 10px; font-size: 13px; }
+.timeline-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.timeline-item:last-child { border-bottom: none; }
+.timeline-time { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 46px; }
+.timeline-body { flex: 1; }
+.timeline-activity { font-size: 14px; }
+.timeline-type { font-size: 18px; }
+.timeline-nav-btn { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; color: var(--text-dim); text-decoration: none; margin-top: 6px; }
+.note-box { background: var(--surface-2); border-right: 3px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; font-size: 13px; }
+
+/* ---------- Bookings ---------- */
+.booking-group-title { font-size: 15px; font-weight: 700; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+.booking-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.booking-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.booking-card-title { font-size: 16px; font-weight: 700; }
+.booking-card-date { font-size: 13px; color: var(--accent); font-weight: 600; }
+.booking-detail { font-size: 13px; color: var(--text-dim); margin-top: 4px; display: flex; gap: 6px; }
+.booking-detail strong { color: var(--text); font-weight: 600; }
+
+/* ---------- Currency ---------- */
+.currency-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.currency-rate { text-align: center; font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
+.currency-rate strong { color: var(--text); font-size: 16px; }
+.currency-input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.currency-input-row input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; color: var(--text); font-size: 20px; font-family: inherit; outline: none; text-align: center; }
+.currency-input-row .cur-label { font-size: 14px; font-weight: 600; color: var(--text-dim); min-width: 50px; }
+.currency-swap { text-align: center; color: var(--accent); font-size: 22px; margin: 4px 0; }
+
+/* ---------- Packing (reuse) ---------- */
+.packing-add-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.packing-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 14px; color: var(--text); font-size: 15px; font-family: inherit; outline: none; }
+.packing-add-btn { background: var(--accent); border: none; color: #fff; width: 46px; height: 46px; border-radius: var(--radius-sm); font-size: 22px; cursor: pointer; flex-shrink: 0; }
+.packing-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.packing-check { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; flex-shrink: 0; }
+.packing-check.checked { background: var(--green); border-color: var(--green); position: relative; }
+.packing-check.checked::after { content: '✓'; color: #fff; position: absolute; top: -3px; left: 3px; font-size: 15px; }
+.packing-item.packed .packing-item-text { text-decoration: line-through; color: var(--text-faint); }
+.packing-item-text { flex: 1; font-size: 14px; }
+.packing-delete { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; }
+.packing-empty { text-align: center; color: var(--text-faint); font-size: 14px; padding: 32px 16px; }
 </style>
 </head>
 <body>
@@ -336,34 +389,22 @@ header {
 
 <!-- Itinerary View -->
 <section class="view" id="view-itinerary">
-  <div class="placeholder-view">
-    <div class="big">📅</div>
-    <div>יומן המסע - יתווסף בשלב הבא</div>
-  </div>
+  <div id="itineraryContent"></div>
 </section>
 
 <!-- Bookings View -->
 <section class="view" id="view-bookings">
-  <div class="placeholder-view">
-    <div class="big">🎫</div>
-    <div>הזמנות - יתווסף בשלב הבא</div>
-  </div>
+  <div id="bookingsContent"></div>
 </section>
 
 <!-- Currency View -->
 <section class="view" id="view-currency">
-  <div class="placeholder-view">
-    <div class="big">💱</div>
-    <div>מטבע - יתווסף בשלב הבא</div>
-  </div>
+  <div id="currencyContent"></div>
 </section>
 
 <!-- Packing View -->
 <section class="view" id="view-packing">
-  <div class="placeholder-view">
-    <div class="big">🧳</div>
-    <div>מה לקחת - יתווסף בשלב הבא</div>
-  </div>
+  <div id="packingContent"></div>
 </section>
 
 <!-- New/Edit Trip Modal -->
@@ -492,6 +533,13 @@ function navigate(view, skipHistory) {
   STATE.currentView = view;
   window.scrollTo(0, 0);
   if (!skipHistory) history.pushState({ view: view }, '');
+  // Render view content
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  if (!tour) return;
+  if (view === 'itinerary') renderItinerary(tour);
+  else if (view === 'bookings') renderBookings(tour);
+  else if (view === 'currency') renderCurrency(tour);
+  else if (view === 'packing') renderPacking(tour);
 }
 
 // ---------- Trip status helper ----------
@@ -572,6 +620,8 @@ async function selectTrip(id) {
 async function loadTripHome() {
   const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
   if (!tour) return;
+
+  fetchWeatherForTour(tour);
 
   document.getElementById('headerTripName').textContent = tour.title;
   document.getElementById('headerTripDates').textContent = (tour.subtitle ? tour.subtitle + ' | ' : '') + formatDates(tour);
@@ -879,6 +929,273 @@ window.seedGeorgia = async function() {
     alert('שגיאה: ' + e.message);
   }
 };
+
+// ---------- Itinerary rendering ----------
+STATE.selectedDay = 0;
+
+function renderItinerary(tour) {
+  const days = tour.days || [];
+  const container = document.getElementById('itineraryContent');
+  if (!days.length) {
+    container.innerHTML = '<div class="placeholder-view"><div class="big">📅</div><div>אין ימים ביומן עדיין</div></div>';
+    return;
+  }
+  if (STATE.selectedDay >= days.length) STATE.selectedDay = 0;
+
+  const chips = days.map((d, i) =>
+    '<div class="day-chip' + (i === STATE.selectedDay ? ' active' : '') + '" onclick="setDay(' + i + ')">' +
+    '<div class="day-chip-date">' + d.date + '</div>' +
+    '<div class="day-chip-day">' + (d.day_of_week || '') + '</div></div>'
+  ).join('');
+
+  const day = days[STATE.selectedDay];
+  let html = '<div class="day-chips">' + chips + '</div>';
+
+  html += '<div class="day-card">' +
+    '<div class="day-card-title">' + day.title + '</div>' +
+    '<div class="day-card-sub">' + day.date + ' (' + (day.day_of_week||'') + ') • ' + (day.location||'') + '</div>' +
+    (day.summary ? '<div class="day-card-summary">' + day.summary + '</div>' : '') +
+    getDayWeather(tour, day) +
+    '</div>';
+
+  (day.items || []).forEach(item => {
+    const typeEmoji = { flight:'✈️', hotel:'🏨', food:'🍽️', sightseeing:'📸', logistics:'📋', rest:'😴', car:'🚗' }[item.type] || '📍';
+    const navBtn = item.activity ?
+      '<a class="timeline-nav-btn" href="https://www.google.com/maps/search/' + encodeURIComponent(item.activity + ' ' + (day.location||'')) + '" target="_blank">🗺️ נווט</a>' : '';
+    html += '<div class="timeline-item">' +
+      '<div class="timeline-time">' + (item.time||'') + '</div>' +
+      '<div class="timeline-body">' +
+        '<div class="timeline-activity"><span class="timeline-type">' + typeEmoji + '</span> ' + item.activity + '</div>' +
+        (item.type === 'sightseeing' || item.type === 'food' ? navBtn : '') +
+      '</div></div>';
+  });
+
+  if (day.notes && day.notes.length) {
+    html += '<div class="section-title">הערות</div>';
+    day.notes.forEach(n => html += '<div class="note-box">' + n + '</div>');
+  }
+
+  container.innerHTML = html;
+}
+
+function setDay(i) {
+  STATE.selectedDay = i;
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  if (tour) renderItinerary(tour);
+}
+
+function getDayWeather(tour, day) {
+  const cities = tour.weatherCities || [];
+  if (!cities.length || !STATE.weatherCache) return '';
+  // Match city by location
+  let cityKey = cities[0];
+  for (const c of cities) {
+    if (day.location && day.location.indexOf(c) >= 0) cityKey = c;
+  }
+  const w = STATE.weatherCache[cityKey];
+  if (!w || !w.daily) return '';
+  // find index by date
+  const parts = day.date.split('.');
+  const dayDate = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1])-1, parseInt(parts[0]));
+  const diffDays = Math.round((dayDate - new Date()) / (1000*60*60*24));
+  if (diffDays < 0 || diffDays >= (w.daily.time||[]).length) return '';
+  const codes = w.daily.weather_code, maxT = w.daily.temperature_2m_max, minT = w.daily.temperature_2m_min;
+  if (!codes || diffDays >= codes.length) return '';
+  const icon = weatherIcon(codes[diffDays]);
+  return '<div class="day-weather"><span style="font-size:22px;">' + icon + '</span>' +
+    '<div><div style="font-weight:600;">' + Math.round(maxT[diffDays]) + '°/' + Math.round(minT[diffDays]) + '°</div>' +
+    '<div style="color:var(--text-dim);font-size:12px;">' + cityKey + '</div></div></div>';
+}
+
+function weatherIcon(code) {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '⛅';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  if (code <= 82) return '🌦️';
+  return '⛈️';
+}
+
+async function fetchWeatherForTour(tour) {
+  if (!tour.weatherCities || !tour.weatherCities.length) return;
+  STATE.weatherCache = STATE.weatherCache || {};
+  const coords = {
+    'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
+    'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
+    'Sokcho': [38.2070, 128.5918]
+  };
+  for (const city of tour.weatherCities) {
+    if (STATE.weatherCache[city]) continue;
+    const c = coords[city];
+    if (!c) continue;
+    try {
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + c[0] + '&longitude=' + c[1] +
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=16';
+      const res = await fetch(url);
+      STATE.weatherCache[city] = await res.json();
+    } catch(e) {}
+  }
+}
+
+// ---------- Bookings rendering ----------
+function renderBookings(tour) {
+  const b = tour.bookings || {};
+  const container = document.getElementById('bookingsContent');
+  let html = '';
+
+  if (b.flights && b.flights.length) {
+    html += '<div class="booking-group-title">✈️ טיסות</div>';
+    b.flights.forEach(f => {
+      html += '<div class="booking-card">' +
+        '<div class="booking-card-head"><div class="booking-card-title">' + (f.flight||'טיסה') + '</div>' +
+        '<div class="booking-card-date">' + (f.date||'') + '</div></div>' +
+        (f.route ? '<div class="booking-detail"><strong>מסלול:</strong> ' + f.route + '</div>' : '') +
+        (f.time ? '<div class="booking-detail"><strong>שעות:</strong> ' + f.time + '</div>' : '') +
+        (f.terminal ? '<div class="booking-detail"><strong>טרמינל:</strong> ' + f.terminal + '</div>' : '') +
+        (f.pnr ? '<div class="booking-detail"><strong>קוד הזמנה:</strong> ' + f.pnr + '</div>' : '') +
+        (f.passengers ? '<div class="booking-detail"><strong>נוסעים:</strong> ' + f.passengers + '</div>' : '') +
+        (f.note ? '<div class="booking-detail">' + f.note + '</div>' : '') +
+        '</div>';
+    });
+  }
+
+  if (b.hotels && b.hotels.length) {
+    html += '<div class="booking-group-title">🏨 מלונות</div>';
+    b.hotels.forEach(h => {
+      html += '<div class="booking-card">' +
+        '<div class="booking-card-head"><div class="booking-card-title">' + h.name + '</div>' +
+        '<div class="booking-card-date">' + (h.checkin||'') + ' - ' + (h.checkout||'') + '</div></div>' +
+        (h.city ? '<div class="booking-detail"><strong>עיר:</strong> ' + h.city + '</div>' : '') +
+        (h.nights ? '<div class="booking-detail"><strong>לילות:</strong> ' + h.nights + '</div>' : '') +
+        (h.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + h.confirmation + '</div>' : '') +
+        (h.pin ? '<div class="booking-detail"><strong>PIN:</strong> ' + h.pin + '</div>' : '') +
+        (h.price ? '<div class="booking-detail"><strong>מחיר:</strong> ' + h.price + '</div>' : '') +
+        (h.address ? '<div class="booking-detail"><strong>כתובת:</strong> ' + h.address + '</div>' : '') +
+        (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + h.phone + '</div>' : '') +
+        (h.note ? '<div class="booking-detail">' + h.note + '</div>' : '') +
+        '</div>';
+    });
+  }
+
+  if (b.cars && b.cars.length) {
+    html += '<div class="booking-group-title">🚗 רכבים</div>';
+    b.cars.forEach(c => {
+      html += '<div class="booking-card">' +
+        '<div class="booking-card-head"><div class="booking-card-title">' + (c.company||'רכב') + '</div>' +
+        '<div class="booking-card-date">' + (c.pickup||'') + ' - ' + (c.dropoff||'') + '</div></div>' +
+        (c.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + c.confirmation + '</div>' : '') +
+        (c.note ? '<div class="booking-detail">' + c.note + '</div>' : '') +
+        '</div>';
+    });
+  }
+
+  if (tour.driveFolder) {
+    html += '<div style="margin-top:20px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;">כל המסמכים ב-Drive</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, אישורים</div></div><span style="color:var(--text-faint);">↗</span></a></div>';
+  }
+
+  if (!html) html = '<div class="placeholder-view"><div class="big">🎫</div><div>אין הזמנות עדיין</div></div>';
+  container.innerHTML = html;
+}
+
+// ---------- Currency rendering ----------
+function renderCurrency(tour) {
+  const container = document.getElementById('currencyContent');
+  const cur = tour.currency || 'USD';
+  const sym = tour.currencySymbol || '$';
+
+  container.innerHTML =
+    '<div class="section-title">המרת מטבע</div>' +
+    '<div class="currency-box">' +
+      '<div class="currency-rate" id="curRate">טוען שער...</div>' +
+      '<div class="currency-input-row"><span class="cur-label">₪ ILS</span>' +
+        '<input type="number" id="ilsInput" placeholder="0" oninput="convertFromIls()"></div>' +
+      '<div class="currency-swap">⇅</div>' +
+      '<div class="currency-input-row"><span class="cur-label">' + sym + ' ' + cur + '</span>' +
+        '<input type="number" id="localInput" placeholder="0" oninput="convertToIls()"></div>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--text-faint);text-align:center;">שערים מתעדכנים בזמן אמת</div>';
+
+  fetchFxRate(cur);
+}
+
+async function fetchFxRate(cur) {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/ILS');
+    const data = await res.json();
+    const rate = data.rates[cur];
+    STATE.fxRate = rate;
+    STATE.fxCur = cur;
+    const el = document.getElementById('curRate');
+    if (el && rate) {
+      el.innerHTML = '1 ₪ = <strong>' + rate.toFixed(2) + ' ' + cur + '</strong>';
+    }
+  } catch(e) {
+    const el = document.getElementById('curRate');
+    if (el) el.textContent = 'שגיאה בטעינת שער';
+  }
+}
+
+function convertFromIls() {
+  if (!STATE.fxRate) return;
+  const ils = parseFloat(document.getElementById('ilsInput').value) || 0;
+  document.getElementById('localInput').value = (ils * STATE.fxRate).toFixed(2);
+}
+function convertToIls() {
+  if (!STATE.fxRate) return;
+  const local = parseFloat(document.getElementById('localInput').value) || 0;
+  document.getElementById('ilsInput').value = (local / STATE.fxRate).toFixed(2);
+}
+
+// ---------- Packing rendering ----------
+function renderPacking(tour) {
+  const container = document.getElementById('packingContent');
+  const items = tour.packingList || [];
+
+  let html = '<div class="section-title">מה לקחת</div>' +
+    '<div class="packing-add-row">' +
+    '<input class="packing-input" id="packInput" placeholder="הוסף פריט..." onkeydown="if(event.key===\'Enter\')addPackItem()">' +
+    '<button class="packing-add-btn" onclick="addPackItem()">+</button></div>';
+
+  if (!items.length) {
+    html += '<div class="packing-empty">🧳 הרשימה ריקה<br><span style="font-size:12px;">הוסף פריטים למעלה</span></div>';
+  } else {
+    const sorted = [...items.filter(i=>!i.packed), ...items.filter(i=>i.packed)];
+    html += '<div id="packList">' + sorted.map(item =>
+      '<div class="packing-item' + (item.packed?' packed':'') + '">' +
+      '<div class="packing-check' + (item.packed?' checked':'') + '" onclick="togglePack(\'' + item.id + '\')"></div>' +
+      '<span class="packing-item-text">' + item.text.replace(/</g,'&lt;') + '</span>' +
+      '<button class="packing-delete" onclick="delPack(\'' + item.id + '\')">✕</button>' +
+      '</div>'
+    ).join('') + '</div>';
+  }
+  container.innerHTML = html;
+}
+
+async function addPackItem() {
+  const input = document.getElementById('packInput');
+  const text = (input.value||'').trim();
+  if (!text) return;
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  tour.packingList = tour.packingList || [];
+  tour.packingList.push({ id: Date.now().toString(), text, packed: false });
+  input.value = '';
+  renderPacking(tour);
+  await window.DB.saveTour(tour.id, { packingList: tour.packingList });
+}
+async function togglePack(id) {
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  const item = (tour.packingList||[]).find(i => i.id === id);
+  if (item) item.packed = !item.packed;
+  renderPacking(tour);
+  await window.DB.saveTour(tour.id, { packingList: tour.packingList });
+}
+async function delPack(id) {
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  tour.packingList = (tour.packingList||[]).filter(i => i.id !== id);
+  renderPacking(tour);
+  await window.DB.saveTour(tour.id, { packingList: tour.packingList });
+}
 
 // ---------- Init ----------
 async function init() {
