@@ -345,6 +345,14 @@ header {
 .packing-item-text { flex: 1; font-size: 14px; }
 .packing-delete { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; }
 .packing-empty { text-align: center; color: var(--text-faint); font-size: 14px; padding: 32px 16px; }
+.owner-btns { display: flex; gap: 6px; margin: 10px 0; justify-content: flex-end; }
+.owner-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-size: 13px; cursor: pointer; font-family: inherit; }
+.owner-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pack-tag { font-size: 11px; padding: 2px 7px; border-radius: 10px; margin-left: 6px; font-weight: 600; display: inline-block; }
+.pack-tag.p1 { background: #3a6bc4; color: #fff; }
+.pack-tag.p2 { background: #b04a8a; color: #fff; }
+.pack-tag.both { background: #4a7c59; color: #fff; }
+.sync-badge { font-size: 11px; color: var(--green); text-align: center; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -1148,28 +1156,93 @@ function convertToIls() {
 }
 
 // ---------- Packing rendering ----------
+STATE.packOwner = 'both';
+STATE.packFilter = 'all';
+STATE.packUnsub = null;
+
+function getTravelers(tour) {
+  // Parse subtitle like "רון, הילה והניה" → first two names
+  const sub = tour.subtitle || '';
+  const names = sub.split(/[,ו]/).map(s => s.trim()).filter(s => s && s.length > 1);
+  return { p1: names[0] || 'אני', p2: names[1] || 'שותף' };
+}
+
 function renderPacking(tour) {
   const container = document.getElementById('packingContent');
   const items = tour.packingList || [];
+  const { p1, p2 } = getTravelers(tour);
 
   let html = '<div class="section-title">מה לקחת</div>' +
+    '<div class="sync-badge">🔄 מסונכרן בזמן אמת</div>' +
     '<div class="packing-add-row">' +
     '<input class="packing-input" id="packInput" placeholder="הוסף פריט..." onkeydown="if(event.key===\'Enter\')addPackItem()">' +
     '<button class="packing-add-btn" onclick="addPackItem()">+</button></div>';
 
+  // Owner selector for new item
+  html += '<div class="owner-btns">' +
+    '<button class="owner-btn' + (STATE.packOwner==='both'?' active':'') + '" onclick="setPackOwner(\'both\')">שנינו</button>' +
+    '<button class="owner-btn' + (STATE.packOwner==='p2'?' active':'') + '" onclick="setPackOwner(\'p2\')">' + p2 + '</button>' +
+    '<button class="owner-btn' + (STATE.packOwner==='p1'?' active':'') + '" onclick="setPackOwner(\'p1\')">' + p1 + '</button>' +
+    '</div>';
+
+  // Filter
+  html += '<div class="owner-btns" style="border-top:1px solid var(--border);padding-top:10px;">' +
+    '<button class="owner-btn' + (STATE.packFilter==='all'?' active':'') + '" onclick="setPackFilter(\'all\')">הכל</button>' +
+    '<button class="owner-btn' + (STATE.packFilter==='p2'?' active':'') + '" onclick="setPackFilter(\'p2\')">' + p2 + '</button>' +
+    '<button class="owner-btn' + (STATE.packFilter==='p1'?' active':'') + '" onclick="setPackFilter(\'p1\')">' + p1 + '</button>' +
+    '</div>';
+
+  const filtered = STATE.packFilter === 'all' ? items :
+    items.filter(i => (i.owner||'both') === STATE.packFilter || (i.owner||'both') === 'both');
+
+  const tag = (owner) => {
+    if (owner === 'p1') return '<span class="pack-tag p1">' + p1 + '</span>';
+    if (owner === 'p2') return '<span class="pack-tag p2">' + p2 + '</span>';
+    return '<span class="pack-tag both">שנינו</span>';
+  };
+
   if (!items.length) {
     html += '<div class="packing-empty">🧳 הרשימה ריקה<br><span style="font-size:12px;">הוסף פריטים למעלה</span></div>';
+  } else if (!filtered.length) {
+    html += '<div class="packing-empty">אין פריטים לסינון זה</div>';
   } else {
-    const sorted = [...items.filter(i=>!i.packed), ...items.filter(i=>i.packed)];
+    const sorted = [...filtered.filter(i=>!i.packed), ...filtered.filter(i=>i.packed)];
     html += '<div id="packList">' + sorted.map(item =>
       '<div class="packing-item' + (item.packed?' packed':'') + '">' +
       '<div class="packing-check' + (item.packed?' checked':'') + '" onclick="togglePack(\'' + item.id + '\')"></div>' +
-      '<span class="packing-item-text">' + item.text.replace(/</g,'&lt;') + '</span>' +
+      '<span class="packing-item-text">' + tag(item.owner||'both') + item.text.replace(/</g,'&lt;') + '</span>' +
       '<button class="packing-delete" onclick="delPack(\'' + item.id + '\')">✕</button>' +
       '</div>'
     ).join('') + '</div>';
   }
   container.innerHTML = html;
+
+  // Set up real-time sync (once per trip)
+  if (STATE.packUnsub) { STATE.packUnsub(); STATE.packUnsub = null; }
+  STATE.packUnsub = window.DB.watchTour(tour.id, (updated) => {
+    const local = STATE.tours.find(t => t.id === updated.id);
+    if (local) {
+      local.packingList = updated.packingList || [];
+      if (STATE.currentView === 'packing') {
+        // Re-render without re-subscribing
+        const temp = STATE.packUnsub; STATE.packUnsub = null;
+        renderPacking(local);
+        if (STATE.packUnsub) STATE.packUnsub();
+        STATE.packUnsub = temp;
+      }
+    }
+  });
+}
+
+function setPackOwner(o) {
+  STATE.packOwner = o;
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  if (tour) renderPacking(tour);
+}
+function setPackFilter(f) {
+  STATE.packFilter = f;
+  const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
+  if (tour) renderPacking(tour);
 }
 
 async function addPackItem() {
@@ -1178,7 +1251,7 @@ async function addPackItem() {
   if (!text) return;
   const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
   tour.packingList = tour.packingList || [];
-  tour.packingList.push({ id: Date.now().toString(), text, packed: false });
+  tour.packingList.push({ id: Date.now().toString(), text, packed: false, owner: STATE.packOwner });
   input.value = '';
   renderPacking(tour);
   await window.DB.saveTour(tour.id, { packingList: tour.packingList });
