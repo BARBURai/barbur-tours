@@ -319,6 +319,7 @@ header {
     <div class="loader"><div class="spinner"></div>טוען טיולים...</div>
   </div>
   <div class="drawer-footer">
+    <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">📥 טען טיול גאורגיה</button>
     <button class="new-trip-btn" onclick="openNewTripForm()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       טיול חדש
@@ -794,6 +795,90 @@ function slugify(str) {
     .replace(/^-+|-+$/g, '')
     .substring(0, 30) || 'trip';
 }
+
+
+// ---- One-time seed: Georgia trip ----
+window.seedGeorgia = async function() {
+  const georgiaData = {
+  title: "גאורגיה",
+  subtitle: "רון, הילה והניה",
+  startDate: "2026-09-03",
+  endDate: "2026-09-07",
+  destination: "תביליסי וקאחתי, גאורגיה",
+  currency: "GEL",
+  currencySymbol: "₾",
+  flag: "🇬🇪",
+  coverImage: "",
+  weatherCities: ["Tbilisi", "Telavi"],
+  driveFolder: "https://drive.google.com/drive/folders/1HSY3Lh_Nb2cnLN_HXS4nLlAjzPKgJlnd",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  bookings: {
+    flights: [
+      {date:"3.9",flight:"Israir 6H891",route:"TLV → תביליסי",time:"19:40-23:20",terminal:"T1",passengers:"רון, הילה, הניה",note:"טיסת הלוך"},
+      {date:"7.9",flight:"El Al LY5108",route:"תביליסי → TLV",time:"10:10-11:50",terminal:"T3",pnr:"Z36FE9",passengers:"רון, הילה, הניה",note:"טיסת חזור - Sun Dor"}
+    ],
+    hotels: [
+      {name:"Radisson Blu Iveria",city:"תביליסי",checkin:"3.9",checkout:"5.9",nights:2,confirmation:"0F7V2KQ4",price:"2367 GEL",note:"מרכז העיר, 2 חדרים",address:"Tbilisi City Centre"},
+      {name:"Esquisse Design Hotel",city:"טלאבי",checkin:"5.9",checkout:"7.9",nights:2,confirmation:"6178.993.330",pin:"7590",price:"1938 GEL / €645",note:"2 חדרי Deluxe Suite, קרוב לציננדלי",address:"19 Kurdghelauri Street, Telavi",phone:"+995 596 72 77 22"}
+    ],
+    cars: []
+  },
+  days: [
+    {date:"3.9",day_of_week:"חמישי",title:"טיסה לתביליסי",location:"תביליסי",summary:"טיסת ערב לגאורגיה, הגעה למלון",items:[
+      {time:"17:40",activity:"הגעה לנתב\"ג טרמינל 1 - 2 שעות לפני",type:"logistics"},
+      {time:"19:40",activity:"טיסה Israir 6H891 → תביליסי",type:"flight"},
+      {time:"23:20",activity:"נחיתה בתביליסי",type:"flight"},
+      {time:"00:30",activity:"צ'ק-אין Radisson Blu Iveria",type:"hotel"}
+    ],notes:["ויזה לגאורגיה: ישראלים פטורים עד 365 יום","מטבע: לארי גאורגי (GEL). כרטיסי אשראי מקובלים"]},
+    {date:"4.9",day_of_week:"שישי",title:"תביליסי - העיר העתיקה",location:"תביליסי",summary:"יום מלא בתביליסי - עיר עתיקה, מבצר, גופרית",items:[
+      {time:"09:00",activity:"ארוחת בוקר במלון",type:"food"},
+      {time:"10:00",activity:"העיר העתיקה של תביליסי",type:"sightseeing"},
+      {time:"12:00",activity:"מבצר נאריקאלה (רכבל)",type:"sightseeing"},
+      {time:"14:00",activity:"מרחצאות הגופרית אבנוטובני",type:"sightseeing"},
+      {time:"19:00",activity:"ארוחת ערב - מטבח גאורגי",type:"food"}
+    ],notes:["חצ'אפורי וחינקלי - מנות הדגל של גאורגיה","יין גאורגי - מהעתיקים בעולם"]},
+    {date:"5.9",day_of_week:"שבת",title:"מעבר לטלאבי + פסטיבל ציננדלי",location:"טלאבי / קאחתי",summary:"נסיעה לחבל היין קאחתי, פסטיבל ציננדלי - הופעה של שיר",items:[
+      {time:"10:00",activity:"צ'ק-אאוט Radisson",type:"logistics"},
+      {time:"11:00",activity:"נסיעה לטלאבי (~1.5 שעות)",type:"logistics"},
+      {time:"15:00",activity:"צ'ק-אין Esquisse Design Hotel",type:"hotel"},
+      {time:"19:00",activity:"🎵 פסטיבל ציננדלי - הופעה של שיר (Parterre שורה 2, מושבים 23-25)",type:"sightseeing"}
+    ],notes:["🎵 פסטיבל ציננדלי - אירוע הדגל של המוזיקה הקלאסית בגאורגיה, באחוזת היין ההיסטורית ציננדלי","אחוזת ציננדלי קרובה למלון בטלאבי"]},
+    {date:"6.9",day_of_week:"ראשון",title:"חבל קאחתי - יקבים",location:"קאחתי",summary:"סיור יקבים באזור היין המפורסם של גאורגיה",items:[
+      {time:"09:00",activity:"ארוחת בוקר",type:"food"},
+      {time:"10:30",activity:"אחוזת ציננדלי + מוזיאון",type:"sightseeing"},
+      {time:"13:00",activity:"טעימות יין ביקבי קאחתי",type:"food"},
+      {time:"16:00",activity:"העיירה סיגנאגי (עיר האהבה)",type:"sightseeing"}
+    ],notes:["קאחתי - חבל היין המרכזי של גאורגיה","סיגנאגי - עיירה ציורית עם נוף לרכס הקווקז"]},
+    {date:"7.9",day_of_week:"שני",title:"חזרה הביתה",location:"תביליסי",summary:"נסיעה חזרה לתביליסי וטיסה לישראל",items:[
+      {time:"06:00",activity:"צ'ק-אאוט + נסיעה לשדה תביליסי",type:"logistics"},
+      {time:"08:00",activity:"הגעה לשדה התעופה",type:"logistics"},
+      {time:"10:10",activity:"טיסה El Al LY5108 → TLV",type:"flight"},
+      {time:"11:50",activity:"נחיתה בנתב\"ג",type:"flight"}
+    ],notes:["צ'ק-אאוט מוקדם - טיסה ב-10:10"]}
+  ],
+  prep: [
+    {task:"🎫 להדפיס כרטיסי פסטיבל ציננדלי",done:false},
+    {task:"🚗 להזמין העברות / רכב שכור לקאחתי",done:false},
+    {task:"💱 GEL - כרטיס אשראי + מעט מזומן",done:false},
+    {task:"📱 eSIM לגאורגיה",done:false}
+  ],
+  packingList: []
+};
+  try {
+    await window.DB.saveTour('georgia-2026', georgiaData);
+    STATE.tours = await window.DB.listTours();
+    STATE.currentTripId = 'georgia-2026';
+    localStorage.setItem('lastTripId', 'georgia-2026');
+    localStorage.setItem('georgiaSeeded', '1');
+    renderDrawer();
+    await loadTripHome();
+    navigate('home');
+    alert('טיול גאורגיה נטען בהצלחה!');
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+  }
+};
 
 // ---------- Init ----------
 async function init() {
