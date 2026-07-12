@@ -1,6 +1,6 @@
 {
   "name": "Barbur Tours",
-  "short_name": "Barbur",
+  "short_name": "Barbur Tours",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

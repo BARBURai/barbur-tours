@@ -488,11 +488,6 @@ header {
   <div id="transportContent"></div>
 </section>
 
-<!-- Transport View -->
-<section class="view" id="view-transport">
-  <div id="transportContent"></div>
-</section>
-
 <!-- New/Edit Trip Modal -->
 <div class="modal-overlay" id="tripFormOverlay">
   <div class="modal">
@@ -785,7 +780,6 @@ async function loadTripHome() {
       '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div><div class="sub">משימות לפני</div></div>' +
       '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div><div class="sub">ביטויים שימושיים</div></div>' +
       '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div><div class="sub">טלפונים חשובים</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div><div class="sub">מוניות ואפליקציות</div></div>' +
       '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div><div class="sub">מוניות ואפליקציות</div></div>' +
     '</div>' +
     (tour.driveFolder ?
@@ -1740,34 +1734,6 @@ function renderEmergency(tour) {
 // ---------- Transport ----------
 function renderTransport(tour) {
   const container = document.getElementById('transportContent');
-  const apps = tour.transport || [];
-
-  if (!apps.length) {
-    container.innerHTML = '<div class="section-title">תחבורה</div>' +
-      '<div class="placeholder-view"><div class="big">🚕</div><div>אין מידע תחבורה לטיול זה עדיין</div></div>';
-    return;
-  }
-
-  let html = '<div class="section-title">תחבורה ומוניות</div>';
-  apps.forEach(a => {
-    html += '<div class="booking-card">' +
-      '<div class="booking-card-head"><div class="booking-card-title">' + (a.icon||'🚕') + ' ' + a.name + '</div>' +
-      (a.recommended ? '<span class="trip-item-badge">מומלץ</span>' : '') + '</div>' +
-      (a.desc ? '<div class="booking-detail">' + a.desc + '</div>' : '') +
-      (a.priceInfo ? '<div class="booking-detail"><strong>מחירים:</strong> ' + a.priceInfo + '</div>' : '') +
-      (a.androidUrl || a.iosUrl ?
-        '<div style="display:flex;gap:8px;margin-top:10px;">' +
-        (a.androidUrl ? '<a class="timeline-nav-btn" href="' + a.androidUrl + '" target="_blank">📱 Android</a>' : '') +
-        (a.iosUrl ? '<a class="timeline-nav-btn" href="' + a.iosUrl + '" target="_blank">🍎 iOS</a>' : '') +
-        '</div>' : '') +
-      '</div>';
-  });
-  container.innerHTML = html;
-}
-
-// ---------- Transport ----------
-function renderTransport(tour) {
-  const container = document.getElementById('transportContent');
   const transport = tour.transport || [];
 
   if (!transport.length) {
@@ -1908,7 +1874,7 @@ async function init() {
 
   // Service worker
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v1';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const swCode = "const CACHE='barbur-tours-v2';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
   }
