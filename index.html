@@ -434,6 +434,7 @@ header {
   <div class="drawer-footer">
     <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">🔄 עדכן טיול גאורגיה</button>
     <button class="new-trip-btn" onclick="seedKorea()" style="background:#3a6bc4;margin-bottom:8px;" id="seedKoreaBtn">🇰🇷 טען טיול קוריאה</button>
+    <button class="new-trip-btn" onclick="seedCyprus()" style="background:#e8a33d;margin-bottom:8px;" id="seedCyprusBtn">🇨🇾 טען טיול קפריסין</button>
     <button class="new-trip-btn" onclick="openNewTripForm()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       טיול חדש
@@ -1017,6 +1018,104 @@ window.seedKorea = async function() {
 };
 
 // ---- One-time seed: Georgia trip ----
+// ---- One-time seed: Cyprus trip ----
+window.seedCyprus = async function() {
+  const cyprusData = {
+  title: "קפריסין",
+  subtitle: "טיול גברים - רון, איתן ואורי",
+  travelers: ["רון", "איתן", "אורי"],
+  startDate: "2026-10-01",
+  endDate: "2026-10-05",
+  destination: "לימסול וסביבותיה, קפריסין",
+  currency: "EUR",
+  currencySymbol: "€",
+  flag: "🇨🇾",
+  coverImage: "",
+  weatherCities: ["Limassol", "Larnaca"],
+  driveFolder: "https://drive.google.com/drive/folders/1YrgnwwKX238gc1haoDcJli8L8jMD0lwp",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  bookings: {
+    flights: [
+      {date:"1.10",flight:"Wizz Air W6 4606",route:"TLV → לרנקה",time:"12:55-14:00",confirmation:"OID66Y",passengers:"רון, אורי, איתן סגל",seats:"10E/10D/10F",price:"278.37 EUR",note:"לא כולל כבודה רשומה - רק תיק יד/גב. WIZZ Priority + צ'ק-אין אונליין כלולים"},
+      {date:"5.10",flight:"ישראייר 6H584 (מופעלת ע\"י Tus Airways)",route:"לרנקה → TLV",time:"22:05-23:10",confirmation:"4766604",passengers:"3 מבוגרים",price:"$495",note:"לא כולל מזוודה/טרולי. כלול: 3 כבודת יד (טרולי או תיק גב גדול)"}
+    ],
+    hotels: [
+      {name:"Ajax Hotel",city:"לימסול",checkin:"1.10 14:00",checkout:"5.10 12:00",nights:4,confirmation:"6042.963.819",pin:"3067",phone:"+357 25 590000",address:"Georgiou Neophytou & D. Nicolaou Street, Limassol, 4006, Cyprus",price:"₪3,485 (€1,007.64) ל-2 חדרים",lat:34.695,lng:33.064,note:"חדר 1: 2 מבוגרים, חדר 2: מבוגר אחד. ארוחת בוקר כלולה. ביטול חינם עד יום לפני ההגעה. חניה חינם באתר, לא דורש הזמנה מראש"}
+    ],
+    cars: [
+      {note:"רכב שכור - חברה וסטטוס הזמנה טרם צוינו, להשלים"}
+    ]
+  },
+  days: [
+    {date:"1.10",day_of_week:"חמישי",title:"נחיתה + ערב במרינה",location:"לרנקה → לימסול",summary:"נחיתה, איסוף רכב, נסיעה למלון, ערב בשרים ובירות במרינה",items:[
+      {time:"12:55",activity:"המראה מנתב\"ג (Wizz Air W6 4606)",type:"flight"},
+      {time:"14:00",activity:"נחיתה בלרנקה",type:"flight"},
+      {time:"14:20",activity:"איסוף הרכב השכור + נסיעה למלון (67 ק\"מ, כ-40 דק')",type:"car"},
+      {time:"15:30",activity:"צ'ק-אין ב-Ajax Hotel, התרעננות, בריכה או חוף Dasoudi הסמוך",type:"hotel"},
+      {time:"19:30",activity:"ערב בשרים ובירות ב-Limassol Marina (4 ק\"מ, כ-8 דק')",type:"food"}
+    ],notes:["מלון סגור לכל 4 הלילות: Ajax Hotel Limassol"]},
+    {date:"2.10",day_of_week:"שישי",title:"צלילת עומק לזנוביה + בירה בשקיעה",location:"לרנקה + לימסול",summary:"2 צלילות עומק לספינת הטבע Zenobia, בערב בר חוף ופאבים",items:[
+      {time:"07:40",activity:"נסיעה מלימסול למרינה בלרנקה (65 ק\"מ, כ-40 דק')",type:"logistics"},
+      {time:"08:30",activity:"2 צלילות עומק (עד 30 מטר) ל-Zenobia Wreck + ארוחת דגים בנמל",type:"sightseeing"},
+      {time:"14:30",activity:"נסיעה חזרה למלון להתקלחות ומנוחה",type:"logistics"},
+      {time:"17:00",activity:"בירה בשקיעה במועדון החוף Columbia Sun, Lady's Mile Beach (12 ק\"מ, כ-15 דק')",type:"food"},
+      {time:"21:00",activity:"סבב ברים ופאבים בעיר העתיקה של לימסול (4 ק\"מ, כ-8 דק')",type:"sightseeing"}
+    ],notes:["מועדוני צלילה מומלצים לבדיקה: Alpha Divers, Dive-In Larnaca, Viking Divers","לכולם רישיון צלילה עד 30 מטר - לבדוק חבילת Double Dive לצוללי Advanced כולל השכרת ציוד מלא"]},
+    {date:"3.10",day_of_week:"שבת",title:"UTV/באגי בהרי טרודוס + גשר צלפוס",location:"הרי טרודוס",summary:"טיול שטח ביערות, עצירה בגשר האבן הוונציאני, ארוחה באומודוס",items:[
+      {time:"08:30",activity:"נסיעה מלימסול להרי הטרודוס (42 ק\"מ, כ-45 דק' בעלייה)",type:"logistics"},
+      {time:"09:30",activity:"טיול UTV/באגי בשבילי עפר ויער, עצירה בגשר האבן הוונציאני Tzelefos Bridge",type:"sightseeing"},
+      {time:"13:00",activity:"ארוחת בשרים ובירה בכפר אומודוס (Omodos)",type:"food"},
+      {time:"14:30",activity:"נסיעה חזרה למלון Ajax בלימסול",type:"logistics"},
+      {time:"20:00",activity:"ארוחת בשרים וערב רגוע בלימסול",type:"food"}
+    ],notes:["סוכנויות באגי/UTV לבדיקה: TT Motorcycle Rentals, Quad Safari Cyprus","⚠️ לבדוק דרישות גיל/רישיון מדויקות - צריך חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל"]},
+    {date:"4.10",day_of_week:"ראשון",title:"Cape Greco + ספורט ימי באיה נאפה",location:"איה נאפה",summary:"קפיצות מצוקים, מערות ים, ספורט ימי וחוף",items:[
+      {time:"08:30",activity:"נסיעה מלימסול ל-Cape Greco/איה נאפה (105 ק\"מ, כ-70 דק')",type:"logistics"},
+      {time:"09:45",activity:"Cape Greco & Sea Caves - קפיצות מהצוקים למים, קשת הסלע הטבעית Kamara Tou Koraka",type:"sightseeing"},
+      {time:"12:00",activity:"חוף איה נאפה - ספורט ימי (אופנועי ים/פאראסיילינג) + ארוחת צהריים על החוף",type:"sightseeing"},
+      {time:"16:00",activity:"נסיעה חזרה למלון Ajax בלימסול (105 ק\"מ, כ-70 דק')",type:"logistics"},
+      {time:"20:30",activity:"ארוחת סיכום חגיגית בעיר העתיקה בלימסול",type:"food"}
+    ],notes:["קפיצות הצוקים ב-Cape Greco - לבדוק גובה/תנאים במקום, לא כולם חייבים לקפוץ"]},
+    {date:"5.10",day_of_week:"שני",title:"פאפוס + שופינג + טיסה חזרה",location:"פאפוס → לרנקה",summary:"טיילת ומצודת פאפוס, שופינג, חזרה לישראל",items:[
+      {time:"09:30",activity:"צ'ק-אאוט מ-Ajax, נסיעה לפאפוס (68 ק\"מ, כ-45 דק')",type:"logistics"},
+      {time:"10:15",activity:"טיילת ומצודת פאפוס + ארוחת צהריים מול הים בנמל",type:"sightseeing"},
+      {time:"13:30",activity:"שופינג ב-Kings Avenue Mall בפאפוס (היחיד בטיול)",type:"sightseeing"},
+      {time:"15:30",activity:"חזרה לכיוון לרנקה, עצירה לקפה/בירה ב-Governor's Beach",type:"logistics"},
+      {time:"19:00",activity:"הגעה לשדה התעופה בלרנקה, החזרת הרכב (130 ק\"מ, כ-80 דק')",type:"car"},
+      {time:"22:05",activity:"טיסת חזור ישראייר 6H584 → תל אביב",type:"flight"},
+      {time:"23:10",activity:"נחיתה בנתב\"ג",type:"flight"}
+    ],notes:[]}
+  ],
+  prep: [
+    {task:"🏍️ לבדוק רישיונות/גיל מינימלי לנהיגת UTV/באגי מול TT Motorcycle Rentals או Quad Safari Cyprus",done:false,note:"חשוב למצוא חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל, כדי שכולם יתחלפו בנהיגה"},
+    {task:"🤿 לבדוק חבילת צלילה כפולה (Double Dive) לזנוביה מול Alpha Divers / Dive-In Larnaca",done:false,note:"כולל השכרת ציוד מלא, לצוללי Advanced"},
+    {task:"🚗 להזמין/לאשר את הרכב השכור בלרנקה",done:false},
+    {task:"🏍️ להזמין את הבאגי/UTV מראש",done:false},
+    {task:"🤿 להזמין את הצלילות מראש",done:false}
+  ],
+  packingList: [],
+  phrases: [],
+  emergency: [
+    {icon:"🆘",label:"חירום כללי",number:"112"},
+    {icon:"🚓",label:"משטרה",number:"199"},
+    {icon:"🚑",label:"אמבולנס",number:"112"}
+  ],
+  transport: []
+};
+  try {
+    await window.DB.saveTour('cyprus-2026', cyprusData);
+    STATE.tours = await window.DB.listTours();
+    STATE.currentTripId = 'cyprus-2026';
+    localStorage.setItem('lastTripId', 'cyprus-2026');
+    renderDrawer();
+    await loadTripHome();
+    navigate('home');
+    alert('טיול קפריסין נטען בהצלחה!');
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+  }
+};
+
 window.seedGeorgia = async function() {
   const georgiaData = {
   title: "גאורגיה",
@@ -1051,29 +1150,38 @@ window.seedGeorgia = async function() {
       {time:"23:20",activity:"נחיתה בתביליסי",type:"flight"},
       {time:"00:30",activity:"צ'ק-אין Radisson Blu Iveria",type:"hotel"}
     ],notes:["ויזה לגאורגיה: ישראלים פטורים עד 365 יום","מטבע: לארי גאורגי (GEL). כרטיסי אשראי מקובלים"]},
-    {date:"4.9",day_of_week:"שישי",title:"תביליסי - העיר העתיקה",location:"תביליסי",summary:"יום מלא בתביליסי - עיר עתיקה, מבצר, גופרית, אופטיקה",items:[
-      {time:"09:00",activity:"ארוחת בוקר במלון",type:"food"},
-      {time:"10:00",activity:"👓 Alain Afflelou GPC - 30 Charchavadze St (פתוח 08:30-23:45)",type:"sightseeing",lat:41.7235977,lng:44.737921},
-      {time:"11:30",activity:"👓 Alain Afflelou Axis Tower - 37m Ilia Chavchavadze ave (פתוח 08:00-22:00)",type:"sightseeing",lat:41.7096,lng:44.7516},
-      {time:"13:00",activity:"העיר העתיקה של תביליסי",type:"sightseeing"},
-      {time:"15:00",activity:"מבצר נאריקאלה (רכבל)",type:"sightseeing"},
-      {time:"16:30",activity:"מרחצאות הגופרית אבנוטובני",type:"sightseeing"},
+    {date:"4.9",day_of_week:"שישי",title:"תביליסי - העיר העתיקה",location:"תביליסי",summary:"אופטיקה של רון בבוקר, אז יום מלא בעיר העתיקה בקצב נוח",items:[
+      {time:"08:30",activity:"👓 רון לבד - בולט לחנות אופטיקה, Chavchavadze Ave (Alain Afflelou), Vake",type:"logistics",lat:41.7096,lng:44.7516},
+      {time:"09:15",activity:"חזרה למלון, ארוחת בוקר עם הילה והניה",type:"food"},
+      {time:"10:15",activity:"העיר העתיקה של תביליסי - הליכה קלה",type:"sightseeing"},
+      {time:"11:45",activity:"מבצר נאריקאלה (רכבל, לא הליכה)",type:"sightseeing"},
+      {time:"12:45",activity:"ארוחת צהריים בעיר העתיקה",type:"food"},
+      {time:"15:45",activity:"גשר השלום + פארק ריקה - הליכה קלה לאורך הנהר",type:"sightseeing"},
+      {time:"17:00",activity:"מרחצאות הגופרית אבנוטובני - ספונטני, לפי מצב רוח וכוח",type:"optional"},
       {time:"19:00",activity:"ארוחת ערב - מטבח גאורגי",type:"food"}
-    ],notes:["👓 שתי חנויות אופטיקה Alain Afflelou לביקור ביום הראשון","חצ'אפורי וחינקלי - מנות הדגל של גאורגיה","יין גאורגי - מהעתיקים בעולם"]},
-    {date:"5.9",day_of_week:"שבת",title:"מעבר לטלאבי + חבל היין קאחתי",location:"טלאבי / קאחתי",summary:"נסיעה לחבל היין קאחתי, צ'ק-אין בטלאבי",items:[
-      {time:"10:00",activity:"צ'ק-אאוט Radisson",type:"logistics"},
-      {time:"11:00",activity:"נסיעה לטלאבי (~1.5 שעות)",type:"logistics"},
-      {time:"15:00",activity:"צ'ק-אין Esquisse Design Hotel",type:"hotel"},
-      {time:"17:00",activity:"סיור ראשוני בטלאבי + ארוחת ערב",type:"food"}
-    ],notes:["אחוזת ציננדלי קרובה למלון בטלאבי","מחר בערב - ההופעה בפסטיבל ציננדלי"]},
-    {date:"6.9",day_of_week:"ראשון",title:"חבל קאחתי + 🎵 קונצרט ציננדלי",location:"קאחתי",summary:"סיור יקבים + בערב: פינחס צוקרמן בפסטיבל ציננדלי",items:[
+    ],notes:["👓 האופטיקה זה עניין אישי של רון בלבד, לא חלק מהתוכנית המשפחתית - בוצע מוקדם בבוקר כדי לא לעכב","מרחצאות הגופרית ספונטניות אחה\"צ - תלוי בכוח, אפשר גם לוותר","חצ'אפורי וחינקלי - מנות הדגל של גאורגיה","יין גאורגי - מהעתיקים בעולם"]},
+    {date:"5.9",day_of_week:"שבת",title:"מעבר לטלאבי + כנסיית סמבה",location:"טביליסי → טלאבי",summary:"איסוף רכב, עצירה בכנסיית סמבה, נסיעה דרך סגארג'ו, שיר מגיעה בערב",items:[
+      {time:"08:30",activity:"רון לבד - איסוף הרכב השכור, Enterprise, 30 Kote Abkhazi St (הזמנה #756529912, טל' +995577967070)",type:"car"},
+      {time:"09:00",activity:"חזרה למלון, ארוחת בוקר, צ'ק-אאוט Radisson",type:"logistics"},
+      {time:"09:30",activity:"יציאה לכנסיית סמבה (Holy Trinity)",type:"logistics"},
+      {time:"10:00",activity:"ביקור בכנסיית סמבה - הכנסייה המרשימה בתביליסי, בלי הליכה משמעותית",type:"sightseeing"},
+      {time:"10:45",activity:"המשך לטלאבי דרך כביש סגארג'ו (מישורי ונוח, ~2.5 שעות)",type:"logistics"},
+      {time:"13:00",activity:"הגעה לטלאבי, ארוחת צהריים",type:"food"},
+      {time:"13:30",activity:"צ'ק-אין Esquisse Design Hotel",type:"hotel"},
+      {time:"14:30",activity:"סיור קליל בעיר טלאבי - ארמון המלך ארקלה השני והגן",type:"sightseeing"},
+      {time:"18:30",activity:"שיר מגיעה מציננדלי, ארוחת ערב ביחד",type:"food"},
+      {time:"21:00",activity:"רון מחזיר את שיר לציננדלי (~15 דק' כל כיוון, כביש מישורי קל)",type:"logistics"}
+    ],notes:["אחוזת ציננדלי קרובה למלון בטלאבי","מחר בערב - ההופעה בפסטיבל ציננדלי","כביש סגארג'ו נבחר כברירת מחדל (מישורי) במקום מעבר גומבורי (הררי) - נוח יותר לנסיעה עם הניה","לתאם עם שיר שעת חזרה מדויקת כדי שלא תתעכב"]},
+    {date:"6.9",day_of_week:"ראשון",title:"סיגנאגי + טעימות יין + 🎵 קונצרט ציננדלי",location:"קאחתי",summary:"בוקר בסיגנאגי עם טעימות יין, מנוחה, ערב באחוזת ציננדלי והקונצרט",items:[
       {time:"09:00",activity:"ארוחת בוקר",type:"food"},
-      {time:"10:30",activity:"אחוזת ציננדלי + מוזיאון",type:"sightseeing",lat:41.8943596,lng:45.5644952},
-      {time:"13:00",activity:"טעימות יין ביקבי קאחתי",type:"food"},
-      {time:"16:00",activity:"העיירה סיגנאגי (עיר האהבה)",type:"sightseeing",lat:41.6200278,lng:45.922355},
-      {time:"18:00",activity:"חזרה למלון + התארגנות לקונצרט",type:"logistics"},
+      {time:"10:00",activity:"יציאה לסיגנאגי",type:"logistics"},
+      {time:"10:45",activity:"סיגנאגי (עיר האהבה) - נוף על עמק אלזני",type:"sightseeing",lat:41.6200278,lng:45.922355},
+      {time:"12:30",activity:"ארוחת צהריים + טעימות יין ביקב מקומי באזור",type:"food"},
+      {time:"14:00",activity:"חזרה לכיוון טלאבי",type:"logistics"},
+      {time:"15:00",activity:"הגעה למלון, מנוחה והתארגנות ללבוש לקונצרט",type:"rest"},
+      {time:"17:30",activity:"אחוזת ציננדלי - סיור במוזיאון ובגנים",type:"sightseeing",lat:41.8943596,lng:45.5644952},
       {time:"19:00",activity:"🎵 קונצרט: Gianandrea Noseda / Pinchas Zukerman / Pan-Caucasian Youth Orchestra - אחוזת ציננדלי (Parterre שורה 2, מושבים 23-25)",type:"sightseeing",lat:41.8943596,lng:45.5644952}
-    ],notes:["🎵 קונצרט ציננדלי 6.9 בשעה 19:00 - פינחס צוקרמן (כנר) + נוסדה (מנצח) + התזמורת. הזמנה Wyc9AZ5718","🎫 3 כרטיסים, Parterre שורה 2, מושבים 23-24-25, קטגוריה B","המקום: אחוזת ציננדלי (Tsinandali Estate) - קרוב למלון בטלאבי","קאחתי - חבל היין המרכזי של גאורגיה","סיגנאגי - עיירה ציורית עם נוף לרכס הקווקז"]},
+    ],notes:["🎵 קונצרט ציננדלי 6.9 בשעה 19:00 - פינחס צוקרמן (כנר) + נוסדה (מנצח) + התזמורת. הזמנה Wyc9AZ5718","🎫 3 כרטיסים, Parterre שורה 2, מושבים 23-24-25, קטגוריה B","המקום: אחוזת ציננדלי (Tsinandali Estate) - קרוב למלון בטלאבי","קאחתי - חבל היין המרכזי של גאורגיה","סיגנאגי - עיירה ציורית עם נוף לרכס הקווקז","טעימות היין משולבות בבוקר סביב סיגנאגי כדי לפנות את הערב לציננדלי והקונצרט בלי לחץ זמן"]},
     {date:"7.9",day_of_week:"שני",title:"חזרה הביתה",location:"תביליסי",summary:"נסיעה חזרה לתביליסי וטיסה לישראל",items:[
       {time:"06:00",activity:"צ'ק-אאוט + נסיעה לשדה תביליסי",type:"logistics"},
       {time:"08:00",activity:"הגעה לשדה התעופה",type:"logistics"},
@@ -1874,7 +1982,7 @@ async function init() {
 
   // Service worker
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v2';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const swCode = "const CACHE='barbur-tours-v5';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
   }
