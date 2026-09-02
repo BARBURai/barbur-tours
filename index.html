@@ -1448,13 +1448,65 @@ function getDayWeather(tour, day) {
   if (diffDays < 0 || diffDays >= (w.daily.time||[]).length) return '';
   const codes = w.daily.weather_code, maxT = w.daily.temperature_2m_max, minT = w.daily.temperature_2m_min;
   if (!codes || diffDays >= codes.length) return '';
-  const icon = weatherIcon(codes[diffDays]);
-  return '<div class="day-weather"><span style="font-size:22px;">' + icon + '</span>' +
-    '<div><div style="font-weight:600;">' + Math.round(maxT[diffDays]) + '°/' + Math.round(minT[diffDays]) + '°</div>' +
+
+  // Pull real hourly rain chance for this specific date (06:00-24:00), instead of
+  // trusting the single daily weather_code (which reflects the worst moment of the day
+  // and can flag a whole day as "rain" from one brief shower).
+  let hourBlocks = [];
+  let dayMaxRain = 0;
+  if (w.hourly && w.hourly.time && w.hourly.precipitation_probability) {
+    const targetDateStr = dayDate.toISOString().slice(0,10);
+    const times = w.hourly.time, probs = w.hourly.precipitation_probability;
+    const hourly = [];
+    for (let h = 0; h < 24; h++) {
+      const idx = times.indexOf(targetDateStr + 'T' + String(h).padStart(2,'0') + ':00');
+      if (idx !== -1) hourly.push({hour: h, prob: probs[idx]});
+    }
+    if (hourly.length) {
+      dayMaxRain = Math.max(...hourly.map(l => l.prob));
+      for (let start = 6; start < 24; start += 3) {
+        const block = hourly.filter(l => l.hour >= start && l.hour < start + 3);
+        if (!block.length) continue;
+        const maxProb = Math.max(...block.map(l => l.prob));
+        if (maxProb >= 20) hourBlocks.push(String(start).padStart(2,'0') + '-' + String(start+3).padStart(2,'0') + ': ' + maxProb + '%');
+      }
+    }
+  }
+
+  const icon = weatherIcon(codes[diffDays], dayMaxRain);
+  const maxTemp = Math.round(maxT[diffDays]), minTemp = Math.round(minT[diffDays]);
+
+  let html = '<div class="day-weather"><span style="font-size:22px;">' + icon + '</span>' +
+    '<div><div style="font-weight:600;">' + maxTemp + '°/' + minTemp + '°</div>' +
     '<div style="color:var(--text-dim);font-size:12px;">' + cityKey + '</div></div></div>';
+
+  if (hourBlocks.length) {
+    html += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px;">☔ סיכוי גשם: ' + hourBlocks.join(' • ') + '</div>';
+  }
+  html += '<div style="font-size:12px;color:var(--text-dim);margin-top:2px;">' + clothingAdvice(maxTemp, minTemp, dayMaxRain) + '</div>';
+
+  return html;
 }
 
-function weatherIcon(code) {
+function clothingAdvice(maxTemp, minTemp, maxRain) {
+  let parts = [];
+  if (maxTemp >= 28) parts.push('👕 בגדי קיץ קלילים');
+  else if (maxTemp >= 21) parts.push('👕 בגדים קלים');
+  else if (maxTemp >= 14) parts.push('🧥 שכבה קלה');
+  else parts.push('🧥 ביגוד חם');
+  if (minTemp <= 16 && (maxTemp - minTemp) >= 8) parts.push('שכבה נוספת לערב');
+  if (maxRain >= 40) parts.push('☂️ מטריה/מעיל גשם');
+  else if (maxRain >= 20) parts.push('☂️ כדאי מטריה קטנה ליתר ביטחון');
+  return parts.join(' • ');
+}
+
+function weatherIcon(code, maxRainProb) {
+  // If actual hourly rain probability is low, don't show a rain/storm icon even if the
+  // daily code technically includes a rain category - avoids misleading "worst moment"
+  // codes for days that are realistically dry.
+  if (typeof maxRainProb === 'number' && maxRainProb < 15) {
+    return code === 0 ? '☀️' : '⛅';
+  }
   if (code === 0) return '☀️';
   if (code <= 3) return '⛅';
   if (code <= 48) return '🌫️';
@@ -1467,18 +1519,30 @@ function weatherIcon(code) {
 async function fetchWeatherForTour(tour) {
   if (!tour.weatherCities || !tour.weatherCities.length) return;
   STATE.weatherCache = STATE.weatherCache || {};
-  const coords = {
+  STATE.cityCoords = STATE.cityCoords || {
     'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
     'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
-    'Sokcho': [38.2070, 128.5918]
+    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288]
   };
   for (const city of tour.weatherCities) {
     if (STATE.weatherCache[city]) continue;
-    const c = coords[city];
+    let c = STATE.cityCoords[city];
+    // Unknown city (e.g. a new future trip) - resolve automatically via free geocoding,
+    // so this keeps working without needing to hand-add coordinates each time.
+    if (!c) {
+      try {
+        const geoRes = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(city) + '&count=1');
+        const geo = await geoRes.json();
+        if (geo && geo.results && geo.results[0]) {
+          c = [geo.results[0].latitude, geo.results[0].longitude];
+          STATE.cityCoords[city] = c;
+        }
+      } catch(e) {}
+    }
     if (!c) continue;
     try {
       const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + c[0] + '&longitude=' + c[1] +
-        '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=16';
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=precipitation_probability,weather_code&timezone=auto&forecast_days=16';
       const res = await fetch(url);
       STATE.weatherCache[city] = await res.json();
     } catch(e) {}
@@ -1982,7 +2046,7 @@ async function init() {
 
   // Service worker
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v5';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const swCode = "const CACHE='barbur-tours-v7';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
   }
