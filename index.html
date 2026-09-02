@@ -634,6 +634,29 @@ function navigate(view, skipHistory) {
 }
 
 // ---------- Trip status helper ----------
+// Returns the real departure Date (day + time) of the first outbound flight,
+// so countdowns reflect the actual flight moment rather than midnight of the start date.
+// Falls back to midnight of tour.startDate if flight data is missing/unparseable.
+// Uses the device's local time throughout (no manual timezone math), which is correct
+// since flights are booked and checked-in from Israel local time.
+function getFlightDateTime(tour) {
+  if (tour.bookings && tour.bookings.flights && tour.bookings.flights.length) {
+    const f = tour.bookings.flights[0];
+    if (f.date && f.time) {
+      const dateParts = f.date.split('.').map(s => parseInt(s, 10));
+      const day = dateParts[0], month = dateParts[1];
+      const depTime = f.time.split('-')[0].trim();
+      const timeParts = depTime.split(':').map(s => parseInt(s, 10));
+      const hh = timeParts[0], mm = timeParts[1];
+      const year = parseInt(tour.startDate.split('-')[0], 10);
+      if (day && month && !isNaN(hh) && !isNaN(mm)) {
+        return new Date(year, month - 1, day, hh, mm, 0);
+      }
+    }
+  }
+  return new Date(tour.startDate + 'T00:00:00');
+}
+
 function getTripStatus(tour) {
   const now = new Date();
   const start = new Date(tour.startDate + 'T00:00:00');
@@ -735,13 +758,14 @@ async function loadTripHome() {
         '<div class="hero-title">✈️ עד הטיסה</div>' +
         '<div class="hero-count" id="tripCountdown" style="font-variant-numeric:tabular-nums;">--:--:--</div>' +
         '<div class="hero-sub">' + status.days + ' ימים · ' + formatDates(tour) + '</div>';
-      // Start countdown after render
-      const flightDateStr = tour.startDate + 'T00:00:00';
+      // Start countdown after render - target the actual flight departure time
+      // (not midnight of the start date), based on the device's local time.
+      const flightDateObj = getFlightDateTime(tour);
       clearInterval(window._tripCd);
       setTimeout(() => {
         function pad(n){ return n<10?'0'+n:n; }
         function upd() {
-          const diff = new Date(flightDateStr) - new Date();
+          const diff = flightDateObj - new Date();
           if (diff <= 0) { clearInterval(window._tripCd); return; }
           const d = Math.floor(diff/(1000*60*60*24));
           const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
@@ -1192,8 +1216,8 @@ window.seedGeorgia = async function() {
   prep: [
     {task:"🛂 בדיקת ויזה/כניסה - גאורגיה: ישראלים פטורים מויזה עד 365 יום ✅",done:false,deadline:"2026-08-20",note:"רק דרכון בתוקף. אין צורך בויזה"},
     {task:"📘 לוודא תוקף דרכון 6+ חודשים לכל המטיילים",done:false,deadline:"2026-08-15",note:"כולל הניה - לבדוק תוקף"},
-    {task:"✈️ צ'ק-אין אונליין Israir (הלוך) - נפתח 48 שעות לפני",done:false,deadline:"2026-09-01",note:"6H891, 3.9 - צ'ק-אין נפתח ~1.9"},
-    {task:"✈️ צ'ק-אין אונליין El Al (חזור)",done:false,deadline:"2026-09-05",note:"LY5108, 7.9"},
+    {task:"✈️ צ'ק-אין אונליין Israir (הלוך) - נפתח 24 שעות לפני",done:false,deadline:"2026-09-02",note:"6H891, 3.9 בשעה 19:40 - צ'ק-אין נפתח ~19:40 ב-2.9"},
+    {task:"✈️ צ'ק-אין אונליין El Al (חזור) - נפתח 24 שעות לפני",done:false,deadline:"2026-09-06",note:"LY5108, 7.9 בשעה 10:10 - צ'ק-אין נפתח ~10:10 ב-6.9"},
     {task:"🛡️ ביטוח נסיעות לכל המטיילים (כולל הניה)",done:false,deadline:"2026-08-27",note:"לוודא כיסוי רפואי + ביטול. הניה - לבדוק גיל/מצב רפואי"},
     {task:"🎫 להדפיס כרטיסי קונצרט ציננדלי (6.9)",done:false,deadline:"2026-09-04",note:"הזמנה Wyc9AZ5718, 3 כרטיסים Parterre שורה 2"},
     {task:"🚗 להזמין העברות / רכב שכור לקאחתי",done:false,deadline:"2026-08-25"},
@@ -2046,7 +2070,7 @@ async function init() {
 
   // Service worker
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v7';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const swCode = "const CACHE='barbur-tours-v8';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
   }
