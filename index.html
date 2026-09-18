@@ -13,7 +13,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW5nyrKYKXPMNFMt8z9YdwJqV-Csy5KXM",
@@ -25,14 +25,67 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// Persist Firestore locally so the trip is readable with no signal, and so edits made
+// offline are queued and flushed on reconnect. Falls back to the in-memory default
+// where IndexedDB is unavailable (private browsing, storage disabled).
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  db = getFirestore(app);
+}
+
+// Last known good copy of every trip. Firestore's own cache is the first line of
+// defence offline; this covers the case where IndexedDB was evicted or was never
+// populated on this device, so a trip is never simply unavailable abroad.
+const SNAPSHOT_KEY = 'toursSnapshot';
+
+function saveSnapshot(tours) {
+  try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ at: Date.now(), tours: tours })); }
+  catch (e) {}
+}
+
+function readSnapshot() {
+  try { return JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null'); }
+  catch (e) { return null; }
+}
 
 // ---- Firestore API (global) ----
 window.DB = {
+  fromCache: false,
+  lastSync: null,
   async listTours() {
-    const snap = await getDocs(collection(db, 'tours'));
+    let snap;
+    try {
+      snap = await getDocs(collection(db, 'tours'));
+    } catch (e) {
+      const prev = readSnapshot();
+      if (prev && prev.tours && prev.tours.length) {
+        window.DB.fromCache = true;
+        window.DB.lastSync = prev.at;
+        return prev.tours;
+      }
+      throw e;
+    }
     const tours = [];
     snap.forEach(d => tours.push({ id: d.id, ...d.data() }));
+    window.DB.fromCache = snap.metadata.fromCache;
+    if (!snap.metadata.fromCache) {
+      saveSnapshot(tours);
+      window.DB.lastSync = Date.now();
+      return tours;
+    }
+    // Served from Firestore's cache. If that cache came back empty, prefer our own
+    // snapshot over telling the user they have no trips.
+    const prev = readSnapshot();
+    if (!tours.length && prev && prev.tours && prev.tours.length) {
+      window.DB.lastSync = prev.at;
+      return prev.tours;
+    }
+    window.DB.lastSync = prev ? prev.at : null;
     return tours;
   },
   async getTour(id) {
@@ -92,6 +145,8 @@ header {
   gap: 14px;
   position: relative;
 }
+.offline-bar { margin: 0 18px 12px; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.35); color: var(--accent-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+.offline-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .hamburger {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -421,6 +476,9 @@ header {
   <button id="notifBtn" class="notif-btn" onclick="toggleNotifications()" title="התראות">🔔</button>
 </header>
 
+<!-- Shown whenever the screen is being filled from saved data rather than a live read. -->
+<div id="offlineBar" class="offline-bar" hidden></div>
+
 <!-- Drawer -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -610,6 +668,41 @@ function closeDrawer() {
 }
 
 // ---------- Navigation ----------
+// ---------- Offline state ----------
+// The app is meant to be usable with no signal, which makes it obliged to say when what
+// you are reading is a saved copy. Silently showing a stale booking would be worse than
+// showing nothing at all.
+function updateOfflineBar() {
+  const bar = document.getElementById('offlineBar');
+  if (!bar) return;
+  const stale = !navigator.onLine || (window.DB && window.DB.fromCache);
+  if (!stale) { bar.hidden = true; return; }
+  let when = '';
+  if (window.DB && window.DB.lastSync) {
+    const d = new Date(window.DB.lastSync);
+    const pad = n => n < 10 ? '0' + n : n;
+    when = ' · עודכן ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  bar.innerHTML = '<span class="dot"></span><span>מצב אופליין — מוצג מידע שנשמר' + when + '</span>';
+  bar.hidden = false;
+}
+
+// Regaining signal should not require restarting the app.
+async function refreshFromServer() {
+  try {
+    STATE.tours = await window.DB.listTours();
+    renderDrawer();
+    if (STATE.currentTripId) {
+      await loadTripHome();
+      if (STATE.currentView && STATE.currentView !== 'home') navigate(STATE.currentView, true);
+    }
+  } catch (e) {}
+  updateOfflineBar();
+}
+
+window.addEventListener('online', refreshFromServer);
+window.addEventListener('offline', updateOfflineBar);
+
 function navigate(view, skipHistory) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const viewEl = document.getElementById('view-' + view);
@@ -1597,16 +1690,38 @@ function weatherIcon(code, maxRainProb) {
   return '⛈️';
 }
 
+const WEATHER_KEY = 'weatherCache';
+const WEATHER_TTL = 3 * 60 * 60 * 1000;
+
+// Restores the last forecast (and any coordinates resolved by geocoding) from a previous
+// session, so an offline start still shows weather instead of an empty card.
+function loadWeatherCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEATHER_KEY) || 'null');
+    if (raw && raw.data) {
+      STATE.weatherFetchedAt = raw.at;
+      if (raw.coords) Object.assign(STATE.cityCoords, raw.coords);
+      return raw.data;
+    }
+  } catch (e) {}
+  return {};
+}
+
 async function fetchWeatherForTour(tour) {
   if (!tour.weatherCities || !tour.weatherCities.length) return;
-  STATE.weatherCache = STATE.weatherCache || {};
   STATE.cityCoords = STATE.cityCoords || {
     'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
     'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
     'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288]
   };
+  if (!STATE.weatherCache) STATE.weatherCache = loadWeatherCache();
+  // A cached forecast is reused for a few hours, then refreshed - without this check a
+  // restored cache would never be updated again.
+  const fresh = STATE.weatherFetchedAt && (Date.now() - STATE.weatherFetchedAt) < WEATHER_TTL;
+  let fetched = false;
+
   for (const city of tour.weatherCities) {
-    if (STATE.weatherCache[city]) continue;
+    if (STATE.weatherCache[city] && fresh) continue;
     let c = STATE.cityCoords[city];
     // Unknown city (e.g. a new future trip) - resolve automatically via free geocoding,
     // so this keeps working without needing to hand-add coordinates each time.
@@ -1626,7 +1741,17 @@ async function fetchWeatherForTour(tour) {
         '&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=precipitation_probability,weather_code&timezone=auto&forecast_days=16';
       const res = await fetch(url);
       STATE.weatherCache[city] = await res.json();
+      fetched = true;
     } catch(e) {}
+  }
+
+  if (fetched) {
+    STATE.weatherFetchedAt = Date.now();
+    try {
+      localStorage.setItem(WEATHER_KEY, JSON.stringify({
+        at: STATE.weatherFetchedAt, data: STATE.weatherCache, coords: STATE.cityCoords
+      }));
+    } catch (e) {}
   }
 }
 
@@ -2101,10 +2226,14 @@ async function init() {
   try {
     STATE.tours = await window.DB.listTours();
   } catch (e) {
+    // Reached only when there is no connection AND no saved copy on this device.
     document.getElementById('homeContent').innerHTML =
-      '<div class="empty-state"><div class="big">⚠️</div><h2>שגיאת חיבור</h2><p>' + e.message + '</p></div>';
+      '<div class="empty-state"><div class="big">⚠️</div><h2>אין חיבור ואין עותק שמור</h2>' +
+      '<p>פתח את האפליקציה פעם אחת עם אינטרנט כדי שהטיולים יישמרו לשימוש אופליין.</p></div>';
+    updateOfflineBar();
     return;
   }
+  updateOfflineBar();
 
   renderDrawer();
 
@@ -2125,11 +2254,10 @@ async function init() {
   STATE.currentTripId = tripId;
   await loadTripHome();
 
-  // Service worker
+  // Service worker (sw.js). This used to register a blob: URL, which browsers reject as
+  // a worker script - the error was swallowed, so no worker ran and nothing was cached.
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v9';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
-    const blob = new Blob([swCode], { type: 'application/javascript' });
-    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
 }
 
