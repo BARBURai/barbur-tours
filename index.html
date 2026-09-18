@@ -396,7 +396,7 @@ header {
 .phrase-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
 .phrase-he { font-size: 15px; font-weight: 600; }
 .phrase-local { font-size: 17px; color: var(--accent-2); margin-top: 4px; direction: ltr; text-align: right; }
-.phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: ltr; text-align: right; }
+.phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: rtl; text-align: right; }
 .phrase-category { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; margin: 18px 0 8px; }
 .emergency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
 .emergency-icon { font-size: 26px; flex-shrink: 0; }
@@ -1118,11 +1118,68 @@ window.seedCyprus = async function() {
     {task:"🤿 להזמין את הצלילות מראש",done:false}
   ],
   packingList: [],
-  phrases: [],
+  phrases: [
+    {category:"בסיסי",he:"שלום",local:"Γεια σας",translit:"יא סאס"},
+    {category:"בסיסי",he:"היי (לא רשמי)",local:"Γεια σου",translit:"יא סו"},
+    {category:"בסיסי",he:"בוקר טוב",local:"Καλημέρα",translit:"קאלימֶרה"},
+    {category:"בסיסי",he:"ערב טוב",local:"Καλησπέρα",translit:"קאליספֶּרה"},
+    {category:"בסיסי",he:"תודה",local:"Ευχαριστώ",translit:"אפחאריסטו"},
+    {category:"בסיסי",he:"בבקשה / על לא דבר",local:"Παρακαλώ",translit:"פאראקאלו"},
+    {category:"בסיסי",he:"כן",local:"Ναι",translit:"נֶה — שימו לב, נשמע כמו לא בעברית"},
+    {category:"בסיסי",he:"לא",local:"Όχι",translit:"אוֹחי"},
+    {category:"בסיסי",he:"סליחה",local:"Συγγνώμη",translit:"סיגנוֹמי"},
+    {category:"בסיסי",he:"אתם מדברים אנגלית?",local:"Μιλάτε αγγλικά;",translit:"מילאטֶה אנגליקה?"},
+    {category:"בסיסי",he:"אני לא מבין",local:"Δεν καταλαβαίνω",translit:"דֶן קאטאלאבֶנו"},
+    {category:"בסיסי",he:"להתראות",local:"Αντίο",translit:"אדיו"},
+
+    {category:"מסעדה ובר",he:"תפריט בבקשה",local:"Τον κατάλογο, παρακαλώ",translit:"טון קאטאלוגו, פאראקאלו"},
+    {category:"מסעדה ובר",he:"שלוש בירות בבקשה",local:"Τρεις μπύρες, παρακαλώ",translit:"טריס בּיירֶס, פאראקאלו"},
+    {category:"מסעדה ובר",he:"לחיים",local:"Γεια μας",translit:"יא מאס"},
+    {category:"מסעדה ובר",he:"מה אתם ממליצים?",local:"Τι προτείνετε;",translit:"טי פּרוֹטינֶטֶה?"},
+    {category:"מסעדה ובר",he:"בשר על הגריל",local:"Ψητό κρέας",translit:"פּסיטו קרֶאס"},
+    {category:"מסעדה ובר",he:"מזטדס (מנות קטנות לשיתוף)",local:"Μεζέδες",translit:"מֶזֶדֶס"},
+    {category:"מסעדה ובר",he:"דגים טריים",local:"Φρέσκο ψάρι",translit:"פרֶסקו פּסארי"},
+    {category:"מסעדה ובר",he:"מים בבקשה",local:"Νερό, παρακαλώ",translit:"נֶרוֹ, פאראקאלו"},
+    {category:"מסעדה ובר",he:"היה טעים מאוד",local:"Ήταν πολύ νόστιμο",translit:"איטאן פּולי נוֹסטימו"},
+    {category:"מסעדה ובר",he:"החשבון בבקשה",local:"Το λογαριασμό, παρακαλώ",translit:"טו לוגאריאזמוֹ, פאראקאלו"},
+
+    {category:"רכב ודרכים",he:"איפה תחנת דלק?",local:"Πού είναι το βενζινάδικο;",translit:"פּוּ אינֶה טו וֶנזינאדיקו?"},
+    {category:"רכב ודרכים",he:"מלא מכל, בבקשה",local:"Γεμίστε το, παρακαλώ",translit:"יֶמיסטֶה טו, פאראקאלו"},
+    {category:"רכב ודרכים",he:"איפה אפשר לחנות?",local:"Πού μπορώ να παρκάρω;",translit:"פּוּ בּוֹרוֹ נא פארקארו?"},
+    {category:"רכב ודרכים",he:"הרכב שלי התקלקל",local:"Το αυτοκίνητό μου χάλασε",translit:"טו אפטוקינִיטוֹ מוּ חאלאסֶה"},
+    {category:"רכב ודרכים",he:"כמה זמן נסיעה לשם?",local:"Πόση ώρα είναι με το αυτοκίνητο;",translit:"פּוֹסי אוֹרה אינֶה מֶה טו אפטוקינִיטו?"},
+
+    {category:"ים וצלילה",he:"אני צוללן",local:"Είμαι δύτης",translit:"אימֶה דיטיס"},
+    {category:"ים וצלילה",he:"איפה המזח?",local:"Πού είναι η προβλήτα;",translit:"פּוּ אינֶה אי פּרוֹבליטה?"},
+    {category:"ים וצלילה",he:"איך מזג האוויר בים היום?",local:"Πώς είναι η θάλασσα σήμερα;",translit:"פּוֹס אינֶה אי תאלאסה סימֶרה?"},
+    {category:"ים וצלילה",he:"מותר לשחות כאן?",local:"Μπορούμε να κολυμπήσουμε εδώ;",translit:"בּוֹרוּמֶה נא קולימבּיסוּמֶה אֶדוֹ?"},
+    {category:"ים וצלילה",he:"מתי צריך להחזיר את הסירה?",local:"Τι ώρα πρέπει να επιστρέψουμε το σκάφος;",translit:"טי אוֹרה פּרֶפּי נא אֶפּיסטרֶפּסוּמֶה טו סקאפוס?"},
+
+    {category:"חירום ורפואה",he:"הצילו!",local:"Βοήθεια!",translit:"ווֹאִיתְיָה!"},
+    {category:"חירום ורפואה",he:"תקראו לאמבולנס",local:"Καλέστε ασθενοφόρο",translit:"קאלֶסטֶה אסתֶנוֹפוֹרוֹ"},
+    {category:"חירום ורפואה",he:"תקראו למשטרה",local:"Καλέστε την αστυνομία",translit:"קאלֶסטֶה טין אסטינוֹמיה"},
+    {category:"חירום ורפואה",he:"קרתה תאונה",local:"Έγινε ατύχημα",translit:"אֶיִינֶה אטיחימה"},
+    {category:"חירום ורפואה",he:"תאונת צלילה - צריך תא לחץ",local:"Ατύχημα κατάδυσης - χρειαζόμαστε θάλαμο αποσυμπίεσης",translit:"אטיחימה קאטאדיסיס - חריאזוֹמאסטֶה תאלאמוֹ אפּוֹסימפּיֶסיס"},
+    {category:"חירום ורפואה",he:"אני צריך רופא",local:"Χρειάζομαι γιατρό",translit:"חריאזוֹמֶה יאטרוֹ"},
+    {category:"חירום ורפואה",he:"איפה בית החולים?",local:"Πού είναι το νοσοκομείο;",translit:"פּוּ אינֶה טו נוֹסוֹקוֹמיוֹ?"},
+    {category:"חירום ורפואה",he:"איפה בית מרקחת?",local:"Πού είναι το φαρμακείο;",translit:"פּוּ אינֶה טו פארמאקיוֹ?"},
+
+    {category:"כסף וקניות",he:"כמה זה עולה?",local:"Πόσο κοστίζει;",translit:"פּוֹסוֹ קוֹסטיזי?"},
+    {category:"כסף וקניות",he:"מקבלים כרטיס אשראי?",local:"Δέχεστε κάρτα;",translit:"דֶחֶסטֶה קארטה?"},
+    {category:"כסף וקניות",he:"יקר מדי",local:"Είναι πολύ ακριβό",translit:"אינֶה פּולי אקריבוֹ"},
+    {category:"כסף וקניות",he:"איפה יש כספומט?",local:"Πού υπάρχει ΑΤΜ;",translit:"פּוּ יפּארחי איי-טי-אֶם?"}
+  ],
   emergency: [
-    {icon:"🆘",label:"חירום כללי",number:"112"},
-    {icon:"🚓",label:"משטרה",number:"199"},
-    {icon:"🚑",label:"אמבולנס",number:"112"}
+    {icon:"\ud83c\udd98",label:"חירום כללי - אירופאי (משטרה/אמבולנס/כבאות)",number:"112"},
+    {icon:"\ud83d\ude93",label:"משטרת קפריסין - קו מקומי",number:"199"},
+    {icon:"\ud83e\udd3f",label:"תא לחץ לרנקה - HTTC (הכי קרוב לזנוביה)",number:"+357 99518837"},
+    {icon:"\ud83e\udd3f",label:"תא לחץ פאפוס (קרוב ל-WellClub)",number:"+357 26803486"},
+    {icon:"\ud83e\udd3f",label:"DAN Europe - מוקד חירום צלילה 24/7",number:"+39 06 42118685"},
+    {icon:"\u26f5",label:"חילוץ ימי JRCC - חיוג חינם מקפריסין",number:"1441"},
+    {icon:"\u26f5",label:"JRCC לרנקה - קו ישיר",number:"+357 24643005"},
+    {icon:"\ud83c\uddee\ud83c\uddf1",label:"שגרירות ישראל ניקוסיה",number:"+357 22369500"},
+    {icon:"\ud83c\uddee\ud83c\uddf1",label:"שגרירות ישראל - תורן חירום מחוץ לשעות",number:"+357 99630439"},
+    {icon:"\ud83c\udfe8",label:"Ajax Hotel לימסול",number:"+357 25590000"}
   ],
   transport: []
 };
@@ -2070,7 +2127,7 @@ async function init() {
 
   // Service worker
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v8';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
+    const swCode = "const CACHE='barbur-tours-v9';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
   }
