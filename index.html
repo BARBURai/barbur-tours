@@ -1148,7 +1148,7 @@ window.seedCyprus = async function() {
   currencySymbol: "€",
   flag: "🇨🇾",
   coverImage: "",
-  weatherCities: ["Limassol", "Larnaca"],
+  weatherCities: ["Limassol", "Paphos", "Polis", "Larnaca"],
   driveFolder: "https://drive.google.com/drive/folders/1YrgnwwKX238gc1haoDcJli8L8jMD0lwp",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -1158,57 +1158,71 @@ window.seedCyprus = async function() {
       {date:"5.10",flight:"ישראייר 6H584 (מופעלת ע\"י Tus Airways)",route:"לרנקה → TLV",time:"22:05-23:10",confirmation:"4766604",passengers:"3 מבוגרים",price:"$495",note:"לא כולל מזוודה/טרולי. כלול: 3 כבודת יד (טרולי או תיק גב גדול)"}
     ],
     hotels: [
-      {name:"Ajax Hotel",city:"לימסול",checkin:"1.10 14:00",checkout:"5.10 12:00",nights:4,confirmation:"6042.963.819",pin:"3067",phone:"+357 25 590000",address:"Georgiou Neophytou & D. Nicolaou Street, Limassol, 4006, Cyprus",price:"₪3,485 (€1,007.64) ל-2 חדרים",lat:34.695,lng:33.064,note:"חדר 1: 2 מבוגרים, חדר 2: מבוגר אחד. ארוחת בוקר כלולה. ביטול חינם עד יום לפני ההגעה. חניה חינם באתר, לא דורש הזמנה מראש"}
+      {name:"Ajax Hotel",city:"לימסול",checkin:"1.10 14:00",checkout:"3.10 09:00",nights:2,confirmation:"6042.963.819",pin:"3067",phone:"+357 25 590000",address:"Georgiou Neophytou & D. Nicolaou Street, Limassol, 4006, Cyprus",price:"₪3,485 (€1,007.64) - המחיר המקורי ל-4 לילות, יתעדכן אחרי השינוי",lat:34.695,lng:33.064,note:"⚠️ ההזמנה בפועל עדיין ל-4 לילות (עד 5.10) - חובה לשנות ל-2 לילות או לבטל ולהזמין מחדש. ביטול חינם עד יום לפני ההגעה. ארוחת בוקר כלולה, חניה חינם באתר"},
+      {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"3.10 15:00",checkout:"5.10 10:00",nights:2,confirmation:"אישור נשלח ל-rhsegal@gmail.com",phone:"+357 26332770",address:"Chlorakas Avenue 67, 8220 Paphos, Cyprus",price:"$564",note:"✅ מאושר. סוויטה משפחתית 2 חדרי שינה עם נוף. ספא ווולנס באתר - מתוכנן לערבי 3.10 ו-4.10"}
     ],
     cars: [
-      {note:"רכב שכור - חברה וסטטוס הזמנה טרם צוינו, להשלים"}
+      {note:"⚠️ טרם הוזמן. נדרש: איסוף בשדה התעופה לרנקה 1.10 בסביבות 13:30, החזרה 5.10 ב-19:45. מומלץ C-SUV או מידל-סייז - 3 מבוגרים + מזוודות"}
     ]
   },
   days: [
-    {date:"1.10",day_of_week:"חמישי",title:"נחיתה + ערב במרינה",location:"לרנקה → לימסול",summary:"נחיתה, איסוף רכב, נסיעה למלון, ערב בשרים ובירות במרינה",items:[
+    {date:"1.10",day_of_week:"חמישי",title:"נחיתה + ערב בלימסול",location:"לרנקה → לימסול",summary:"נחיתה, איסוף רכב, צ׳ק-אין, טיילת מולוס וערב במרינה",items:[
       {time:"12:55",activity:"המראה מנתב\"ג (Wizz Air W6 4606)",type:"flight"},
       {time:"14:00",activity:"נחיתה בלרנקה",type:"flight"},
-      {time:"14:20",activity:"איסוף הרכב השכור + נסיעה למלון (67 ק\"מ, כ-40 דק')",type:"car"},
-      {time:"15:30",activity:"צ'ק-אין ב-Ajax Hotel, התרעננות, בריכה או חוף Dasoudi הסמוך",type:"hotel"},
-      {time:"19:30",activity:"ערב בשרים ובירות ב-Limassol Marina (4 ק\"מ, כ-8 דק')",type:"food"}
-    ],notes:["מלון סגור לכל 4 הלילות: Ajax Hotel Limassol"]},
-    {date:"2.10",day_of_week:"שישי",title:"צלילת עומק לזנוביה + בירה בשקיעה",location:"לרנקה + לימסול",summary:"2 צלילות עומק לספינת הטבע Zenobia, בערב בר חוף ופאבים",items:[
-      {time:"07:40",activity:"נסיעה מלימסול למרינה בלרנקה (65 ק\"מ, כ-40 דק')",type:"logistics"},
-      {time:"08:30",activity:"2 צלילות עומק (עד 30 מטר) ל-Zenobia Wreck + ארוחת דגים בנמל",type:"sightseeing"},
-      {time:"14:30",activity:"נסיעה חזרה למלון להתקלחות ומנוחה",type:"logistics"},
-      {time:"17:00",activity:"בירה בשקיעה במועדון החוף Columbia Sun, Lady's Mile Beach (12 ק\"מ, כ-15 דק')",type:"food"},
-      {time:"21:00",activity:"סבב ברים ופאבים בעיר העתיקה של לימסול (4 ק\"מ, כ-8 דק')",type:"sightseeing"}
-    ],notes:["מועדוני צלילה מומלצים לבדיקה: Alpha Divers, Dive-In Larnaca, Viking Divers","לכולם רישיון צלילה עד 30 מטר - לבדוק חבילת Double Dive לצוללי Advanced כולל השכרת ציוד מלא"]},
-    {date:"3.10",day_of_week:"שבת",title:"UTV/באגי בהרי טרודוס + גשר צלפוס",location:"הרי טרודוס",summary:"טיול שטח ביערות, עצירה בגשר האבן הוונציאני, ארוחה באומודוס",items:[
-      {time:"08:30",activity:"נסיעה מלימסול להרי הטרודוס (42 ק\"מ, כ-45 דק' בעלייה)",type:"logistics"},
-      {time:"09:30",activity:"טיול UTV/באגי בשבילי עפר ויער, עצירה בגשר האבן הוונציאני Tzelefos Bridge",type:"sightseeing"},
-      {time:"13:00",activity:"ארוחת בשרים ובירה בכפר אומודוס (Omodos)",type:"food"},
-      {time:"14:30",activity:"נסיעה חזרה למלון Ajax בלימסול",type:"logistics"},
-      {time:"20:00",activity:"ארוחת בשרים וערב רגוע בלימסול",type:"food"}
-    ],notes:["סוכנויות באגי/UTV לבדיקה: TT Motorcycle Rentals, Quad Safari Cyprus","⚠️ לבדוק דרישות גיל/רישיון מדויקות - צריך חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל"]},
-    {date:"4.10",day_of_week:"ראשון",title:"Cape Greco + ספורט ימי באיה נאפה",location:"איה נאפה",summary:"קפיצות מצוקים, מערות ים, ספורט ימי וחוף",items:[
-      {time:"08:30",activity:"נסיעה מלימסול ל-Cape Greco/איה נאפה (105 ק\"מ, כ-70 דק')",type:"logistics"},
-      {time:"09:45",activity:"Cape Greco & Sea Caves - קפיצות מהצוקים למים, קשת הסלע הטבעית Kamara Tou Koraka",type:"sightseeing"},
-      {time:"12:00",activity:"חוף איה נאפה - ספורט ימי (אופנועי ים/פאראסיילינג) + ארוחת צהריים על החוף",type:"sightseeing"},
-      {time:"16:00",activity:"נסיעה חזרה למלון Ajax בלימסול (105 ק\"מ, כ-70 דק')",type:"logistics"},
-      {time:"20:30",activity:"ארוחת סיכום חגיגית בעיר העתיקה בלימסול",type:"food"}
-    ],notes:["קפיצות הצוקים ב-Cape Greco - לבדוק גובה/תנאים במקום, לא כולם חייבים לקפוץ"]},
-    {date:"5.10",day_of_week:"שני",title:"פאפוס + שופינג + טיסה חזרה",location:"פאפוס → לרנקה",summary:"טיילת ומצודת פאפוס, שופינג, חזרה לישראל",items:[
-      {time:"09:30",activity:"צ'ק-אאוט מ-Ajax, נסיעה לפאפוס (68 ק\"מ, כ-45 דק')",type:"logistics"},
-      {time:"10:15",activity:"טיילת ומצודת פאפוס + ארוחת צהריים מול הים בנמל",type:"sightseeing"},
-      {time:"13:30",activity:"שופינג ב-Kings Avenue Mall בפאפוס (היחיד בטיול)",type:"sightseeing"},
-      {time:"15:30",activity:"חזרה לכיוון לרנקה, עצירה לקפה/בירה ב-Governor's Beach",type:"logistics"},
-      {time:"19:00",activity:"הגעה לשדה התעופה בלרנקה, החזרת הרכב (130 ק\"מ, כ-80 דק')",type:"car"},
+      {time:"14:30",activity:"איסוף הרכב השכור בשדה התעופה",type:"car",lat:34.8751,lng:33.6249},
+      {time:"15:00",activity:"נסיעה ללימסול (67 ק\"מ, כ-45 דק׳)",type:"logistics"},
+      {time:"16:00",activity:"צ׳ק-אין ב-Ajax Hotel והתרעננות",type:"hotel",lat:34.695,lng:33.064},
+      {time:"18:00",activity:"טיילת מולוס (Molos Promenade) לאורך הים",type:"sightseeing",lat:34.6742,lng:33.0470},
+      {time:"20:00",activity:"ארוחת ערב ובירות ב-Limassol Marina או בכיכר סריפולו בעיר העתיקה",type:"food",lat:34.6720,lng:33.0430}
+    ],notes:["לילות 1-2: Ajax Hotel לימסול"]},
+    {date:"2.10",day_of_week:"שישי",title:"צלילת עומק לזנוביה",location:"לרנקה",summary:"2 צלילות עומק לספינת הטבע Zenobia, ספא וערב רגוע בלימסול",items:[
+      {time:"07:45",activity:"נסיעה מלימסול לנמל לרנקה (65 ק\"מ, כ-40 דק׳)",type:"logistics"},
+      {time:"09:00",activity:"2 צלילות עומק (עד 30 מ׳) לספינת הטבע Zenobia",type:"sightseeing",lat:34.8967,lng:33.6408},
+      {time:"14:00",activity:"סיום הצלילות + ארוחת דגים בנמל לרנקה",type:"food"},
+      {time:"15:30",activity:"נסיעה חזרה ללימסול",type:"logistics"},
+      {time:"17:30",activity:"ספא ומנוחה במלון",type:"hotel"},
+      {time:"20:30",activity:"ארוחת ערב בלימסול",type:"food"}
+    ],notes:["מקדמה לצלילות שולמה ✅ - נשאר לאמת שעת התייצבות ומיקום מדויק מול מועדון הצלילה","לקחת: כרטיס PADI, לוג-בוק וביטוח צלילה","אחרי צלילה: לא לטוס 24 שעות - הטיסה ב-5.10, אין בעיה"]},
+    {date:"3.10",day_of_week:"שבת",title:"באגי בפיסורי + מעבר לפאפוס",location:"פיסורי → כלורקה",summary:"טיול שטח 4 שעות להרי טרודוס, ואז החלפת מלון לפאפוס",items:[
+      {time:"09:00",activity:"צ׳ק-אאוט מ-Ajax ונסיעה לפיסורי (כ-30 דק׳)",type:"logistics"},
+      {time:"10:00",activity:"טיול באגי/קוואד שטח 4 שעות להרי טרודוס - Summer Quad Rentals, בסיס פיסורי",type:"sightseeing",lat:34.6686,lng:32.7021},
+      {time:"14:00",activity:"סיום הטיול + ארוחה בפיסורי",type:"food"},
+      {time:"15:00",activity:"נסיעה לכלורקה/פאפוס (כ-25 דק׳)",type:"logistics"},
+      {time:"15:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel"},
+      {time:"18:00",activity:"ספא ווולנס ב-WellClub",type:"hotel"},
+      {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
+    ],notes:["לילות 3-4: WellClub Resort, כלורקה","⚠️ הבאגי טרם הוזמן - Summer Quad Rentals, לבדוק CF Moto 625cc / באגי ל-3 מבוגרים","⚠️ לוודא דרישות גיל ורישיון - שגם אורי ואיתן יוכלו לנהוג בפועל ולא רק לשבת"]},
+    {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
+      {time:"09:15",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-35 דק׳)",type:"logistics"},
+      {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
+      {time:"10:45",activity:"שייט לחצי האי אקמאס, עגינה בבלו לגון - שנרקול ושחייה",type:"sightseeing",lat:35.0556,lng:32.3406},
+      {time:"14:00",activity:"החזרת הסירה במרינת לאצ׳י",type:"logistics",lat:35.0405,lng:32.3986},
+      {time:"14:30",activity:"ארוחת דגים במרינה (Yiannakis / Periyiali)",type:"food"},
+      {time:"16:30",activity:"חזרה ל-WellClub",type:"logistics"},
+      {time:"18:00",activity:"ספא ווולנס, ערב רגוע",type:"hotel"}
+    ],notes:["⚠️ הסירה טרם הוזמנה - Latchi Watersports Centre / Latchi Marine Boat Rentals, מנוע 50-80 כ\"ס, 10:00-14:00","לבדוק תחזית רוח וים יום לפני - הבלו לגון חשוף כשיש רוח מערבית","חילוץ ימי: 1441 (חיוג חינם) - מופיע במסך החירום"]},
+    {date:"5.10",day_of_week:"שני",title:"קארטינג, סלע אפרודיטה וטיסה הביתה",location:"פאפוס → לרנקה",summary:"קארטינג תחרותי בבוקר, נסיעה חופית מזרחה עם עצירה בסלע אפרודיטה",items:[
+      {time:"10:00",activity:"צ׳ק-אאוט מ-WellClub",type:"hotel"},
+      {time:"10:30",activity:"קארטינג תחרותי ב-Paphos Karting Centre, ירוסקיפו",type:"sightseeing"},
+      {time:"12:00",activity:"סיום הקארטינג ונסיעה למרכז פאפוס",type:"logistics"},
+      {time:"12:30",activity:"ארוחת צהריים בפאפוס",type:"food"},
+      {time:"14:30",activity:"יציאה מזרחה לכיוון לרנקה לאורך החוף",type:"logistics"},
+      {time:"15:15",activity:"עצירה בסלע אפרודיטה (Petra tou Romiou)",type:"sightseeing",lat:34.6636,lng:32.6269},
+      {time:"18:00",activity:"ארוחת ערב בטיילת פיניקודס, לרנקה",type:"food",lat:34.9128,lng:33.6404},
+      {time:"19:45",activity:"החזרת הרכב בשדה התעופה לרנקה",type:"car",lat:34.8751,lng:33.6249},
       {time:"22:05",activity:"טיסת חזור ישראייר 6H584 → תל אביב",type:"flight"},
       {time:"23:10",activity:"נחיתה בנתב\"ג",type:"flight"}
-    ],notes:[]}
+    ],notes:["⚠️ הקארטינג טרם הוזמן - Paphos Karting Centre, ירוסקיפו, טל׳ 99620916","להיות בשדה התעופה לכל המאוחר ב-20:00 - טיסה בינלאומית","הארוחה בפיניקודס צמודה לשדה (כ-7 דק׳ נסיעה) - אם מתעכבים, לוותר עליה"]}
   ],
   prep: [
-    {task:"🏍️ לבדוק רישיונות/גיל מינימלי לנהיגת UTV/באגי מול TT Motorcycle Rentals או Quad Safari Cyprus",done:false,note:"חשוב למצוא חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל, כדי שכולם יתחלפו בנהיגה"},
-    {task:"🤿 לבדוק חבילת צלילה כפולה (Double Dive) לזנוביה מול Alpha Divers / Dive-In Larnaca",done:false,note:"כולל השכרת ציוד מלא, לצוללי Advanced"},
-    {task:"🚗 להזמין/לאשר את הרכב השכור בלרנקה",done:false},
-    {task:"🏍️ להזמין את הבאגי/UTV מראש",done:false},
-    {task:"🤿 להזמין את הצלילות מראש",done:false}
+    {task:"🚗 להזמין רכב שכור",done:false,deadline:"2026-09-22",note:"איסוף לרנקה 1.10 ~13:30, החזרה 5.10 ב-19:45. C-SUV או מידל-סייז ל-3 מבוגרים + מזוודות. הכי דחוף - המחירים רק עולים"},
+    {task:"🏨 לשנות את הזמנת Ajax מ-4 לילות ל-2 (1-3.10)",done:false,deadline:"2026-09-22",note:"ביטול חינם רק עד יום לפני ההגעה. בלי שינוי - תשלם על 2 לילות שלא תישן בהם"},
+    {task:"⛵ להזמין סירה בלאצ׳י ל-4.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Latchi Watersports Centre / Latchi Marine Boat Rentals. מנוע 50-80 כ\"ס, בלי רישיון שיט"},
+    {task:"🏍️ להזמין באגי/קוואד ל-3.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Summer Quad Rentals, בסיס פיסורי. לוודא שגם בני 18 ו-21 יכולים לנהוג בפועל"},
+    {task:"🏁 להזמין קארטינג ל-5.10 בבוקר",done:false,deadline:"2026-09-28",note:"Paphos Karting Centre, ירוסקיפו. טל׳ 99620916"},
+    {task:"🤿 לאמת שעת התייצבות ומיקום לצלילות זנוביה",done:false,deadline:"2026-09-28",note:"מקדמה שולמה ✅ - נשאר רק לאשר פרטים"},
+    {task:"📄 לבדוק תוקף דרכונים (6 חודשים), רישיונות נהיגה וכרטיסי PADI",done:false,deadline:"2026-09-25"},
+    {task:"🗺️ להוריד מפת קפריסין אופליין ב-Google Maps + לשמור את נקודות הטיול",done:false,deadline:"2026-09-30",note:"My Maps לא עובד אופליין - חייב לשמור כל נקודה דרך שמור/רשימה"}
   ],
   packingList: [],
   phrases: [
@@ -1712,7 +1726,8 @@ async function fetchWeatherForTour(tour) {
   STATE.cityCoords = STATE.cityCoords || {
     'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
     'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
-    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288]
+    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288],
+    'Paphos': [34.7754, 32.4245], 'Polis': [35.0364, 32.4264]
   };
   if (!STATE.weatherCache) STATE.weatherCache = loadWeatherCache();
   // A cached forecast is reused for a few hours, then refreshed - without this check a
