@@ -145,6 +145,26 @@ header {
   gap: 14px;
   position: relative;
 }
+.home-tasks { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 14px 10px; margin-bottom: 14px; }
+.home-task { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.home-task:last-child { border-bottom: 0; }
+.home-task-body { flex: 1; min-width: 0; }
+.home-task-text { font-size: 13.5px; line-height: 1.45; }
+.home-task-due { font-size: 11px; font-weight: 700; margin-top: 3px; }
+.home-task-more { display: block; width: 100%; background: none; border: 0; color: var(--text-dim); font-size: 12.5px; padding: 8px 0 2px; }
+.wx-strip { display: flex; gap: 7px; margin-bottom: 6px; }
+.wx-cell { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 2px; text-align: center; }
+.wx-date { font-size: 10.5px; color: var(--text-faint); }
+.wx-icon { font-size: 20px; margin: 3px 0; }
+.wx-temp { font-size: 12.5px; font-weight: 700; color: var(--accent-2); direction: ltr; }
+.wx-temp span { color: var(--text-faint); font-weight: 500; margin-right: 3px; }
+.wx-note { font-size: 11px; color: var(--text-faint); line-height: 1.5; margin-bottom: 14px; }
+.cost-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
+.cost-total { font-size: 26px; font-weight: 800; color: var(--accent-2); direction: ltr; text-align: right; }
+.cost-per { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
+.cost-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 4px 0; color: var(--text-dim); }
+.cost-row b { color: var(--text); font-weight: 600; direction: ltr; }
+.cost-foot { font-size: 11px; color: var(--text-faint); margin-top: 8px; line-height: 1.5; }
 .day-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .day-nav-btn { width: 40px; height: 40px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); color: var(--accent-2); border-radius: 50%; font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; }
 .day-nav-btn:disabled { opacity: .3; color: var(--text-faint); }
@@ -491,8 +511,11 @@ header {
 .emergency-icon { font-size: 26px; flex-shrink: 0; }
 .emergency-info { flex: 1; }
 .emergency-label { font-size: 14px; font-weight: 600; }
-.emergency-num { font-size: 18px; color: var(--accent-2); direction: ltr; text-align: right; font-weight: 700; }
-.emergency-call { background: var(--green); color: #fff; border-radius: 8px; padding: 8px 14px; text-decoration: none; font-size: 13px; font-weight: 600; }
+.tel-link { color: var(--accent-2); text-decoration: none; unicode-bidi: isolate; direction: ltr; display: inline-block; border-bottom: 1px dotted currentColor; }
+.emergency-num { font-size: 18px; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; text-align: right; font-weight: 700; }
+.emergency-call { background: var(--green); color: #fff; border-radius: 8px; padding: 8px 12px; text-decoration: none; font-size: 13px; font-weight: 600; }
+.emergency-wa { background: #25D366; color: #073; border-radius: 8px; padding: 8px 10px; text-decoration: none; font-size: 15px; font-weight: 700; margin-right: 6px; }
+.emergency-acts { display: flex; align-items: center; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -1406,6 +1429,8 @@ async function loadTripHome() {
     '<div class="hero">' + heroBg + '<div class="hero-content">' + heroText + '</div></div>' +
     buildNowHtml(tour) +
     buildAlertsHtml(tour) +
+    buildWeatherStripHtml(tour) +
+    buildCostHtml(tour) +
     '<div class="section-title">גישה מהירה</div>' +
     '<div class="quick-grid">' +
       '<div class="quick-card" onclick="navigate(\'itinerary\')"><div class="icon">📅</div><div class="label">יומן המסע</div><div class="sub">תוכנית יומית</div></div>' +
@@ -1460,6 +1485,84 @@ function buildNowHtml(tour) {
     rows + '</div>';
 }
 
+// Compact forecast for the trip days. Worth showing on the home screen because the
+// question "what will it be like" is asked far more often than it is worth opening the
+// itinerary for.
+function weatherBrief(tour, day) {
+  const cities = tour.weatherCities || [];
+  if (!cities.length || !STATE.weatherCache) return null;
+  let cityKey = cities[0];
+  for (const c of cities) if (day.location && day.location.indexOf(c) >= 0) cityKey = c;
+  const w = STATE.weatherCache[cityKey];
+  if (!w || !w.daily || !w.daily.time) return null;
+  const parts = String(day.date).split('.');
+  const d = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+  const i = w.daily.time.indexOf(localDateStr(d));
+  if (i < 0 || !w.daily.temperature_2m_max) return null;
+  return {
+    icon: weatherIcon(w.daily.weather_code[i], 0),
+    max: Math.round(w.daily.temperature_2m_max[i]),
+    min: Math.round(w.daily.temperature_2m_min[i])
+  };
+}
+
+function buildWeatherStripHtml(tour) {
+  const days = tour.days || [];
+  if (!days.length) return '';
+  const briefs = days.map(d => weatherBrief(tour, d));
+  if (!briefs.some(Boolean)) return '';
+  const cells = days.map((d, i) => {
+    const w = briefs[i];
+    return '<div class="wx-cell"><div class="wx-date">' + d.date + '</div>' +
+      '<div class="wx-icon">' + (w ? w.icon : '·') + '</div>' +
+      (w ? '<div class="wx-temp">' + w.max + '°<span>' + w.min + '°</span></div>' : '') +
+      '</div>';
+  }).join('');
+  const st = getTripStatus(tour);
+  // Beyond about a week a forecast is a hint, not a plan, and saying so is better than
+  // letting someone pack off the back of it.
+  const caveat = (st.status === 'before' && st.days > 7)
+    ? '<div class="wx-note">תחזית ל-' + st.days + ' ימים קדימה היא אינדיקציה בלבד — היא תתייצב ככל שמתקרבים.</div>'
+    : '';
+  return '<div class="section-title">מזג אוויר בימי הטיול</div><div class="wx-strip">' + cells + '</div>' + caveat;
+}
+
+// Rates taken from the trip's own paperwork, where the same amount appears in two
+// currencies - so these are the rates actually billed, not a live market rate.
+const FX_ILS = { EUR: 3.4815, USD: 3.0367 };
+
+function priceToIls(str) {
+  if (!str) return null;
+  const t = String(str);
+  const num = m => parseFloat(m[1].replace(/,/g, ''));
+  let m = t.match(/₪\s*([\d,]+(?:\.\d+)?)/);           // a shekel figure in the document wins
+  if (m) return num(m);
+  m = t.match(/(?:US\$|\$)\s*([\d,]+(?:\.\d+)?)/);
+  if (m) return num(m) * FX_ILS.USD;
+  m = t.match(/€\s*([\d,]+(?:\.\d+)?)/) || t.match(/([\d,]+(?:\.\d+)?)\s*EUR/);
+  if (m) return num(m) * FX_ILS.EUR;
+  return null;
+}
+
+function buildCostHtml(tour) {
+  const b = tour.bookings || {};
+  const rows = [];
+  (b.flights || []).forEach(f => rows.push({ label: '✈️ ' + (f.flight || 'טיסה'), ils: priceToIls(f.price) }));
+  (b.hotels  || []).forEach(h => rows.push({ label: '🏨 ' + (h.name  || 'מלון'), ils: priceToIls(h.price) }));
+  (b.cars    || []).forEach(c => rows.push({ label: '🚗 ' + (c.company || 'רכב'), ils: priceToIls(c.price) }));
+  const priced = rows.filter(r => r.ils);
+  if (!priced.length) return '';
+  const total = priced.reduce((a, r) => a + r.ils, 0);
+  const heads = (tour.travelers || []).length || 1;
+  const fmt = n => '₪' + Math.round(n).toLocaleString('en-US');
+  return '<div class="section-title">עלויות ששולמו</div><div class="cost-card">' +
+    '<div class="cost-total">' + fmt(total) + '</div>' +
+    '<div class="cost-per">' + fmt(total / heads) + ' לאדם · ' + heads + ' משתתפים</div>' +
+    priced.map(r => '<div class="cost-row"><span>' + r.label + '</span><b>' + fmt(r.ils) + '</b></div>').join('') +
+    '<div class="cost-foot">לא כולל פעילויות שטרם הוזמנו, דלק, אוכל וקניות. המרות לפי השערים שבמסמכי ההזמנה עצמם.</div>' +
+    '</div>';
+}
+
 function buildAlertsHtml(tour) {
   const status = getTripStatus(tour);
   if (status.status === 'past') return '';
@@ -1474,20 +1577,32 @@ function buildAlertsHtml(tour) {
   }).sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
 
   if (!urgent.length) return '';
-  const top = urgent[0];
-  const dl = new Date(top.deadline + 'T00:00:00');
-  const daysLeft = Math.ceil((dl - now) / (1000*60*60*24));
-  let label, cls;
-  if (daysLeft < 0) { label = 'עבר!'; cls = 'alert-critical'; }
-  else if (daysLeft === 0) { label = 'היום!'; cls = 'alert-critical'; }
-  else if (daysLeft <= 3) { label = 'בעוד ' + daysLeft + ' ימים'; cls = 'alert-critical'; }
-  else { label = 'בעוד ' + daysLeft + ' ימים'; cls = 'alert-warning'; }
 
-  return '<div class="home-alert ' + cls + '" onclick="navigate(\'prep\')">' +
-    '<span class="home-alert-icon">⏰</span>' +
-    '<div class="home-alert-body"><div class="home-alert-title">' + top.task + '</div>' +
-    '<div class="home-alert-sub">' + label + (urgent.length > 1 ? ' · +' + (urgent.length-1) + ' משימות דחופות' : '') + '</div></div>' +
-    '<span style="color:var(--text-faint);">‹</span></div>';
+  // These used to collapse into one banner reading "+5 urgent tasks", which meant the
+  // screen you look at every day could tell you something was wrong but not what, and
+  // ticking one off took three taps. They are a list now, checkable in place.
+  const show = urgent.slice(0, 4);
+  const rows = show.map(t => {
+    const idx = prep.indexOf(t);
+    const left = Math.ceil((new Date(t.deadline + 'T00:00:00') - now) / (1000*60*60*24));
+    let label, color;
+    if (left < 0)       { label = 'עבר!';  color = 'var(--red)'; }
+    else if (left === 0){ label = 'היום!'; color = 'var(--red)'; }
+    else if (left <= 3) { label = 'בעוד ' + left + ' ימים'; color = 'var(--red)'; }
+    else                { label = 'בעוד ' + left + ' ימים'; color = '#f59e0b'; }
+    return '<div class="home-task">' +
+      '<div class="packing-check" onclick="togglePrep(' + idx + ')"></div>' +
+      '<div class="home-task-body" onclick="navigate(\'prep\')">' +
+        '<div class="home-task-text">' + t.task + '</div>' +
+        '<div class="home-task-due" style="color:' + color + ';">📅 ' + label + '</div>' +
+      '</div></div>';
+  }).join('');
+
+  return '<div class="section-title">דחוף עכשיו</div><div class="home-tasks">' + rows +
+    (urgent.length > show.length
+      ? '<button class="home-task-more" onclick="navigate(\'prep\')">עוד ' + (urgent.length - show.length) + ' משימות דחופות ›</button>'
+      : '<button class="home-task-more" onclick="navigate(\'prep\')">כל ההכנות ›</button>') +
+    '</div>';
 }
 
 function convertDriveUrl(url) {
@@ -1714,7 +1829,7 @@ window.seedCyprus = async function() {
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
     ],
     cars: [
-      {company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
+      {company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
     ]
   },
   days: [
@@ -2162,7 +2277,7 @@ function renderItinerary(tour) {
       if (n.indexOf('🔴') >= 0 || n.indexOf('קריטי') >= 0) cls += ' critical';
       else if (n.indexOf('⚠️') >= 0) cls += ' warning';
       else if (n.indexOf('✅') >= 0 || n.indexOf('💡') >= 0) cls += ' success';
-      html += '<div class="' + cls + '">' + n + '</div>';
+      html += '<div class="' + cls + '">' + linkPhones(n) + '</div>';
     });
   }
 
@@ -2292,6 +2407,13 @@ async function saveInlineItem(idx) {
   await saveDays(tour);
 }
 
+// yyyy-mm-dd in the device's own timezone. toISOString() is UTC and silently shifts
+// the date for anyone east of Greenwich.
+function localDateStr(d) {
+  const pad = n => (n < 10 ? '0' : '') + n;
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
 function getDayWeather(tour, day) {
   const cities = tour.weatherCities || [];
   if (!cities.length || !STATE.weatherCache) return '';
@@ -2302,11 +2424,14 @@ function getDayWeather(tour, day) {
   }
   const w = STATE.weatherCache[cityKey];
   if (!w || !w.daily) return '';
-  // find index by date
+  // Look the day up by its date string. This used to round the difference between
+  // midnight of the trip day and the current moment, which lands a day early whenever
+  // it is run after midday - so the forecast shown belonged to the day before.
   const parts = day.date.split('.');
   const dayDate = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1])-1, parseInt(parts[0]));
-  const diffDays = Math.round((dayDate - new Date()) / (1000*60*60*24));
-  if (diffDays < 0 || diffDays >= (w.daily.time||[]).length) return '';
+  const targetDateStr = localDateStr(dayDate);
+  const diffDays = (w.daily.time || []).indexOf(targetDateStr);
+  if (diffDays < 0) return '';
   const codes = w.daily.weather_code, maxT = w.daily.temperature_2m_max, minT = w.daily.temperature_2m_min;
   if (!codes || diffDays >= codes.length) return '';
 
@@ -2316,7 +2441,9 @@ function getDayWeather(tour, day) {
   let hourBlocks = [];
   let dayMaxRain = 0;
   if (w.hourly && w.hourly.time && w.hourly.precipitation_probability) {
-    const targetDateStr = dayDate.toISOString().slice(0,10);
+    // Note this reuses the local date string above: toISOString() converts to UTC, and
+    // local midnight east of Greenwich is the previous day there, which shifted the
+    // hourly rain lookup by a day as well.
     const times = w.hourly.time, probs = w.hourly.precipitation_probability;
     const hourly = [];
     for (let h = 0; h < 24; h++) {
@@ -2460,7 +2587,7 @@ function renderBookings(tour) {
         (f.terminal ? '<div class="booking-detail"><strong>טרמינל:</strong> ' + f.terminal + '</div>' : '') +
         (f.pnr ? '<div class="booking-detail"><strong>קוד הזמנה:</strong> ' + f.pnr + '</div>' : '') +
         (f.passengers ? '<div class="booking-detail"><strong>נוסעים:</strong> ' + f.passengers + '</div>' : '') +
-        (f.note ? '<div class="booking-detail">' + f.note + '</div>' : '') +
+        (f.note ? '<div class="booking-detail">' + linkPhones(f.note) + '</div>' : '') +
         '</div>';
     });
   }
@@ -2478,8 +2605,8 @@ function renderBookings(tour) {
         (h.price ? '<div class="booking-detail"><strong>מחיר:</strong> ' + h.price + '</div>' : '') +
         (h.address ? '<div class="booking-detail"><strong>כתובת:</strong> ' + h.address + '</div>' : '') +
         '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="' + (h.lat && h.lng ? 'https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(h.name + ' ' + (h.city||''))) + '" target="_blank">🗺️ נווט למלון</a></div>' +
-        (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + h.phone + '</div>' : '') +
-        (h.note ? '<div class="booking-detail">' + h.note + '</div>' : '') +
+        (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + linkPhones(h.phone) + (waLink(h.phone) ? ' <a class="tel-link" style="border:0;" href="' + waLink(h.phone) + '" target="_blank">💬</a>' : '') + '</div>' : '') +
+        (h.note ? '<div class="booking-detail">' + linkPhones(h.note) + '</div>' : '') +
         '</div>';
     });
   }
@@ -2491,7 +2618,7 @@ function renderBookings(tour) {
         '<div class="booking-card-head"><div class="booking-card-title">' + (c.company||'רכב') + '</div>' +
         '<div class="booking-card-date">' + (c.pickup||'') + ' - ' + (c.dropoff||'') + '</div></div>' +
         (c.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + c.confirmation + '</div>' : '') +
-        (c.note ? '<div class="booking-detail">' + c.note + '</div>' : '') +
+        (c.note ? '<div class="booking-detail">' + linkPhones(c.note) + '</div>' : '') +
         '</div>';
     });
   }
@@ -2716,7 +2843,7 @@ function renderPrep(tour) {
         '<div class="packing-check' + (item.done?' checked':'') + '" onclick="togglePrep(' + idx + ')"></div>' +
         '<span class="packing-item-text">' + item.task.replace(/</g,'&lt;') +
         deadlineHtml +
-        (item.note ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + item.note + '</div>' : '') +
+        (item.note ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + linkPhones(item.note) + '</div>' : '') +
         '</span>' +
         '<button class="packing-delete" onclick="delPrep(' + idx + ')">✕</button></div>';
     }).join('');
@@ -2832,6 +2959,23 @@ function renderPhrases(tour) {
 }
 
 // ---------- Emergency ----------
+// A phone number sitting inside Hebrew text gets reordered by the bidi algorithm:
+// "+357 25312345" comes out on screen as "25312345 357+". Isolating each one keeps it
+// readable, and since we are already touching it, makes it tappable.
+function linkPhones(text) {
+  return String(text).replace(
+    /(\+\d[\d\s\-]{6,}\d)|(\b0\d{1,2}[\s\-]?\d{6,7}\b)|(\b\d{8}\b)/g,
+    m => '<a class="tel-link" href="tel:' + m.replace(/[^0-9+]/g, '') + '">' + m.trim() + '</a>'
+  );
+}
+
+// WhatsApp only makes sense for a real international number, not for 112 or 1441.
+function waLink(number) {
+  const digits = String(number).replace(/[^0-9+]/g, '');
+  if (digits[0] !== '+' || digits.replace(/\D/g, '').length < 9) return '';
+  return 'https://wa.me/' + digits.slice(1);
+}
+
 function renderEmergency(tour) {
   const container = document.getElementById('emergencyContent');
   const contacts = tour.emergency || [];
@@ -2848,7 +2992,10 @@ function renderEmergency(tour) {
       '<span class="emergency-icon">' + (c.icon || '📞') + '</span>' +
       '<div class="emergency-info"><div class="emergency-label">' + c.label + '</div>' +
       '<div class="emergency-num">' + c.number + '</div></div>' +
-      '<a class="emergency-call" href="tel:' + c.number.replace(/[^0-9+]/g,'') + '">חייג</a></div>';
+      '<div class="emergency-acts">' +
+        (waLink(c.number) ? '<a class="emergency-wa" href="' + waLink(c.number) + '" target="_blank" title="WhatsApp">💬</a>' : '') +
+        '<a class="emergency-call" href="tel:' + c.number.replace(/[^0-9+]/g,'') + '">חייג</a>' +
+      '</div></div>';
   });
   container.innerHTML = html;
 }
@@ -2871,7 +3018,7 @@ function renderTransport(tour) {
     html += '<div class="booking-card">' +
       '<div class="booking-card-head"><div class="booking-card-title">' + (t.icon||'🚕') + ' ' + t.name + '</div>' +
       (t.recommended ? '<div class="trip-item-badge">מומלץ</div>' : '') + '</div>' +
-      (t.desc ? '<div class="booking-detail">' + t.desc + '</div>' : '') +
+      (t.desc ? '<div class="booking-detail">' + linkPhones(t.desc) + '</div>' : '') +
       (t.priceInfo ? '<div class="booking-detail"><strong>מחירים:</strong> ' + t.priceInfo + '</div>' : '') +
       '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">' +
       (android ? '<a class="timeline-nav-btn" href="' + android + '" target="_blank">🤖 Android</a>' : '') +
