@@ -145,6 +145,16 @@ header {
   gap: 14px;
   position: relative;
 }
+.day-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.day-nav-btn { width: 40px; height: 40px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); color: var(--accent-2); border-radius: 50%; font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.day-nav-btn:disabled { opacity: .3; color: var(--text-faint); }
+.day-nav-label { flex: 1; text-align: center; font-size: 15px; font-weight: 700; }
+.day-nav-label span { display: block; font-size: 11px; font-weight: 500; color: var(--text-faint); margin-top: 2px; }
+.day-nav-hint { text-align: center; font-size: 11px; color: var(--text-faint); margin: -6px 0 12px; }
+.phrase-card { position: relative; }
+.phrase-speak { position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 50%; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.phrase-speak.on { background: rgba(249,115,22,0.2); border-color: var(--accent); }
+.phrase-he, .phrase-local, .phrase-translit { padding-left: 44px; }
 .now-card { background: linear-gradient(135deg, rgba(249,115,22,0.14), rgba(249,115,22,0.05)); border: 1px solid rgba(249,115,22,0.4); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
 .now-head { font-size: 11.5px; font-weight: 700; color: var(--accent-2); letter-spacing: .04em; margin-bottom: 2px; }
 .now-day { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
@@ -2068,7 +2078,17 @@ function renderItinerary(tour) {
   ).join('');
 
   const day = days[STATE.selectedDay];
-  let html = '<div class="day-chips">' + chips + '</div>';
+  // In RTL the later days sit to the left, so the arrow pointing left advances.
+  const dayNav =
+    '<div class="day-nav">' +
+      '<button class="day-nav-btn" onclick="stepDay(-1)"' + (STATE.selectedDay <= 0 ? ' disabled' : '') + '>\u203a</button>' +
+      '<div class="day-nav-label">' + day.date + ' · ' + (day.day_of_week || '') +
+        '<span>יום ' + (STATE.selectedDay + 1) + ' מתוך ' + days.length + '</span></div>' +
+      '<button class="day-nav-btn" onclick="stepDay(1)"' + (STATE.selectedDay >= days.length - 1 ? ' disabled' : '') + '>\u2039</button>' +
+    '</div>' +
+    '<div class="day-nav-hint">החלק ימינה ושמאלה כדי להחליף יום</div>';
+
+  let html = '<div class="day-chips">' + chips + '</div>' + dayNav;
 
   // Day card - editable title
   if (STATE.editingDay === STATE.selectedDay && STATE.editingTitle) {
@@ -2147,6 +2167,41 @@ function renderItinerary(tour) {
   }
 
   container.innerHTML = html;
+  initItinerarySwipe();
+}
+
+// Stepping a day at a time, from the arrows or from a swipe.
+function stepDay(delta) {
+  const tour = curTour();
+  const days = (tour && tour.days) || [];
+  const next = STATE.selectedDay + delta;
+  if (next < 0 || next >= days.length) return;
+  setDay(next);
+  window.scrollTo(0, 0);
+}
+
+// Swipe between days. The chips run right-to-left like the rest of the app, so the
+// next day sits to the left and dragging rightward brings it in - the direction a
+// Hebrew book turns.
+function initItinerarySwipe() {
+  const el = document.getElementById('itineraryContent');
+  if (!el || el._swipeReady) return;
+  el._swipeReady = true;
+  let x0 = null, y0 = null;
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    // Mostly-vertical movement is the page scrolling, not a swipe.
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    stepDay(dx > 0 ? 1 : -1);
+  }, { passive: true });
 }
 
 function setDay(i) {
@@ -2694,6 +2749,53 @@ async function delPrep(idx) {
 }
 
 // ---------- Phrases ----------
+// Reading a phrase aloud is the point of a phrasebook you hold in front of a waiter.
+// Android speaks Greek through the system text-to-speech engine, and once the Greek
+// voice pack is installed it works with no connection. Without it the browser falls
+// back to some other voice and mangles the pronunciation, so the first attempt says so
+// instead of quietly being wrong.
+let PHRASE_VOICE_WARNED = false;
+
+function greekVoice() {
+  if (!window.speechSynthesis) return null;
+  const voices = speechSynthesis.getVoices() || [];
+  return voices.find(v => /^el(\b|-|_)/i.test(v.lang)) || null;
+}
+
+function speakPhrase(idx) {
+  const tour = curTour();
+  const phrase = ((tour && tour.phrases) || [])[idx];
+  if (!phrase || !window.speechSynthesis) return;
+
+  speechSynthesis.cancel();
+  const card = document.getElementById('phrase' + idx);
+  const btn = card && card.querySelector('.phrase-speak');
+
+  const u = new SpeechSynthesisUtterance(phrase.local);
+  u.lang = 'el-GR';
+  u.rate = 0.8;   // slow enough to copy
+  const voice = greekVoice();
+  if (voice) {
+    u.voice = voice;
+  } else if (!PHRASE_VOICE_WARNED) {
+    PHRASE_VOICE_WARNED = true;
+    const note = document.getElementById('phraseVoiceNote');
+    if (note) note.style.display = 'block';
+  }
+  if (btn) {
+    btn.classList.add('on');
+    u.onend = u.onerror = () => btn.classList.remove('on');
+  }
+  speechSynthesis.speak(u);
+}
+
+// Voices load asynchronously on most browsers; this makes sure they are populated
+// before the first tap, so the Greek voice is not missed on a technicality.
+if (window.speechSynthesis) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
 function renderPhrases(tour) {
   const container = document.getElementById('phrasesContent');
   const phrases = tour.phrases || [];
@@ -2704,13 +2806,22 @@ function renderPhrases(tour) {
     return;
   }
 
-  let html = '<div class="section-title">שיחון</div>';
+  let html = '<div class="section-title">שיחון</div>' +
+    '<div style="font-size:11.5px;color:var(--text-faint);margin-bottom:10px;">לחץ על ביטוי כדי לשמוע אותו ביוונית 🔊</div>' +
+    '<div id="phraseVoiceNote" style="display:none;background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.35);' +
+      'border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--accent-2);margin-bottom:12px;line-height:1.6;">' +
+      'אין קול יווני מותקן במכשיר, אז ההגייה תישמע משובשת.<br>' +
+      'באנדרואיד: הגדרות ← נגישות ← פלט טקסט לדיבור ← התקנת קולות ← יוונית.<br>' +
+      'אחרי ההתקנה זה עובד גם בלי אינטרנט.</div>';
+
   const cats = {};
-  phrases.forEach(p => { (cats[p.category] = cats[p.category] || []).push(p); });
+  phrases.forEach((p, i) => { (cats[p.category] = cats[p.category] || []).push({ p: p, i: i }); });
   Object.keys(cats).forEach(cat => {
     html += '<div class="phrase-category">' + cat + '</div>';
-    cats[cat].forEach(p => {
-      html += '<div class="phrase-card">' +
+    cats[cat].forEach(entry => {
+      const p = entry.p;
+      html += '<div class="phrase-card" id="phrase' + entry.i + '" onclick="speakPhrase(' + entry.i + ')">' +
+        '<button class="phrase-speak" onclick="event.stopPropagation();speakPhrase(' + entry.i + ')">🔊</button>' +
         '<div class="phrase-he">' + p.he + '</div>' +
         '<div class="phrase-local">' + p.local + '</div>' +
         (p.translit ? '<div class="phrase-translit">' + p.translit + '</div>' : '') +
