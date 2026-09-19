@@ -1820,8 +1820,8 @@ function buildEstimatesHtml(tour, heads, fmt) {
   // boat or a buggy is hired once, not once each. Multiplying those by heads inflated
   // the estimate by hundreds of euro.
   const rows = est.map(e => {
-    const perHead = e.perPerson != null;
-    const amount = perHead ? e.perPerson : (e.total || 0);
+    const perHead = typeof e.perPerson === 'number';
+    const amount = perHead ? e.perPerson : (typeof e.total === 'number' ? e.total : 0);
     const ils = (perHead ? amount * heads : amount) * (FX_ILS[e.currency] || 1);
     return { label: e.label, note: e.note, amount: amount, perHead: perHead, cur: e.currency, ils: ils };
   });
