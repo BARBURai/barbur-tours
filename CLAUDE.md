@@ -1,167 +1,167 @@
-# Barbur Tours
+# ברבור טורס
 
-A personal, offline-first travel companion. One trip at a time, in Hebrew, on a phone,
-in a country where the data roaming may or may not work. Every design decision in here
-follows from that last clause.
+מלווה נסיעות אישי שעובד קודם כל אופליין. טיול אחד בכל רגע נתון, בעברית, בטלפון,
+במדינה שבה הנדידה עשויה לעבוד ועשויה שלא. כל החלטת תכנון בפרויקט הזה נגזרת מהסיפא
+של המשפט הקודם.
 
-**Owner:** BARBURai. Two Claude accounts work on this repo, in turns — see
-[Working agreement](#working-agreement).
+**בעלים:** BARBURai. שני חשבונות קלוד עובדים על הריפו הזה, בתורות — ראה
+[הסכם העבודה](#הסכם-העבודה).
 
-## What it is
+> הקובץ הזה בעברית כי הבעלים קורא ועורך אותו. הקוד עצמו — הערות והודעות קומיט —
+> נשאר באנגלית.
 
-A single-page PWA served as static files from this repository. Trips live in Firestore
-(project `barbur-tours`, collection `tours`); everything else is local. There is no
-build step, no bundler, no package manager, no test suite. You edit `index.html` and
-that is the deploy.
+## מה זה
+
+אפליקציית PWA של עמוד אחד, מוגשת כקבצים סטטיים מתוך הריפו הזה. הטיולים חיים
+ב-Firestore (פרויקט `barbur-tours`, אוסף `tours`); כל השאר מקומי. אין שלב בנייה,
+אין באנדלר, אין מנהל חבילות, אין סוויטת בדיקות. עורכים את `index.html` — וזה הדיפלוי.
 
 ```
-index.html        the entire app - 3.5k lines
-sw.js             service worker (cache shell, offline routing)
-manifest.json     PWA manifest
-cyprus.pmtiles    49MB Protomaps basemap for the Cyprus trip
-vendor/           maplibre-gl, pmtiles, protomaps themes, Rubik font subsets
-icon-192/512.png  app icons
+index.html        כל האפליקציה - 3.5 אלף שורות
+sw.js             service worker (קאשינג של ה-shell, ניתוב אופליין)
+manifest.json     מניפסט ה-PWA
+cyprus.pmtiles    מפת בסיס Protomaps לטיול קפריסין, 49MB
+vendor/           maplibre-gl, pmtiles, ערכות protomaps, תתי-קבוצות של פונט Rubik
+icon-192/512.png  אייקוני האפליקציה
 ```
 
-Nothing is loaded from a CDN except the two version-pinned Firebase ES modules. Map
-libraries and fonts are vendored **on purpose**: an offline-first app cannot depend on a
-CDN being reachable, and the service worker can only cache what it can fetch same-origin.
-Do not "modernise" a vendored file back into a CDN link.
+שום דבר לא נטען מ-CDN חוץ משני מודולי ה-ES של Firebase, שגרסתם מקובעת. ספריות
+המפה והפונטים יושבים ב-`vendor/` **בכוונה**: אפליקציה שעובדת אופליין לא יכולה
+להישען על כך ש-CDN יהיה נגיש, וה-service worker יכול לשמור בקאש רק מה שהוא מסוגל
+למשוך מאותו origin. אל "תמודרן" קובץ מקומי בחזרה לקישור CDN.
 
-## Layout of index.html
+## המבנה של index.html
 
-Three blocks, in this order:
+שלושה בלוקים, בסדר הזה:
 
-| Lines (approx) | What |
+| שורות (בערך) | מה |
 | --- | --- |
-| 15-110 | `<script type="module">` - Firebase init and the `window.DB` API. The only module script. |
-| 112-642 | `<style>` - all CSS, including `@font-face` and the theme tokens. |
-| 646-823 | Markup - header, drawer, the ten `<section class="view">` blocks, trip modal, bottom nav. |
-| 825-3566 | `<script>` - all application code, classic (non-module) so every handler is a global. |
+| 15-110 | `<script type="module">` — אתחול Firebase וה-API של `window.DB`. סקריפט המודול היחיד. |
+| 112-642 | `<style>` — כל ה-CSS, כולל `@font-face` וטוקני ערכת הנושא. |
+| 646-823 | ה-markup — כותרת, מגירה, עשרת בלוקי `<section class="view">`, מודל הטיול וניווט תחתון. |
+| 825-3566 | `<script>` — כל קוד האפליקציה, קלאסי (לא מודול), ולכן כל handler הוא גלובלי. |
 
-Line numbers move on every commit. The stable landmarks are the `// ---------- Name ----------`
-section comments in the main script; navigate by those:
+מספרי השורות זזים בכל קומיט. נקודות הציון היציבות הן הערות הסקשנים בסקריפט הראשי,
+בצורת `// ---------- Name ----------`. תתמצא לפיהן:
 
 `Drawer` · `Navigation` · `Offline map` · `Theme` · `Offline state` · `Trip status helper`
 · `Render drawer trip list` · `Select trip` · `Empty state` · `Trip form` · `Helpers`
-· one-time seeds · `Itinerary rendering` · `Bookings rendering` · `Currency rendering`
+· זריעות חד-פעמיות · `Itinerary rendering` · `Bookings rendering` · `Currency rendering`
 · `Packing rendering` · `Prep checklist` · `Phrases` · `Emergency` · `Transport`
 · `Notifications` · `Init`
 
-### Views
+### המסכים
 
-Ten sections, one visible at a time, switched by `navigate(view)`:
+עשרה סקשנים, אחד גלוי בכל רגע, מוחלפים על ידי `navigate(view)`:
 `home` `itinerary` `bookings` `currency` `packing` `prep` `phrases` `emergency`
 `transport` `map`.
 
-Five of them are in the bottom nav (home, itinerary, bookings, map, packing); the rest
-are reached from the drawer. The drawer is the real navigation — the bottom nav is the
-shortcut, not the map of the app.
+חמישה מהם נמצאים בניווט התחתון (בית, יומן, הזמנות, מפה, מה לקחת); לשאר מגיעים
+מהמגירה. **המגירה היא הניווט האמיתי** — הניווט התחתון הוא קיצור דרך, לא מפת
+האפליקציה.
 
-### State
+### המצב
 
-One global `STATE = { currentView, currentTripId, tours, editingTripId, selectedFlag }`.
-`curTour()` resolves the current trip. There is no framework, no reactivity and no
-component tree: a screen changes because a `render*(tour)` function rewrites its
-container's `innerHTML`. Keep it that way unless the owner asks otherwise — half a
-framework would be worse than none.
+גלובל אחד: `STATE = { currentView, currentTripId, tours, editingTripId, selectedFlag }`.
+`curTour()` מחזיר את הטיול הנוכחי. אין פריימוורק, אין ריאקטיביות ואין עץ קומפוננטות:
+מסך משתנה כי פונקציית `render*(tour)` כותבת מחדש את ה-`innerHTML` של המכל שלו. תשאיר
+את זה ככה אלא אם הבעלים מבקש אחרת — חצי פריימוורק יהיה גרוע יותר מכלום.
 
-## Data
+## נתונים
 
-Firestore `tours/{id}`, read and written only through `window.DB`
-(`listTours` `getTour` `saveTour` `deleteTour` `watchTour`). `saveTour` merges, so a
-screen can persist just its own slice (`saveDays`, the packing and prep writers).
+`tours/{id}` ב-Firestore, נקרא ונכתב אך ורק דרך `window.DB`
+(`listTours` `getTour` `saveTour` `deleteTour` `watchTour`). `saveTour` עושה merge,
+ולכן מסך יכול לשמור רק את הפרוסה שלו (`saveDays`, הכותבים של רשימת הציוד וההכנות).
 
-Offline reads are defended twice over: Firestore's own IndexedDB persistence is the
-first line, and a `toursSnapshot` copy in `localStorage` is the second, for the case
-where IndexedDB was evicted or never populated on that device. `DB.fromCache` and
-`DB.lastSync` drive the staleness bar. A trip is never allowed to simply be unavailable
-abroad.
+הקריאה במצב אופליין מוגנת פעמיים: ההתמדה של Firestore עצמו ב-IndexedDB היא הקו
+הראשון, ועותק `toursSnapshot` ב-`localStorage` הוא הקו השני — למקרה ש-IndexedDB
+פונה או מעולם לא אוכלס במכשיר הזה. `DB.fromCache` ו-`DB.lastSync` מזינים את פס
+ההתיישנות. טיול לעולם לא יהיה פשוט לא-זמין בחו"ל.
 
-Trips were seeded once each by `window.seedCyprus` / `seedGeorgia` / `seedKorea`. These
-are historical one-shots kept for reference, not a data layer.
+הטיולים נזרעו פעם אחת כל אחד על ידי `window.seedCyprus` / `seedGeorgia` / `seedKorea`.
+אלה זריעות חד-פעמיות היסטוריות ששמורות לעיון, לא שכבת נתונים.
 
-External data: Open-Meteo for the forecast (cached, stale beats empty), an FX rate for
-the currency screen.
+מקורות חיצוניים: Open-Meteo לתחזית (נשמר בקאש, תחזית ישנה עדיפה על פאנל ריק), ושער
+המרה למסך המטבע.
 
-## Offline and the service worker
+## אופליין וה-service worker
 
-`CACHE` in `sw.js` is the deploy version — currently `barbur-tours-v25`. **Bump it in
-any commit that changes a file listed in `SHELL`**, or returning users keep the old
-copy; `activate` deletes every cache that is not the current `CACHE`.
+`CACHE` ב-`sw.js` הוא גרסת הדיפלוי — כרגע `barbur-tours-v25`. **תעלה אותו בכל קומיט
+שמשנה קובץ שמופיע ברשימת `SHELL`**, אחרת משתמשים חוזרים נשארים עם העותק הישן;
+`activate` מוחק כל קאש שאינו ה-`CACHE` הנוכחי.
 
-Three deliberate exceptions in the `fetch` handler, each with the reason in a comment
-above it — read them before touching that file:
+שלושה חריגים מכוונים ב-handler של `fetch`, לכל אחד יש הערה עם הסיבה מעליו — תקרא
+אותן לפני שאתה נוגע בקובץ:
 
-- `googleapis.com` passes straight through (intercepting it breaks Firestore's own cache
-  and its long-lived listen channel).
-- `.pmtiles` passes straight through (Range requests produce 206s the Cache API refuses
-  to store; the map screen saves the whole archive to IndexedDB itself).
-- Navigations are network-first with the cached shell as fallback; everything same-origin
-  is cache-first.
+- `googleapis.com` עובר ישירות (יירוט שלו שובר גם את הקאש הפנימי של Firestore וגם
+  את ערוץ ההאזנה ארוך-הטווח שלו).
+- `.pmtiles` עובר ישירות (בקשות Range מייצרות תשובות 206 ש-Cache API מסרב לאחסן;
+  מסך המפה שומר את הארכיון כולו ב-IndexedDB בעצמו).
+- ניווטים הם network-first עם ה-shell מהקאש כגיבוי; כל מה שמאותו origin הוא
+  cache-first.
 
-Install uses `Promise.allSettled`, not `cache.addAll`, so one failed request cannot leave
-a user with no offline copy at all.
+ההתקנה משתמשת ב-`Promise.allSettled` ולא ב-`cache.addAll`, כדי שבקשה אחת שנכשלת לא
+תשאיר משתמש בלי שום עותק אופליין.
 
-## The map
+## המפה
 
-One `.pmtiles` archive read directly by the pmtiles library — no tile server. The user
-downloads it once to IndexedDB from the map screen, and it works with no signal after
-that. GPS, distance/bearing helpers, per-day pins and an optional trail overlay
-(off by default). All of it lives under the `Offline map` section.
+ארכיון `.pmtiles` אחד שנקרא ישירות על ידי ספריית pmtiles — בלי שום שרת אריחים.
+המשתמש מוריד אותו פעם אחת ל-IndexedDB ממסך המפה, ומשם זה עובד בלי קליטה. GPS,
+פונקציות עזר למרחק וכיוון, סיכות לפי יום ושכבת מסלול אופציונלית (כבויה כברירת
+מחדל). הכל יושב תחת סקשן `Offline map`.
 
-## Conventions
+## קונבנציות
 
-- **Hebrew, RTL.** `<html lang="he" dir="rtl">`. All UI strings are Hebrew. Phone numbers
-  need `linkPhones` to stay readable in RTL — do not hand-roll that again.
-- **Theme.** Dark is the default; light exists. Never hard-code a colour — use the tokens
-  on `:root` (`--bg --surface --surface-2 --accent --accent-2 --text --text-dim
-  --text-faint --border --red --green --blue --radius --radius-sm --shadow`) and their
-  `:root[data-theme="light"]` overrides.
-- **Phone-first.** Portrait, `viewport-fit=cover`, standalone. Check anything you change
-  at phone width before calling it done.
-- **Comments explain why, not what.** The existing comments record decisions and the bugs
-  that caused them. Match that register; keep them when you touch the code around them.
-- **English in the repo** (comments, commit messages), Hebrew in the UI.
-- **Commit messages** say what changed for the user, in plain words, lowercase after the
-  first letter — e.g. "Make the drawer the navigation, and stop the home screen sprawling".
+- **עברית, RTL.** `<html lang="he" dir="rtl">`. כל מחרוזות הממשק בעברית. מספרי טלפון
+  צריכים את `linkPhones` כדי להישאר קריאים ב-RTL — אל תכתוב את זה שוב לבד.
+- **ערכת נושא.** כהה היא ברירת המחדל; בהירה קיימת. לעולם אל תקבע צבע קשיח — תשתמש
+  בטוקנים שעל `:root` (`--bg --surface --surface-2 --accent --accent-2 --text
+  --text-dim --text-faint --border --red --green --blue --radius --radius-sm
+  --shadow`) ובדריסות שלהם תחת `:root[data-theme="light"]`.
+- **טלפון קודם.** פורטרט, `viewport-fit=cover`, standalone. תבדוק כל שינוי ברוחב של
+  טלפון לפני שאתה אומר שסיימת.
+- **הערות מסבירות למה, לא מה.** ההערות הקיימות מתעדות החלטות ואת הבאגים שגרמו להן.
+  תתאים את עצמך לרישום הזה, ותשמור עליהן כשאתה נוגע בקוד סביבן.
+- **אנגלית בריפו** (הערות קוד והודעות קומיט), עברית בממשק. הקובץ הזה הוא החריג.
+- **הודעות קומיט** מתארות מה השתנה עבור המשתמש, במילים פשוטות — למשל
+  "Make the drawer the navigation, and stop the home screen sprawling".
 
-## Working agreement
+## הסכם העבודה
 
-Two Claude accounts work on this repo. **`main` is the single source of truth and we work
-in turns** — nobody starts while the other's turn is open. Almost all the code is in one
-file, so parallel work means conflicts inside a 2,700-line script, which is exactly where
-things break quietly.
+שני חשבונות קלוד עובדים על הריפו הזה. **`main` הוא מקור האמת היחיד, ועובדים
+בתורות** — אף אחד לא מתחיל בזמן שהתור של השני פתוח. כמעט כל הקוד יושב בקובץ אחד,
+ולכן עבודה במקביל פירושה קונפליקטים בתוך סקריפט של 2,700 שורות, וזה בדיוק המקום
+שבו דברים נשברים בשקט.
 
-Each turn:
+בכל תור:
 
-1. Sync first: `git fetch origin main && git checkout -B <your-branch> origin/main`.
-   Never build on a stale `main`.
-2. One task = one commit = one PR = squash-merge into `main`. No long-lived branches.
-3. Bump `CACHE` in `sw.js` if the change touches a `SHELL` file.
-4. Update the handoff log below in the same commit.
-5. Hand the turn back explicitly.
+1. סנכרן קודם: `git fetch origin main && git checkout -B <הענף שלך> origin/main`.
+   לעולם אל תבנה על `main` ישן.
+2. משימה אחת = קומיט אחד = PR אחד = סקווש-מרג' ל-`main`. בלי ענפים ארוכי-טווח.
+3. תעלה את `CACHE` ב-`sw.js` אם השינוי נוגע בקובץ מ-`SHELL`.
+4. תעדכן את יומן המסירה למטה, באותו קומיט.
+5. תמסור את התור במפורש.
 
-There is no test suite; verification is opening the app and looking at it. Say plainly
-what you checked and what you did not.
+אין סוויטת בדיקות; אימות פירושו לפתוח את האפליקציה ולהסתכל. תגיד בפירוש מה בדקת
+ומה לא בדקת.
 
-## Handoff log
+## יומן מסירה
 
-Newest first. One entry per turn: what changed, which sections, anything left open.
+החדש למעלה. רשומה אחת לכל תור: מה השתנה, באילו סקשנים, ומה נשאר פתוח.
 
-- **2026-09-19 — session B (claude/barbur-torus-code-v66jy2)** — Added this file. No app
-  code touched. Drafted from the code and git history alone, so the sections marked
-  "unconfirmed" below still need the owner.
+- **2026-09-19 — סשן B (claude/barbur-torus-code-v66jy2)** — הקובץ הזה נוצר, ואז
+  הועבר לעברית. לא נגעתי בקוד האפליקציה. נכתב מתוך הקוד וההיסטוריה בלבד, ולכן
+  הסעיף "לא מאומת" למטה עדיין ממתין לבעלים.
 
-## Unconfirmed — owner to fill in
+## לא מאומת — לבעלים להשלים
 
-Everything above is derived from the code and the commit history. These are not:
+כל מה שלמעלה נגזר מהקוד ומהיסטוריית הקומיטים. אלה לא:
 
-- **How this is deployed and served.** GitHub Pages? A custom domain? Push-to-deploy, or
-  a manual step?
-- **Who uses it.** Just the owner, or the travellers on the trip too?
-- **Firestore rules and access.** The web API key is in the client, as it must be — what
-  actually guards the `tours` collection?
-- **What the next trip is**, and whether Cyprus is live or finished.
-- **Anything decided in chat and never written down** — rejected approaches, things that
-  must not change, promises made to whoever uses the app.
+- **איך זה מתפרסם ומוגש בפועל.** GitHub Pages? דומיין משלו? דיפלוי אוטומטי בדחיפה
+  או שלב ידני?
+- **מי משתמש בזה.** רק הבעלים, או גם המטיילים בטיול?
+- **כללי הגישה ב-Firestore.** מפתח ה-API של הווב נמצא בצד הלקוח, כמו שחייב להיות —
+  מה בפועל מגן על אוסף `tours`?
+- **מה הטיול הבא**, והאם קפריסין חי או הסתיים.
+- **כל מה שנקבע בשיחות ואף פעם לא נכתב** — גישות שנפסלו, דברים שאסור לשנות,
+  הבטחות למי שמשתמש באפליקציה.
