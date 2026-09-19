@@ -13,7 +13,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW5nyrKYKXPMNFMt8z9YdwJqV-Csy5KXM",
@@ -25,14 +25,67 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// Persist Firestore locally so the trip is readable with no signal, and so edits made
+// offline are queued and flushed on reconnect. Falls back to the in-memory default
+// where IndexedDB is unavailable (private browsing, storage disabled).
+let db;
+try {
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  db = getFirestore(app);
+}
+
+// Last known good copy of every trip. Firestore's own cache is the first line of
+// defence offline; this covers the case where IndexedDB was evicted or was never
+// populated on this device, so a trip is never simply unavailable abroad.
+const SNAPSHOT_KEY = 'toursSnapshot';
+
+function saveSnapshot(tours) {
+  try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ at: Date.now(), tours: tours })); }
+  catch (e) {}
+}
+
+function readSnapshot() {
+  try { return JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null'); }
+  catch (e) { return null; }
+}
 
 // ---- Firestore API (global) ----
 window.DB = {
+  fromCache: false,
+  lastSync: null,
   async listTours() {
-    const snap = await getDocs(collection(db, 'tours'));
+    let snap;
+    try {
+      snap = await getDocs(collection(db, 'tours'));
+    } catch (e) {
+      const prev = readSnapshot();
+      if (prev && prev.tours && prev.tours.length) {
+        window.DB.fromCache = true;
+        window.DB.lastSync = prev.at;
+        return prev.tours;
+      }
+      throw e;
+    }
     const tours = [];
     snap.forEach(d => tours.push({ id: d.id, ...d.data() }));
+    window.DB.fromCache = snap.metadata.fromCache;
+    if (!snap.metadata.fromCache) {
+      saveSnapshot(tours);
+      window.DB.lastSync = Date.now();
+      return tours;
+    }
+    // Served from Firestore's cache. If that cache came back empty, prefer our own
+    // snapshot over telling the user they have no trips.
+    const prev = readSnapshot();
+    if (!tours.length && prev && prev.tours && prev.tours.length) {
+      window.DB.lastSync = prev.at;
+      return prev.tours;
+    }
+    window.DB.lastSync = prev ? prev.at : null;
     return tours;
   },
   async getTour(id) {
@@ -92,6 +145,8 @@ header {
   gap: 14px;
   position: relative;
 }
+.offline-bar { margin: 0 18px 12px; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.35); color: var(--accent-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+.offline-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .hamburger {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -396,7 +451,7 @@ header {
 .phrase-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
 .phrase-he { font-size: 15px; font-weight: 600; }
 .phrase-local { font-size: 17px; color: var(--accent-2); margin-top: 4px; direction: ltr; text-align: right; }
-.phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: ltr; text-align: right; }
+.phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: rtl; text-align: right; }
 .phrase-category { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; margin: 18px 0 8px; }
 .emergency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
 .emergency-icon { font-size: 26px; flex-shrink: 0; }
@@ -420,6 +475,9 @@ header {
   <div class="header-flag" id="headerFlag">🧳</div>
   <button id="notifBtn" class="notif-btn" onclick="toggleNotifications()" title="התראות">🔔</button>
 </header>
+
+<!-- Shown whenever the screen is being filled from saved data rather than a live read. -->
+<div id="offlineBar" class="offline-bar" hidden></div>
 
 <!-- Drawer -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -610,6 +668,41 @@ function closeDrawer() {
 }
 
 // ---------- Navigation ----------
+// ---------- Offline state ----------
+// The app is meant to be usable with no signal, which makes it obliged to say when what
+// you are reading is a saved copy. Silently showing a stale booking would be worse than
+// showing nothing at all.
+function updateOfflineBar() {
+  const bar = document.getElementById('offlineBar');
+  if (!bar) return;
+  const stale = !navigator.onLine || (window.DB && window.DB.fromCache);
+  if (!stale) { bar.hidden = true; return; }
+  let when = '';
+  if (window.DB && window.DB.lastSync) {
+    const d = new Date(window.DB.lastSync);
+    const pad = n => n < 10 ? '0' + n : n;
+    when = ' · עודכן ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  bar.innerHTML = '<span class="dot"></span><span>מצב אופליין — מוצג מידע שנשמר' + when + '</span>';
+  bar.hidden = false;
+}
+
+// Regaining signal should not require restarting the app.
+async function refreshFromServer() {
+  try {
+    STATE.tours = await window.DB.listTours();
+    renderDrawer();
+    if (STATE.currentTripId) {
+      await loadTripHome();
+      if (STATE.currentView && STATE.currentView !== 'home') navigate(STATE.currentView, true);
+    }
+  } catch (e) {}
+  updateOfflineBar();
+}
+
+window.addEventListener('online', refreshFromServer);
+window.addEventListener('offline', updateOfflineBar);
+
 function navigate(view, skipHistory) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const viewEl = document.getElementById('view-' + view);
@@ -1055,7 +1148,7 @@ window.seedCyprus = async function() {
   currencySymbol: "€",
   flag: "🇨🇾",
   coverImage: "",
-  weatherCities: ["Limassol", "Larnaca"],
+  weatherCities: ["Limassol", "Paphos", "Polis", "Larnaca"],
   driveFolder: "https://drive.google.com/drive/folders/1YrgnwwKX238gc1haoDcJli8L8jMD0lwp",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -1065,64 +1158,141 @@ window.seedCyprus = async function() {
       {date:"5.10",flight:"ישראייר 6H584 (מופעלת ע\"י Tus Airways)",route:"לרנקה → TLV",time:"22:05-23:10",confirmation:"4766604",passengers:"3 מבוגרים",price:"$495",note:"לא כולל מזוודה/טרולי. כלול: 3 כבודת יד (טרולי או תיק גב גדול)"}
     ],
     hotels: [
-      {name:"Ajax Hotel",city:"לימסול",checkin:"1.10 14:00",checkout:"5.10 12:00",nights:4,confirmation:"6042.963.819",pin:"3067",phone:"+357 25 590000",address:"Georgiou Neophytou & D. Nicolaou Street, Limassol, 4006, Cyprus",price:"₪3,485 (€1,007.64) ל-2 חדרים",lat:34.695,lng:33.064,note:"חדר 1: 2 מבוגרים, חדר 2: מבוגר אחד. ארוחת בוקר כלולה. ביטול חינם עד יום לפני ההגעה. חניה חינם באתר, לא דורש הזמנה מראש"}
+      {name:"Ajax Hotel",city:"לימסול",checkin:"1.10 14:00",checkout:"3.10 09:00",nights:2,confirmation:"6042.963.819",pin:"3067",phone:"+357 25 590000",address:"Georgiou Neophytou & D. Nicolaou Street, Limassol, 4006, Cyprus",price:"₪3,485 (€1,007.64) - המחיר המקורי ל-4 לילות, יתעדכן אחרי השינוי",lat:34.695,lng:33.064,note:"⚠️ ההזמנה בפועל עדיין ל-4 לילות (עד 5.10) - חובה לשנות ל-2 לילות או לבטל ולהזמין מחדש. ביטול חינם עד יום לפני ההגעה. ארוחת בוקר כלולה, חניה חינם באתר"},
+      {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"3.10 15:00",checkout:"5.10 10:00",nights:2,confirmation:"אישור נשלח ל-rhsegal@gmail.com",phone:"+357 26332770",address:"Chlorakas Avenue 67, 8220 Paphos, Cyprus",price:"$564",note:"✅ מאושר. סוויטה משפחתית 2 חדרי שינה עם נוף. ספא ווולנס באתר - מתוכנן לערבי 3.10 ו-4.10"}
     ],
     cars: [
-      {note:"רכב שכור - חברה וסטטוס הזמנה טרם צוינו, להשלים"}
+      {company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"1.10 14:00",dropoff:"5.10 21:00",confirmation:"Sixt: 8PRF87 · Booking.com: 770618870",note:"✅ מאושר. נהג ראשי: Ron Segal. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. 5 דלתות, 5 מקומות, מיזוג, קילומטראז׳ ללא הגבלה. דלק: מלא-למלא. טל׳ Sixt: +357 25312345 · תמיכת Booking: 03-3722089. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון (צריך PIN) - השתתפות עצמית €800 נזק, €800 גניבה. ⚠️ גיל מינימלי 21 ורישיון מעל שנתיים - רלוונטי לאורי ואיתן."}
     ]
   },
   days: [
-    {date:"1.10",day_of_week:"חמישי",title:"נחיתה + ערב במרינה",location:"לרנקה → לימסול",summary:"נחיתה, איסוף רכב, נסיעה למלון, ערב בשרים ובירות במרינה",items:[
+    {date:"1.10",day_of_week:"חמישי",title:"נחיתה + ערב בלימסול",location:"לרנקה → לימסול",summary:"נחיתה, איסוף רכב, צ׳ק-אין, טיילת מולוס וערב במרינה",items:[
       {time:"12:55",activity:"המראה מנתב\"ג (Wizz Air W6 4606)",type:"flight"},
       {time:"14:00",activity:"נחיתה בלרנקה",type:"flight"},
-      {time:"14:20",activity:"איסוף הרכב השכור + נסיעה למלון (67 ק\"מ, כ-40 דק')",type:"car"},
-      {time:"15:30",activity:"צ'ק-אין ב-Ajax Hotel, התרעננות, בריכה או חוף Dasoudi הסמוך",type:"hotel"},
-      {time:"19:30",activity:"ערב בשרים ובירות ב-Limassol Marina (4 ק\"מ, כ-8 דק')",type:"food"}
-    ],notes:["מלון סגור לכל 4 הלילות: Ajax Hotel Limassol"]},
-    {date:"2.10",day_of_week:"שישי",title:"צלילת עומק לזנוביה + בירה בשקיעה",location:"לרנקה + לימסול",summary:"2 צלילות עומק לספינת הטבע Zenobia, בערב בר חוף ופאבים",items:[
-      {time:"07:40",activity:"נסיעה מלימסול למרינה בלרנקה (65 ק\"מ, כ-40 דק')",type:"logistics"},
-      {time:"08:30",activity:"2 צלילות עומק (עד 30 מטר) ל-Zenobia Wreck + ארוחת דגים בנמל",type:"sightseeing"},
-      {time:"14:30",activity:"נסיעה חזרה למלון להתקלחות ומנוחה",type:"logistics"},
-      {time:"17:00",activity:"בירה בשקיעה במועדון החוף Columbia Sun, Lady's Mile Beach (12 ק\"מ, כ-15 דק')",type:"food"},
-      {time:"21:00",activity:"סבב ברים ופאבים בעיר העתיקה של לימסול (4 ק\"מ, כ-8 דק')",type:"sightseeing"}
-    ],notes:["מועדוני צלילה מומלצים לבדיקה: Alpha Divers, Dive-In Larnaca, Viking Divers","לכולם רישיון צלילה עד 30 מטר - לבדוק חבילת Double Dive לצוללי Advanced כולל השכרת ציוד מלא"]},
-    {date:"3.10",day_of_week:"שבת",title:"UTV/באגי בהרי טרודוס + גשר צלפוס",location:"הרי טרודוס",summary:"טיול שטח ביערות, עצירה בגשר האבן הוונציאני, ארוחה באומודוס",items:[
-      {time:"08:30",activity:"נסיעה מלימסול להרי הטרודוס (42 ק\"מ, כ-45 דק' בעלייה)",type:"logistics"},
-      {time:"09:30",activity:"טיול UTV/באגי בשבילי עפר ויער, עצירה בגשר האבן הוונציאני Tzelefos Bridge",type:"sightseeing"},
-      {time:"13:00",activity:"ארוחת בשרים ובירה בכפר אומודוס (Omodos)",type:"food"},
-      {time:"14:30",activity:"נסיעה חזרה למלון Ajax בלימסול",type:"logistics"},
-      {time:"20:00",activity:"ארוחת בשרים וערב רגוע בלימסול",type:"food"}
-    ],notes:["סוכנויות באגי/UTV לבדיקה: TT Motorcycle Rentals, Quad Safari Cyprus","⚠️ לבדוק דרישות גיל/רישיון מדויקות - צריך חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל"]},
-    {date:"4.10",day_of_week:"ראשון",title:"Cape Greco + ספורט ימי באיה נאפה",location:"איה נאפה",summary:"קפיצות מצוקים, מערות ים, ספורט ימי וחוף",items:[
-      {time:"08:30",activity:"נסיעה מלימסול ל-Cape Greco/איה נאפה (105 ק\"מ, כ-70 דק')",type:"logistics"},
-      {time:"09:45",activity:"Cape Greco & Sea Caves - קפיצות מהצוקים למים, קשת הסלע הטבעית Kamara Tou Koraka",type:"sightseeing"},
-      {time:"12:00",activity:"חוף איה נאפה - ספורט ימי (אופנועי ים/פאראסיילינג) + ארוחת צהריים על החוף",type:"sightseeing"},
-      {time:"16:00",activity:"נסיעה חזרה למלון Ajax בלימסול (105 ק\"מ, כ-70 דק')",type:"logistics"},
-      {time:"20:30",activity:"ארוחת סיכום חגיגית בעיר העתיקה בלימסול",type:"food"}
-    ],notes:["קפיצות הצוקים ב-Cape Greco - לבדוק גובה/תנאים במקום, לא כולם חייבים לקפוץ"]},
-    {date:"5.10",day_of_week:"שני",title:"פאפוס + שופינג + טיסה חזרה",location:"פאפוס → לרנקה",summary:"טיילת ומצודת פאפוס, שופינג, חזרה לישראל",items:[
-      {time:"09:30",activity:"צ'ק-אאוט מ-Ajax, נסיעה לפאפוס (68 ק\"מ, כ-45 דק')",type:"logistics"},
-      {time:"10:15",activity:"טיילת ומצודת פאפוס + ארוחת צהריים מול הים בנמל",type:"sightseeing"},
-      {time:"13:30",activity:"שופינג ב-Kings Avenue Mall בפאפוס (היחיד בטיול)",type:"sightseeing"},
-      {time:"15:30",activity:"חזרה לכיוון לרנקה, עצירה לקפה/בירה ב-Governor's Beach",type:"logistics"},
-      {time:"19:00",activity:"הגעה לשדה התעופה בלרנקה, החזרת הרכב (130 ק\"מ, כ-80 דק')",type:"car"},
+      {time:"14:00",activity:"איסוף הרכב מ-Sixt, אולם הנכנסים (הזמנה 8PRF87)",type:"car",lat:34.8751,lng:33.6249},
+      {time:"15:00",activity:"נסיעה ללימסול (67 ק\"מ, כ-45 דק׳)",type:"logistics"},
+      {time:"16:00",activity:"צ׳ק-אין ב-Ajax Hotel והתרעננות",type:"hotel",lat:34.695,lng:33.064},
+      {time:"18:00",activity:"טיילת מולוס (Molos Promenade) לאורך הים",type:"sightseeing",lat:34.6742,lng:33.0470},
+      {time:"20:00",activity:"ארוחת ערב ובירות ב-Limassol Marina או בכיכר סריפולו בעיר העתיקה",type:"food",lat:34.6720,lng:33.0430}
+    ],notes:["לילות 1-2: Ajax Hotel לימסול","⚠️ הרכב מוזמן לאיסוף ב-14:00 - בדיוק שעת הנחיתה. אחרי ביקורת דרכונים וכבודה תגיעו לדלפק מאוחר יותר. הוואוצ׳ר אומר שרכב עלול להשתחרר אם מאחרים - להתקשר ל-Sixt מראש: +357 25312345","לדלפק: כרטיס אשראי פיזי ע״ש רון עם €800 פנוי + PIN, ואוצ׳ר, רישיון נהיגה מקורי ודרכון"]},
+    {date:"2.10",day_of_week:"שישי",title:"צלילת עומק לזנוביה",location:"לרנקה",summary:"2 צלילות עומק לספינת הטבע Zenobia, ספא וערב רגוע בלימסול",items:[
+      {time:"07:45",activity:"נסיעה מלימסול לנמל לרנקה (65 ק\"מ, כ-40 דק׳)",type:"logistics"},
+      {time:"09:00",activity:"2 צלילות עומק (עד 30 מ׳) לספינת הטבע Zenobia",type:"sightseeing",lat:34.8967,lng:33.6408},
+      {time:"14:00",activity:"סיום הצלילות + ארוחת דגים בנמל לרנקה",type:"food"},
+      {time:"15:30",activity:"נסיעה חזרה ללימסול",type:"logistics"},
+      {time:"17:30",activity:"ספא ומנוחה במלון",type:"hotel"},
+      {time:"20:30",activity:"ארוחת ערב בלימסול",type:"food"}
+    ],notes:["מקדמה לצלילות שולמה ✅ - נשאר לאמת שעת התייצבות ומיקום מדויק מול מועדון הצלילה","לקחת: כרטיס PADI, לוג-בוק וביטוח צלילה","אחרי צלילה: לא לטוס 24 שעות - הטיסה ב-5.10, אין בעיה"]},
+    {date:"3.10",day_of_week:"שבת",title:"באגי בפיסורי + מעבר לפאפוס",location:"פיסורי → כלורקה",summary:"טיול שטח 4 שעות להרי טרודוס, ואז החלפת מלון לפאפוס",items:[
+      {time:"09:00",activity:"צ׳ק-אאוט מ-Ajax ונסיעה לפיסורי (כ-30 דק׳)",type:"logistics"},
+      {time:"10:00",activity:"טיול באגי/קוואד שטח 4 שעות להרי טרודוס - Summer Quad Rentals, בסיס פיסורי",type:"sightseeing",lat:34.6686,lng:32.7021},
+      {time:"14:00",activity:"סיום הטיול + ארוחה בפיסורי",type:"food"},
+      {time:"15:00",activity:"נסיעה לכלורקה/פאפוס (כ-25 דק׳)",type:"logistics"},
+      {time:"15:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel"},
+      {time:"18:00",activity:"ספא ווולנס ב-WellClub",type:"hotel"},
+      {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
+    ],notes:["לילות 3-4: WellClub Resort, כלורקה","⚠️ הבאגי טרם הוזמן - Summer Quad Rentals, לבדוק CF Moto 625cc / באגי ל-3 מבוגרים","⚠️ לוודא דרישות גיל ורישיון - שגם אורי ואיתן יוכלו לנהוג בפועל ולא רק לשבת"]},
+    {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
+      {time:"09:15",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-35 דק׳)",type:"logistics"},
+      {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
+      {time:"10:45",activity:"שייט לחצי האי אקמאס, עגינה בבלו לגון - שנרקול ושחייה",type:"sightseeing",lat:35.0556,lng:32.3406},
+      {time:"14:00",activity:"החזרת הסירה במרינת לאצ׳י",type:"logistics",lat:35.0405,lng:32.3986},
+      {time:"14:30",activity:"ארוחת דגים במרינה (Yiannakis / Periyiali)",type:"food"},
+      {time:"16:30",activity:"חזרה ל-WellClub",type:"logistics"},
+      {time:"18:00",activity:"ספא ווולנס, ערב רגוע",type:"hotel"}
+    ],notes:["⚠️ הסירה טרם הוזמנה - Latchi Watersports Centre / Latchi Marine Boat Rentals, מנוע 50-80 כ\"ס, 10:00-14:00","לבדוק תחזית רוח וים יום לפני - הבלו לגון חשוף כשיש רוח מערבית","חילוץ ימי: 1441 (חיוג חינם) - מופיע במסך החירום"]},
+    {date:"5.10",day_of_week:"שני",title:"קארטינג, סלע אפרודיטה וטיסה הביתה",location:"פאפוס → לרנקה",summary:"קארטינג תחרותי בבוקר, נסיעה חופית מזרחה עם עצירה בסלע אפרודיטה",items:[
+      {time:"10:00",activity:"צ׳ק-אאוט מ-WellClub",type:"hotel"},
+      {time:"10:30",activity:"קארטינג תחרותי ב-Paphos Karting Centre, ירוסקיפו",type:"sightseeing"},
+      {time:"12:00",activity:"סיום הקארטינג ונסיעה למרכז פאפוס",type:"logistics"},
+      {time:"12:30",activity:"ארוחת צהריים בפאפוס",type:"food"},
+      {time:"14:30",activity:"יציאה מזרחה לכיוון לרנקה לאורך החוף",type:"logistics"},
+      {time:"15:15",activity:"עצירה בסלע אפרודיטה (Petra tou Romiou)",type:"sightseeing",lat:34.6636,lng:32.6269},
+      {time:"18:00",activity:"ארוחת ערב בטיילת פיניקודס, לרנקה",type:"food",lat:34.9128,lng:33.6404},
+      {time:"19:45",activity:"החזרת הרכב ל-Sixt בשדה התעופה (ההזמנה עד 21:00 - מחזירים מוקדם)",type:"car",lat:34.8751,lng:33.6249},
       {time:"22:05",activity:"טיסת חזור ישראייר 6H584 → תל אביב",type:"flight"},
       {time:"23:10",activity:"נחיתה בנתב\"ג",type:"flight"}
-    ],notes:[]}
+    ],notes:["⚠️ הקארטינג טרם הוזמן - Paphos Karting Centre, ירוסקיפו, טל׳ 99620916","להיות בשדה התעופה לכל המאוחר ב-20:00 - טיסה בינלאומית","הארוחה בפיניקודס צמודה לשדה (כ-7 דק׳ נסיעה) - אם מתעכבים, לוותר עליה","ההזמנה של Sixt היא עד 21:00, אבל טיסה ב-22:05 - להחזיר ב-19:45 ולא להסתמך על השעה שבוואוצ׳ר","לתדלק לפני ההחזרה - מדיניות מלא-למלא, אחרת Sixt גובה לפי המחיר שלהם"]}
   ],
   prep: [
-    {task:"🏍️ לבדוק רישיונות/גיל מינימלי לנהיגת UTV/באגי מול TT Motorcycle Rentals או Quad Safari Cyprus",done:false,note:"חשוב למצוא חברה שמאפשרת גם לבני 18 ו-21 לנהוג בפועל, כדי שכולם יתחלפו בנהיגה"},
-    {task:"🤿 לבדוק חבילת צלילה כפולה (Double Dive) לזנוביה מול Alpha Divers / Dive-In Larnaca",done:false,note:"כולל השכרת ציוד מלא, לצוללי Advanced"},
-    {task:"🚗 להזמין/לאשר את הרכב השכור בלרנקה",done:false},
-    {task:"🏍️ להזמין את הבאגי/UTV מראש",done:false},
-    {task:"🤿 להזמין את הצלילות מראש",done:false}
+    {task:"🚗 להזמין רכב שכור",done:true,note:"✅ הוזמן - Sixt, Compact SUV אוטומטי, אישור 8PRF87"},
+    {task:"⏰ לתאם שעת איסוף מול Sixt - ההזמנה ל-14:00 והטיסה נוחתת ב-14:00",done:false,deadline:"2026-09-24",note:"לפי הוואוצ׳ר, הגעה אחרי שעת האיסוף עלולה לשחרר את הרכב. טל׳ +357 25312345"},
+    {task:"🏨 לשנות את הזמנת Ajax מ-4 לילות ל-2 (1-3.10)",done:false,deadline:"2026-09-22",note:"ביטול חינם רק עד יום לפני ההגעה. בלי שינוי - תשלם על 2 לילות שלא תישן בהם"},
+    {task:"⛵ להזמין סירה בלאצ׳י ל-4.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Latchi Watersports Centre / Latchi Marine Boat Rentals. מנוע 50-80 כ\"ס, בלי רישיון שיט"},
+    {task:"🏍️ להזמין באגי/קוואד ל-3.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Summer Quad Rentals, בסיס פיסורי. לוודא שגם בני 18 ו-21 יכולים לנהוג בפועל"},
+    {task:"🏁 להזמין קארטינג ל-5.10 בבוקר",done:false,deadline:"2026-09-28",note:"Paphos Karting Centre, ירוסקיפו. טל׳ 99620916"},
+    {task:"🤿 לאמת שעת התייצבות ומיקום לצלילות זנוביה",done:false,deadline:"2026-09-28",note:"מקדמה שולמה ✅ - נשאר רק לאשר פרטים"},
+    {task:"🚗 להחליט אם מוסיפים את אורי ואיתן כנהגים נוספים ברכב",done:false,deadline:"2026-09-28",note:"⚠️ Sixt דורשת גיל 21+ ורישיון מעל שנתיים. תוספת תשלום בדלפק. בלי זה רון נוהג לבד כל הטיול - כולל 105 ק\"מ ביום הסירה"},
+    {task:"📄 לבדוק תוקף דרכונים (6 חודשים), רישיונות נהיגה וכרטיסי PADI",done:false,deadline:"2026-09-25"},
+    {task:"💳 להכין לדלפק Sixt: כרטיס אשראי פיזי ע\"ש רון עם €800 פנוי + PIN, ואוצ׳ר מודפס, רישיונות מקוריים",done:false,deadline:"2026-09-30",note:"כרטיסים נטענים/וירטואליים לא מתקבלים. בלי ואוצ׳ר עלולים לא למסור את הרכב"},
+    {task:"🗺️ להוריד מפת קפריסין אופליין ב-Google Maps + לשמור את נקודות הטיול",done:false,deadline:"2026-09-30",note:"My Maps לא עובד אופליין - חייב לשמור כל נקודה דרך שמור/רשימה"}
   ],
   packingList: [],
-  phrases: [],
+  phrases: [
+    {category:"בסיסי",he:"שלום",local:"Γεια σας",translit:"יא סאס"},
+    {category:"בסיסי",he:"היי (לא רשמי)",local:"Γεια σου",translit:"יא סו"},
+    {category:"בסיסי",he:"בוקר טוב",local:"Καλημέρα",translit:"קאלימֶרה"},
+    {category:"בסיסי",he:"ערב טוב",local:"Καλησπέρα",translit:"קאליספֶּרה"},
+    {category:"בסיסי",he:"תודה",local:"Ευχαριστώ",translit:"אפחאריסטו"},
+    {category:"בסיסי",he:"בבקשה / על לא דבר",local:"Παρακαλώ",translit:"פאראקאלו"},
+    {category:"בסיסי",he:"כן",local:"Ναι",translit:"נֶה — שימו לב, נשמע כמו לא בעברית"},
+    {category:"בסיסי",he:"לא",local:"Όχι",translit:"אוֹחי"},
+    {category:"בסיסי",he:"סליחה",local:"Συγγνώμη",translit:"סיגנוֹמי"},
+    {category:"בסיסי",he:"אתם מדברים אנגלית?",local:"Μιλάτε αγγλικά;",translit:"מילאטֶה אנגליקה?"},
+    {category:"בסיסי",he:"אני לא מבין",local:"Δεν καταλαβαίνω",translit:"דֶן קאטאלאבֶנו"},
+    {category:"בסיסי",he:"להתראות",local:"Αντίο",translit:"אדיו"},
+
+    {category:"מסעדה ובר",he:"תפריט בבקשה",local:"Τον κατάλογο, παρακαλώ",translit:"טון קאטאלוגו, פאראקאלו"},
+    {category:"מסעדה ובר",he:"שלוש בירות בבקשה",local:"Τρεις μπύρες, παρακαλώ",translit:"טריס בּיירֶס, פאראקאלו"},
+    {category:"מסעדה ובר",he:"לחיים",local:"Γεια μας",translit:"יא מאס"},
+    {category:"מסעדה ובר",he:"מה אתם ממליצים?",local:"Τι προτείνετε;",translit:"טי פּרוֹטינֶטֶה?"},
+    {category:"מסעדה ובר",he:"בשר על הגריל",local:"Ψητό κρέας",translit:"פּסיטו קרֶאס"},
+    {category:"מסעדה ובר",he:"מזטדס (מנות קטנות לשיתוף)",local:"Μεζέδες",translit:"מֶזֶדֶס"},
+    {category:"מסעדה ובר",he:"דגים טריים",local:"Φρέσκο ψάρι",translit:"פרֶסקו פּסארי"},
+    {category:"מסעדה ובר",he:"מים בבקשה",local:"Νερό, παρακαλώ",translit:"נֶרוֹ, פאראקאלו"},
+    {category:"מסעדה ובר",he:"היה טעים מאוד",local:"Ήταν πολύ νόστιμο",translit:"איטאן פּולי נוֹסטימו"},
+    {category:"מסעדה ובר",he:"החשבון בבקשה",local:"Το λογαριασμό, παρακαλώ",translit:"טו לוגאריאזמוֹ, פאראקאלו"},
+
+    {category:"רכב ודרכים",he:"איפה תחנת דלק?",local:"Πού είναι το βενζινάδικο;",translit:"פּוּ אינֶה טו וֶנזינאדיקו?"},
+    {category:"רכב ודרכים",he:"מלא מכל, בבקשה",local:"Γεμίστε το, παρακαλώ",translit:"יֶמיסטֶה טו, פאראקאלו"},
+    {category:"רכב ודרכים",he:"איפה אפשר לחנות?",local:"Πού μπορώ να παρκάρω;",translit:"פּוּ בּוֹרוֹ נא פארקארו?"},
+    {category:"רכב ודרכים",he:"הרכב שלי התקלקל",local:"Το αυτοκίνητό μου χάλασε",translit:"טו אפטוקינִיטוֹ מוּ חאלאסֶה"},
+    {category:"רכב ודרכים",he:"כמה זמן נסיעה לשם?",local:"Πόση ώρα είναι με το αυτοκίνητο;",translit:"פּוֹסי אוֹרה אינֶה מֶה טו אפטוקינִיטו?"},
+
+    {category:"ים וצלילה",he:"אני צוללן",local:"Είμαι δύτης",translit:"אימֶה דיטיס"},
+    {category:"ים וצלילה",he:"איפה המזח?",local:"Πού είναι η προβλήτα;",translit:"פּוּ אינֶה אי פּרוֹבליטה?"},
+    {category:"ים וצלילה",he:"איך מזג האוויר בים היום?",local:"Πώς είναι η θάλασσα σήμερα;",translit:"פּוֹס אינֶה אי תאלאסה סימֶרה?"},
+    {category:"ים וצלילה",he:"מותר לשחות כאן?",local:"Μπορούμε να κολυμπήσουμε εδώ;",translit:"בּוֹרוּמֶה נא קולימבּיסוּמֶה אֶדוֹ?"},
+    {category:"ים וצלילה",he:"מתי צריך להחזיר את הסירה?",local:"Τι ώρα πρέπει να επιστρέψουμε το σκάφος;",translit:"טי אוֹרה פּרֶפּי נא אֶפּיסטרֶפּסוּמֶה טו סקאפוס?"},
+
+    {category:"חירום ורפואה",he:"הצילו!",local:"Βοήθεια!",translit:"ווֹאִיתְיָה!"},
+    {category:"חירום ורפואה",he:"תקראו לאמבולנס",local:"Καλέστε ασθενοφόρο",translit:"קאלֶסטֶה אסתֶנוֹפוֹרוֹ"},
+    {category:"חירום ורפואה",he:"תקראו למשטרה",local:"Καλέστε την αστυνομία",translit:"קאלֶסטֶה טין אסטינוֹמיה"},
+    {category:"חירום ורפואה",he:"קרתה תאונה",local:"Έγινε ατύχημα",translit:"אֶיִינֶה אטיחימה"},
+    {category:"חירום ורפואה",he:"תאונת צלילה - צריך תא לחץ",local:"Ατύχημα κατάδυσης - χρειαζόμαστε θάλαμο αποσυμπίεσης",translit:"אטיחימה קאטאדיסיס - חריאזוֹמאסטֶה תאלאמוֹ אפּוֹסימפּיֶסיס"},
+    {category:"חירום ורפואה",he:"אני צריך רופא",local:"Χρειάζομαι γιατρό",translit:"חריאזוֹמֶה יאטרוֹ"},
+    {category:"חירום ורפואה",he:"איפה בית החולים?",local:"Πού είναι το νοσοκομείο;",translit:"פּוּ אינֶה טו נוֹסוֹקוֹמיוֹ?"},
+    {category:"חירום ורפואה",he:"איפה בית מרקחת?",local:"Πού είναι το φαρμακείο;",translit:"פּוּ אינֶה טו פארמאקיוֹ?"},
+
+    {category:"כסף וקניות",he:"כמה זה עולה?",local:"Πόσο κοστίζει;",translit:"פּוֹסוֹ קוֹסטיזי?"},
+    {category:"כסף וקניות",he:"מקבלים כרטיס אשראי?",local:"Δέχεστε κάρτα;",translit:"דֶחֶסטֶה קארטה?"},
+    {category:"כסף וקניות",he:"יקר מדי",local:"Είναι πολύ ακριβό",translit:"אינֶה פּולי אקריבוֹ"},
+    {category:"כסף וקניות",he:"איפה יש כספומט?",local:"Πού υπάρχει ΑΤΜ;",translit:"פּוּ יפּארחי איי-טי-אֶם?"}
+  ],
   emergency: [
-    {icon:"🆘",label:"חירום כללי",number:"112"},
-    {icon:"🚓",label:"משטרה",number:"199"},
-    {icon:"🚑",label:"אמבולנס",number:"112"}
+    {icon:"\ud83c\udd98",label:"חירום כללי - אירופאי (משטרה/אמבולנס/כבאות)",number:"112"},
+    {icon:"\ud83d\ude93",label:"משטרת קפריסין - קו מקומי",number:"199"},
+    {icon:"\ud83e\udd3f",label:"תא לחץ לרנקה - HTTC (הכי קרוב לזנוביה)",number:"+357 99518837"},
+    {icon:"\ud83e\udd3f",label:"תא לחץ פאפוס (קרוב ל-WellClub)",number:"+357 26803486"},
+    {icon:"\ud83e\udd3f",label:"DAN Europe - מוקד חירום צלילה 24/7",number:"+39 06 42118685"},
+    {icon:"\u26f5",label:"חילוץ ימי JRCC - חיוג חינם מקפריסין",number:"1441"},
+    {icon:"\u26f5",label:"JRCC לרנקה - קו ישיר",number:"+357 24643005"},
+    {icon:"\ud83c\uddee\ud83c\uddf1",label:"שגרירות ישראל ניקוסיה",number:"+357 22369500"},
+    {icon:"\ud83c\uddee\ud83c\uddf1",label:"שגרירות ישראל - תורן חירום מחוץ לשעות",number:"+357 99630439"},
+    {icon:"\ud83c\udfe8",label:"Ajax Hotel לימסול",number:"+357 25590000"},
+    {icon:"\ud83c\udfe8",label:"WellClub Resort פאפוס",number:"+357 26332770"},
+    {icon:"\ud83d\ude97",label:"Sixt - תקלה או איחור ברכב",number:"+357 25312345"},
+    {icon:"\ud83d\udcde",label:"תמיכת Booking.com (ישראל)",number:"03-3722089"}
   ],
   transport: []
 };
@@ -1540,16 +1710,39 @@ function weatherIcon(code, maxRainProb) {
   return '⛈️';
 }
 
+const WEATHER_KEY = 'weatherCache';
+const WEATHER_TTL = 3 * 60 * 60 * 1000;
+
+// Restores the last forecast (and any coordinates resolved by geocoding) from a previous
+// session, so an offline start still shows weather instead of an empty card.
+function loadWeatherCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEATHER_KEY) || 'null');
+    if (raw && raw.data) {
+      STATE.weatherFetchedAt = raw.at;
+      if (raw.coords) Object.assign(STATE.cityCoords, raw.coords);
+      return raw.data;
+    }
+  } catch (e) {}
+  return {};
+}
+
 async function fetchWeatherForTour(tour) {
   if (!tour.weatherCities || !tour.weatherCities.length) return;
-  STATE.weatherCache = STATE.weatherCache || {};
   STATE.cityCoords = STATE.cityCoords || {
     'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
     'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
-    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288]
+    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288],
+    'Paphos': [34.7754, 32.4245], 'Polis': [35.0364, 32.4264]
   };
+  if (!STATE.weatherCache) STATE.weatherCache = loadWeatherCache();
+  // A cached forecast is reused for a few hours, then refreshed - without this check a
+  // restored cache would never be updated again.
+  const fresh = STATE.weatherFetchedAt && (Date.now() - STATE.weatherFetchedAt) < WEATHER_TTL;
+  let fetched = false;
+
   for (const city of tour.weatherCities) {
-    if (STATE.weatherCache[city]) continue;
+    if (STATE.weatherCache[city] && fresh) continue;
     let c = STATE.cityCoords[city];
     // Unknown city (e.g. a new future trip) - resolve automatically via free geocoding,
     // so this keeps working without needing to hand-add coordinates each time.
@@ -1569,7 +1762,17 @@ async function fetchWeatherForTour(tour) {
         '&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=precipitation_probability,weather_code&timezone=auto&forecast_days=16';
       const res = await fetch(url);
       STATE.weatherCache[city] = await res.json();
+      fetched = true;
     } catch(e) {}
+  }
+
+  if (fetched) {
+    STATE.weatherFetchedAt = Date.now();
+    try {
+      localStorage.setItem(WEATHER_KEY, JSON.stringify({
+        at: STATE.weatherFetchedAt, data: STATE.weatherCache, coords: STATE.cityCoords
+      }));
+    } catch (e) {}
   }
 }
 
@@ -2044,10 +2247,14 @@ async function init() {
   try {
     STATE.tours = await window.DB.listTours();
   } catch (e) {
+    // Reached only when there is no connection AND no saved copy on this device.
     document.getElementById('homeContent').innerHTML =
-      '<div class="empty-state"><div class="big">⚠️</div><h2>שגיאת חיבור</h2><p>' + e.message + '</p></div>';
+      '<div class="empty-state"><div class="big">⚠️</div><h2>אין חיבור ואין עותק שמור</h2>' +
+      '<p>פתח את האפליקציה פעם אחת עם אינטרנט כדי שהטיולים יישמרו לשימוש אופליין.</p></div>';
+    updateOfflineBar();
     return;
   }
+  updateOfflineBar();
 
   renderDrawer();
 
@@ -2068,11 +2275,10 @@ async function init() {
   STATE.currentTripId = tripId;
   await loadTripHome();
 
-  // Service worker
+  // Service worker (sw.js). This used to register a blob: URL, which browsers reject as
+  // a worker script - the error was swallowed, so no worker ran and nothing was cached.
   if ('serviceWorker' in navigator) {
-    const swCode = "const CACHE='barbur-tours-v8';self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim()));});self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(u.hostname.indexOf('firestore')>=0||u.hostname.indexOf('googleapis')>=0||u.hostname.indexOf('open-meteo')>=0)return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});";
-    const blob = new Blob([swCode], { type: 'application/javascript' });
-    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
 }
 
