@@ -110,6 +110,31 @@ window.dispatchEvent(new Event('db-ready'));
 </script>
 
 <style>
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('vendor/fonts/rubik-hebrew-400-normal.woff2') format('woff2');
+  unicode-range: U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('vendor/fonts/rubik-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('vendor/fonts/rubik-hebrew-600-normal.woff2') format('woff2');
+  unicode-range: U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 600; font-display: swap;
+  src: url('vendor/fonts/rubik-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 700; font-display: swap;
+  src: url('vendor/fonts/rubik-hebrew-700-normal.woff2') format('woff2');
+  unicode-range: U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 700; font-display: swap;
+  src: url('vendor/fonts/rubik-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url('vendor/fonts/rubik-hebrew-800-normal.woff2') format('woff2');
+  unicode-range: U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F; }
+@font-face { font-family: 'Rubik'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url('vendor/fonts/rubik-latin-800-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 :root {
@@ -156,7 +181,8 @@ window.dispatchEvent(new Event('db-ready'));
 :root[data-theme="light"] .wx-cell { box-shadow: var(--shadow); }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Rubik, Arial, sans-serif;
+  font-family: 'Rubik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
@@ -241,7 +267,9 @@ header {
 .hamburger svg { width: 22px; height: 22px; stroke: var(--text); }
 .header-titles { flex: 1; min-width: 0; }
 .header-trip-name { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.header-trip-dates { font-size: 13px; color: var(--text-dim); }
+/* The subtitle and dates were wrapping onto three lines, which pushed the header to
+   130px and squeezed everything else. One line each, truncated if they do not fit. */
+.header-trip-dates { font-size: 12.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-flag { font-size: 30px; flex-shrink: 0; }
 .notif-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); width: 44px; height: 44px; font-size: 20px; cursor: pointer; flex-shrink: 0; position: relative; }
 .notif-btn.enabled { border-color: var(--accent); }
@@ -337,6 +365,11 @@ header {
   margin: 22px 0 12px;
 }
 .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.drawer-theme-btn { display: flex; align-items: center; gap: 11px; width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-family: inherit; margin: 0 0 10px; }
+.drawer-theme-switch { width: 40px; height: 23px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background .2s; }
+.drawer-theme-switch.on { background: var(--accent); }
+.drawer-theme-switch i { position: absolute; top: 3px; right: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.drawer-theme-switch.on i { transform: translateX(-17px); }
 .quick-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 18px 16px;
@@ -545,12 +578,12 @@ header {
 .phrase-local { font-size: 17px; color: var(--accent-2); margin-top: 4px; direction: ltr; text-align: right; }
 .phrase-translit { font-size: 12px; color: var(--text-dim); margin-top: 2px; direction: rtl; text-align: right; }
 .phrase-category { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; margin: 18px 0 8px; }
-.emergency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
-.emergency-icon { font-size: 26px; flex-shrink: 0; }
+.emergency-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 7px; display: flex; align-items: center; gap: 11px; box-shadow: var(--shadow); }
+.emergency-icon { font-size: 22px; flex-shrink: 0; }
 .emergency-info { flex: 1; }
-.emergency-label { font-size: 14px; font-weight: 600; }
+.emergency-label { font-size: 13px; font-weight: 600; line-height: 1.35; }
 .tel-link { color: var(--accent-2); text-decoration: none; unicode-bidi: isolate; direction: ltr; display: inline-block; border-bottom: 1px dotted currentColor; }
-.emergency-num { font-size: 18px; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; text-align: right; font-weight: 700; }
+.emergency-num { font-size: 16px; margin-top: 2px; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; text-align: right; font-weight: 700; }
 .emergency-call { background: var(--green); color: #fff; border-radius: 8px; padding: 8px 12px; text-decoration: none; font-size: 13px; font-weight: 600; }
 .emergency-wa { background: #25D366; color: #073; border-radius: 8px; padding: 8px 10px; text-decoration: none; font-size: 15px; font-weight: 700; margin-right: 6px; }
 .emergency-acts { display: flex; align-items: center; flex-shrink: 0; }
@@ -568,7 +601,6 @@ header {
     <div class="header-trip-dates" id="headerTripDates">טוען...</div>
   </div>
   <div class="header-flag" id="headerFlag">🧳</div>
-  <button id="themeBtn" class="notif-btn" onclick="toggleTheme()" title="מצב בהיר / כהה">🌙</button>
   <button id="notifBtn" class="notif-btn" onclick="toggleNotifications()" title="התראות">🔔</button>
 </header>
 
@@ -585,6 +617,7 @@ header {
   <div class="drawer-scroll" id="drawerScroll">
     <div class="loader"><div class="spinner"></div>טוען טיולים...</div>
   </div>
+  <div id="drawerTheme"></div>
   <div class="drawer-footer">
     <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">🔄 עדכן טיול גאורגיה</button>
     <button class="new-trip-btn" onclick="seedKorea()" style="background:#3a6bc4;margin-bottom:8px;" id="seedKoreaBtn">🇰🇷 טען טיול קוריאה</button>
@@ -737,9 +770,9 @@ header {
     <svg viewBox="0 0 24 24" stroke-width="2"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2v2z"/></svg>
     <span>הזמנות</span>
   </button>
-  <button class="nav-btn" data-view="currency" onclick="navigate('currency')">
-    <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.5 9.5h5M9.5 14.5h5M12 7v10"/></svg>
-    <span>מטבע</span>
+  <button class="nav-btn" data-view="map" onclick="navigate('map')">
+    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 3L3 5.5v15L9 18l6 3 6-2.5v-15L15 6 9 3z"/><path d="M9 3v15M15 6v15"/></svg>
+    <span>מפה</span>
   </button>
   <button class="nav-btn" data-view="packing" onclick="navigate('packing')">
     <svg viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
@@ -1251,13 +1284,12 @@ function applyTheme(mode) {
   document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
   const meta = document.getElementById('themeColorMeta');
   if (meta) meta.setAttribute('content', light ? '#f4f6fb' : '#0f1117');
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.textContent = light ? '☀️' : '🌙';
   try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
 }
 
 function toggleTheme() {
   applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
+  renderDrawerTheme();
   // The map carries its own palette, so it has to be rebuilt to follow.
   if (STATE.currentView === 'map') {
     const tour = curTour();
@@ -1398,6 +1430,21 @@ function renderDrawer() {
     past.forEach(t => html += drawerTripItem(t));
   }
   scroll.innerHTML = html;
+  renderDrawerTheme();
+}
+
+// The theme switch lives here rather than in the header, which was already carrying a
+// two-line title, a flag, a bell and the menu button on a 412px screen.
+function renderDrawerTheme() {
+  const host = document.getElementById('drawerTheme');
+  if (!host) return;
+  const light = currentTheme() === 'light';
+  host.innerHTML =
+    '<button class="drawer-theme-btn" onclick="toggleTheme()">' +
+      '<span>' + (light ? '☀️' : '🌙') + '</span>' +
+      '<span style="flex:1;">' + (light ? 'מצב בהיר' : 'מצב כהה') + '</span>' +
+      '<span class="drawer-theme-switch' + (light ? ' on' : '') + '"><i></i></span>' +
+    '</button>';
 }
 
 function drawerTripItem(t) {
@@ -1435,7 +1482,9 @@ async function loadTripHome() {
   setTimeout(() => { updateNotifBtn(); fireDueNotifications(); }, 800);
 
   document.getElementById('headerTripName').textContent = tour.title;
-  document.getElementById('headerTripDates').textContent = (tour.subtitle ? tour.subtitle + ' | ' : '') + formatDates(tour);
+  // Just the dates. The subtitle pushed this past the available width and got
+  // truncated mid-word, and it is already on the trip card in the drawer.
+  document.getElementById('headerTripDates').textContent = formatDates(tour);
   document.getElementById('headerFlag').textContent = tour.flag || '🧳';
 
   const status = getTripStatus(tour);
@@ -1498,14 +1547,12 @@ async function loadTripHome() {
     '<div class="section-title">גישה מהירה</div>' +
     '<div class="quick-grid">' +
       '<div class="quick-card" onclick="navigate(\'itinerary\')"><div class="icon">📅</div><div class="label">יומן המסע</div><div class="sub">תוכנית יומית</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'map\')"><div class="icon">🗺️</div><div class="label">מפה</div><div class="sub">אופליין + GPS</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'bookings\')"><div class="icon">🎫</div><div class="label">הזמנות</div><div class="sub">טיסות, מלונות</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div><div class="sub">' + (tour.currency || 'המרה') + '</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div><div class="sub">רשימת ציוד</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div><div class="sub">משימות לפני</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div><div class="sub">ביטויים שימושיים</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div><div class="sub">טלפונים חשובים</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div><div class="sub">מוניות ואפליקציות</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div></div>' +
+      '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div></div>' +
     '</div>' +
     (tour.driveFolder ?
       '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
@@ -3087,8 +3134,28 @@ function renderEmergency(tour) {
     return;
   }
 
+  // Grouped by what has gone wrong, so the right block is found without reading all
+  // fifteen. Uses an explicit group when the data carries one, otherwise infers it from
+  // the icon, so grouping works whether or not the trip has been reloaded.
+  const GROUPS = [
+    { key: 'now',      title: '🚨 מיידי',              icons: ['🆘', '🚓'] },
+    { key: 'dive',     title: '🤿 צלילה ורפואת לחץ',   icons: ['🤿'] },
+    { key: 'sea',      title: '⛵ ים וחילוץ ימי',       icons: ['⛵'] },
+    { key: 'embassy',  title: '🇮🇱 שגרירות ישראל',      icons: ['🇮🇱'] },
+    { key: 'vendors',  title: '🏨 מלונות וספקים',       icons: ['🏨', '🚗', '📞'] }
+  ];
+  const groupOf = c => {
+    if (c.group) return c.group;
+    const g = GROUPS.find(x => x.icons.indexOf(c.icon) >= 0);
+    return g ? g.key : 'vendors';
+  };
+
   let html = '<div class="section-title">חירום וקשר</div>';
-  contacts.forEach(c => {
+  GROUPS.forEach(g => {
+    const inGroup = contacts.filter(c => groupOf(c) === g.key);
+    if (!inGroup.length) return;
+    html += '<div class="phrase-category">' + g.title + '</div>';
+    inGroup.forEach(c => {
     html += '<div class="emergency-card">' +
       '<span class="emergency-icon">' + (c.icon || '📞') + '</span>' +
       '<div class="emergency-info"><div class="emergency-label">' + c.label + '</div>' +
@@ -3097,6 +3164,7 @@ function renderEmergency(tour) {
         (waLink(c.number) ? '<a class="emergency-wa" href="' + waLink(c.number) + '" target="_blank" title="WhatsApp">💬</a>' : '') +
         '<a class="emergency-call" href="tel:' + c.number.replace(/[^0-9+]/g,'') + '">חייג</a>' +
       '</div></div>';
+    });
   });
   container.innerHTML = html;
 }
