@@ -1796,7 +1796,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 10, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 11, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2201,7 +2201,7 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 10,
+  dataVersion: 11,
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2253,14 +2253,19 @@ window.seedCyprus = async function() {
       {time:"19:30",activity:"נסיעה לכלורקה/פאפוס (כ-130 ק\"מ, 1:15 בכביש המהיר)",type:"logistics"},
       {time:"20:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel",lat:34.7881,lng:32.4090}
     ],notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
-    {date:"3.10",day_of_week:"שבת",title:"באגי/ATV בשטח + ספא",location:"פיסורי או טרודוס",summary:"טיול שטח 4 שעות, ואחריו ספא בריזורט וערב בקאטו פאפוס",items:[
-      {time:"09:30",activity:"יציאה מ-WellClub",type:"logistics"},
-      {time:"10:00",activity:"טיול באגי/ATV 4 שעות - פיסורי (כ-40 דק׳) או הרי טרודוס",type:"sightseeing",lat:34.6686,lng:32.7021},
-      {time:"14:30",activity:"ארוחה בכפר אחרי הטיול",type:"food"},
-      {time:"16:00",activity:"חזרה ל-WellClub",type:"logistics"},
-      {time:"18:00",activity:"ספא ווולנס בריזורט",type:"hotel"},
+    {date:"3.10",day_of_week:"שבת",title:"רייזרים באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"לולאת שטח בחצי האי אקמאס על רייזרים, ואחריה ספא בריזורט וערב בקאטו פאפוס",items:[
+      {time:"08:15",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
+      {time:"09:15",activity:"איסוף הרייזרים - Sammer Rent a Car, לאצ׳י",type:"logistics",lat:35.03961,lng:32.39958},
+      {time:"09:45",activity:"מרחץ אפרודיטה - סוף האספלט ותחילת שביל העפר של השמורה",type:"sightseeing",lat:35.05639,lng:32.33472},
+      {time:"10:30",activity:"תצפית הבלגונה הכחולה - הנקודה הגבוהה על הרכס",type:"sightseeing",lat:35.08183,lng:32.30605},
+      {time:"11:45",activity:"חוף הצבים - מפרץ לארה, רחצה בחוף הפראי",type:"sightseeing",lat:34.95611,lng:32.31222},
+      {time:"13:15",activity:"צהריים ב-Viklari (The Last Castle) - על המצוק מעל קניון אווקאס",type:"food",lat:34.91689,lng:32.32833},
+      {time:"14:45",activity:"חזרה צפונה ללאצ׳י בשבילי הרכס (כ-24 ק\"מ בשטח, 75-90 דק׳)",type:"logistics"},
+      {time:"16:15",activity:"החזרת הרייזרים ב-Sammer",type:"logistics",lat:35.03961,lng:32.39958},
+      {time:"17:00",activity:"חזרה ל-WellClub",type:"logistics"},
+      {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel"},
       {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
-    ],notes:["⚠️ הבאגי טרם הוזמן - לבדוק Summer Quad Rentals (פיסורי) ואפשרויות בטרודוס","⚠️ לשאול במפורש על בן 18: איתן נולד 8.9.2008. זו השאלה שתקבע אם הוא נוהג או רק נוסע","לוודא רכבים שמתאימים ל-1.92 מ׳"]},
+    ],notes:["⚠️ הרייזרים טרם הוזמנו - Sammer Rent a Car, לאצ׳י. הנקודה שמורה בפריט של 09:15 ביומן","🕐 הלולאה היא כ-44 ק\"מ בקו אווירי, כ-70 ק\"מ בשבילים בפועל. עם עצירות, רחצה בלארה וצהריים ב-Viklari זה יום של 6-7 שעות השכרה, לא 4. לתאם מול Sammer לפני","⚠️ חוף לארה הוא שמורת קינון של צבי ים ויש הגבלות על כניסת רכב בעונה - לוודא מול Sammer שהמסלול מותר ב-3.10","⚠️ לשאול במפורש על בן 18: איתן נולד 8.9.2008. זו השאלה שתקבע אם הוא נוהג או רק נוסע","⚠️ לוודא רכבים שמתאימים ל-1.92 מ׳","📍 הקואורדינטות נבדקו: Sammer יושב כ-130 מ׳ ממרינת לאצ׳י של יום 4.10, כלומר מאומת. מרחץ אפרודיטה שונה בכ-900 מ׳ ממקור חיצוני - כדאי לאמת אותו על המפה לפני היציאה"]},
     {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
       {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics"},
       {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},

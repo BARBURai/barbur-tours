@@ -165,8 +165,13 @@ page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/
 // context rather than failure.
 const external = url => !url.startsWith(origin());
 page.on('requestfailed', r => {
-  if (external(r.url())) offline.add(new URL(r.url()).hostname);
-  else problems.push(`local request failed: ${r.url().replace(origin(), '')} (${r.failure()?.errorText})`);
+  if (external(r.url())) { offline.add(new URL(r.url()).hostname); return; }
+  // ERR_ABORTED means something cancelled the request, not that the server failed to
+  // answer it - closing the browser while the 49MB basemap is still streaming produces
+  // one every run. A tool that reports that as a fault teaches you to ignore it, and
+  // then you ignore the real one too. A 404 still gets flagged, by the response handler.
+  if (r.failure()?.errorText === 'net::ERR_ABORTED') return;
+  problems.push(`local request failed: ${r.url().replace(origin(), '')} (${r.failure()?.errorText})`);
 });
 page.on('response', r => {
   if (r.status() >= 400 && !external(r.url())) problems.push(`local ${r.status()}: ${r.url().replace(origin(), '')}`);
