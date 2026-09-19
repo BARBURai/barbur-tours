@@ -4,7 +4,7 @@
 // blob: URL built at runtime, which browsers reject as a worker script - the failure
 // was swallowed by a .catch(()=>{}), so no worker was ever installed and nothing was
 // ever cached. A worker script has to be a real same-origin URL.
-const CACHE = 'barbur-tours-v13';
+const CACHE = 'barbur-tours-v14';
 
 // Everything needed to open the app with no network. The Firebase modules are included
 // because they are ES imports: without them index.html loads and then stalls.
@@ -15,7 +15,15 @@ const SHELL = [
   './icon-192.png',
   './icon-512.png',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js',
+  // Map libraries are vendored rather than loaded from a CDN precisely so they can be
+  // cached here: an offline-first app cannot depend on a CDN being reachable.
+  './vendor/maplibre-gl.mjs',
+  './vendor/maplibre-gl-shared.mjs',
+  './vendor/maplibre-gl-worker.mjs',
+  './vendor/maplibre-gl.css',
+  './vendor/pmtiles.js',
+  './vendor/protomaps-themes-base.js'
 ];
 
 const SHELL_FALLBACK = new URL('./index.html', self.location).href;
@@ -72,6 +80,11 @@ self.addEventListener('fetch', e => {
   // Intercepting googleapis.com breaks both, so it is passed straight through.
   if (url.hostname.endsWith('googleapis.com')) return;
 
+  // The basemap archive is read with HTTP Range requests, and the Cache API refuses to
+  // store the 206 responses they produce. It is left alone: the map screen saves the
+  // whole file to IndexedDB itself, which is what makes it available offline.
+  if (url.pathname.endsWith('.pmtiles')) return;
+
   // The page itself: take a fresh copy when there is signal, fall back to the cached
   // shell so the app still opens without any.
   if (req.mode === 'navigate') {
@@ -88,7 +101,11 @@ self.addEventListener('fetch', e => {
   // Our own assets and the version-pinned Firebase modules never change under the same
   // URL, so serving them from the cache is both correct and instant. A deploy changes
   // CACHE, which drops the old entries on activate.
-  if (url.origin === self.location.origin || url.hostname === 'www.gstatic.com') {
+  // Map label glyphs are fetched per character range as labels come into view, so they
+  // accumulate in the cache while online and are then available offline.
+  if (url.origin === self.location.origin ||
+      url.hostname === 'www.gstatic.com' ||
+      url.hostname === 'protomaps.github.io') {
     e.respondWith(cacheFirst(req));
   }
 });
