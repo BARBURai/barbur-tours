@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#0f1117" id="themeColorMeta">
+<meta name="color-scheme" content="dark light">
 <title>Barbur Tours</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -126,7 +127,33 @@ window.dispatchEvent(new Event('db-ready'));
   --blue: #3b82f6;
   --radius: 14px;
   --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(0,0,0,0);
 }
+
+/* Light theme. Same palette rotated, with the orange darkened so it still passes as
+   readable text on white - the dark-mode orange is too pale against a light surface. */
+:root[data-theme="light"] {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #eef1f7;
+  --accent: #ea580c;
+  --accent-2: #c2410c;
+  --text: #0f172a;
+  --text-dim: #52627a;
+  --text-faint: #94a3b8;
+  --border: #dde3ee;
+  --shadow: 0 1px 3px rgba(15,23,42,0.07);
+}
+:root[data-theme="light"] .booking-card,
+:root[data-theme="light"] .phrase-card,
+:root[data-theme="light"] .emergency-card,
+:root[data-theme="light"] .quick-card,
+:root[data-theme="light"] .cost-card,
+:root[data-theme="light"] .home-tasks,
+:root[data-theme="light"] .packing-item,
+:root[data-theme="light"] .currency-box,
+:root[data-theme="light"] .map-pt,
+:root[data-theme="light"] .wx-cell { box-shadow: var(--shadow); }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Rubik, Arial, sans-serif;
@@ -154,16 +181,17 @@ header {
 .home-task-more { display: block; width: 100%; background: none; border: 0; color: var(--text-dim); font-size: 12.5px; padding: 8px 0 2px; }
 .wx-strip { display: flex; gap: 7px; margin-bottom: 6px; }
 .wx-cell { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 2px; text-align: center; }
+.wx-cell.wx-empty { opacity: .45; }
 .wx-date { font-size: 10.5px; color: var(--text-faint); }
 .wx-icon { font-size: 20px; margin: 3px 0; }
-.wx-temp { font-size: 12.5px; font-weight: 700; color: var(--accent-2); direction: ltr; }
+.wx-temp { font-size: 12.5px; font-weight: 700; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; }
 .wx-temp span { color: var(--text-faint); font-weight: 500; margin-right: 3px; }
 .wx-note { font-size: 11px; color: var(--text-faint); line-height: 1.5; margin-bottom: 14px; }
 .cost-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
-.cost-total { font-size: 26px; font-weight: 800; color: var(--accent-2); direction: ltr; text-align: right; }
+.cost-total { font-size: 26px; font-weight: 800; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; text-align: right; }
 .cost-per { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
 .cost-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 4px 0; color: var(--text-dim); }
-.cost-row b { color: var(--text); font-weight: 600; direction: ltr; }
+.cost-row b { color: var(--text); font-weight: 600; direction: ltr; unicode-bidi: isolate; }
 .cost-foot { font-size: 11px; color: var(--text-faint); margin-top: 8px; line-height: 1.5; }
 .day-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .day-nav-btn { width: 40px; height: 40px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); color: var(--accent-2); border-radius: 50%; font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; }
@@ -192,7 +220,7 @@ header {
 .map-pt-main { flex: 1; min-width: 0; }
 .map-pt-name { font-size: 13.5px; font-weight: 600; }
 .map-pt-sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
-.map-pt-dist { font-size: 12.5px; color: var(--accent-2); font-weight: 700; white-space: nowrap; direction: ltr; text-align: left; }
+.map-pt-dist { font-size: 12.5px; color: var(--accent-2); font-weight: 700; white-space: nowrap; direction: ltr; unicode-bidi: isolate; text-align: left; }
 .map-dl { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 10px; }
 .map-prog { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
 .map-prog > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
@@ -200,6 +228,7 @@ header {
 .map-pin { width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
 .maplibregl-ctrl-attrib { font-size: 9px !important; }
 .offline-bar { margin: 0 18px 12px; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.35); color: var(--accent-2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+.offline-bar[hidden] { display: none; }
 .offline-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .hamburger {
   background: var(--surface);
@@ -283,18 +312,23 @@ header {
 .view.active { display: block; }
 
 .hero {
-  border-radius: var(--radius); overflow: hidden;
-  position: relative; min-height: 200px;
-  display: flex; align-items: flex-end;
-  background: var(--surface-2);
-  margin-bottom: 20px;
+  position: relative;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
 }
 .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,17,23,0.95) 0%, rgba(15,17,23,0.3) 60%, transparent 100%); }
-.hero-content { position: relative; padding: 20px; width: 100%; }
+.hero-content { position: relative; padding: 16px 18px; width: 100%; }
 .hero-eyebrow { font-size: 13px; color: var(--accent-2); font-weight: 600; margin-bottom: 4px; }
-.hero-title { font-size: 22px; font-weight: 800; }
-.hero-count { font-size: clamp(28px, 9vw, 44px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.hero-title { font-size: 19px; font-weight: 800; }
+.hero-count { font-size: clamp(30px, 8vw, 40px); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; line-height: 1.1; margin: 2px 0; }
 .hero-sub { font-size: 14px; color: var(--text-dim); }
 
 .section-title {
@@ -472,8 +506,12 @@ header {
 .currency-rate { text-align: center; font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
 .currency-rate strong { color: var(--text); font-size: 16px; }
 .currency-input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
-.currency-input-row input { flex: 1; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; color: var(--text); font-size: 20px; font-family: inherit; outline: none; text-align: center; }
+.currency-input-row input { flex: 1; min-width: 0; width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; color: var(--text); font-size: 20px; font-family: inherit; outline: none; text-align: center; }
 .currency-input-row .cur-label { font-size: 14px; font-weight: 600; color: var(--text-dim); min-width: 50px; }
+.fx-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fx-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 6px; text-align: center; box-shadow: var(--shadow); }
+.fx-cell .fx-from { font-size: 14px; font-weight: 700; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; }
+.fx-cell .fx-to { font-size: 12.5px; color: var(--text-dim); margin-top: 3px; direction: ltr; unicode-bidi: isolate; }
 .currency-swap { text-align: center; color: var(--accent); font-size: 22px; margin: 4px 0; }
 
 /* ---------- Packing (reuse) ---------- */
@@ -530,6 +568,7 @@ header {
     <div class="header-trip-dates" id="headerTripDates">טוען...</div>
   </div>
   <div class="header-flag" id="headerFlag">🧳</div>
+  <button id="themeBtn" class="notif-btn" onclick="toggleTheme()" title="מצב בהיר / כהה">🌙</button>
   <button id="notifBtn" class="notif-btn" onclick="toggleNotifications()" title="התראות">🔔</button>
 </header>
 
@@ -1036,7 +1075,7 @@ async function mapDeleteFile() {
 }
 
 function mapStyle(themes, sourceUrl) {
-  const layers = themes.default('protomaps', 'dark', 'he');
+  const layers = themes.default('protomaps', currentTheme() === 'light' ? 'light' : 'dark', 'he');
   // Dirt tracks and footpaths are in the data, but the stock theme draws them at zero
   // width below zoom 14 - invisible exactly where they matter, on the Troodos and
   // Pissouri routes. This redraws them brighter and from further out.
@@ -1199,6 +1238,31 @@ function mapRenderList(tour) {
 
   el.innerHTML = (MAP_POS ? '' :
     '<div style="font-size:11.5px;color:var(--text-faint);margin-bottom:8px;">מרחק ואזימוט יופיעו ברגע שה-GPS ייתפס</div>') + rows;
+}
+
+// ---------- Theme ----------
+// Applied to <html> so every variable flips at once, and remembered per device.
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(mode) {
+  const light = mode === 'light';
+  document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+  const meta = document.getElementById('themeColorMeta');
+  if (meta) meta.setAttribute('content', light ? '#f4f6fb' : '#0f1117');
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = light ? '☀️' : '🌙';
+  try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
+}
+
+function toggleTheme() {
+  applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
+  // The map carries its own palette, so it has to be rebuilt to follow.
+  if (STATE.currentView === 'map') {
+    const tour = curTour();
+    if (tour) { mapStop(); renderMap(tour); }
+  }
 }
 
 // ---------- Offline state ----------
@@ -1513,9 +1577,10 @@ function buildWeatherStripHtml(tour) {
   if (!briefs.some(Boolean)) return '';
   const cells = days.map((d, i) => {
     const w = briefs[i];
-    return '<div class="wx-cell"><div class="wx-date">' + d.date + '</div>' +
-      '<div class="wx-icon">' + (w ? w.icon : '·') + '</div>' +
-      (w ? '<div class="wx-temp">' + w.max + '°<span>' + w.min + '°</span></div>' : '') +
+    return '<div class="wx-cell' + (w ? '' : ' wx-empty') + '"><div class="wx-date">' + d.date + '</div>' +
+      '<div class="wx-icon">' + (w ? w.icon : '—') + '</div>' +
+      (w ? '<div class="wx-temp">' + w.max + '°<span>' + w.min + '°</span></div>'
+         : '<div class="wx-temp" style="color:var(--text-faint);font-weight:500;font-size:10px;">רחוק מדי</div>') +
       '</div>';
   }).join('');
   const st = getTripStatus(tour);
@@ -2641,32 +2706,68 @@ function renderCurrency(tour) {
     '<div class="section-title">המרת מטבע</div>' +
     '<div class="currency-box">' +
       '<div class="currency-rate" id="curRate">טוען שער...</div>' +
-      '<div class="currency-input-row"><span class="cur-label">₪ ILS</span>' +
-        '<input type="number" id="ilsInput" placeholder="0" oninput="convertFromIls()"></div>' +
-      '<div class="currency-swap">⇅</div>' +
       '<div class="currency-input-row"><span class="cur-label">' + sym + ' ' + cur + '</span>' +
-        '<input type="number" id="localInput" placeholder="0" oninput="convertToIls()"></div>' +
+        '<input type="number" inputmode="decimal" id="localInput" placeholder="0" oninput="convertToIls()"></div>' +
+      '<div class="currency-swap">⇅</div>' +
+      '<div class="currency-input-row"><span class="cur-label">₪ ILS</span>' +
+        '<input type="number" inputmode="decimal" id="ilsInput" placeholder="0" oninput="convertFromIls()"></div>' +
     '</div>' +
-    '<div style="font-size:12px;color:var(--text-faint);text-align:center;">שערים מתעדכנים בזמן אמת</div>';
+    // The screen was a single converter and a page of empty space. In a shop you want
+    // the answer without typing, so the common notes are precomputed.
+    '<div class="section-title">כמה זה בשקלים</div>' +
+    '<div class="fx-grid" id="fxGrid"></div>' +
+    '<div style="font-size:11.5px;color:var(--text-faint);text-align:center;margin-top:12px;">' +
+      'השער נמשך בזמן אמת, ונשמר לשימוש אופליין</div>';
 
   fetchFxRate(cur);
 }
 
 async function fetchFxRate(cur) {
+  // Keep the last rate on the device. A converter that only works with signal is
+  // useless in the one place you need it - standing in a shop abroad.
+  const KEY = 'fxRate_' + cur;
+  const showRate = (rate, stale) => {
+    STATE.fxRate = rate;
+    STATE.fxCur = cur;
+    const el = document.getElementById('curRate');
+    if (el) {
+      // Quoted as "1 EUR = x ILS": you are spending euros and thinking in shekels,
+      // not the other way round.
+      el.innerHTML = '1 ' + (curTour() || {}).currencySymbol + ' = <strong>' + (1 / rate).toFixed(2) + ' ₪</strong>' +
+        (stale ? '<div style="font-size:11px;color:var(--text-faint);margin-top:4px;">שער שמור — אין חיבור כרגע</div>' : '');
+    }
+    renderFxGrid(cur, rate);
+  };
+
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+  if (cached && cached.rate) showRate(cached.rate, true);
+
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/ILS');
     const data = await res.json();
     const rate = data.rates[cur];
-    STATE.fxRate = rate;
-    STATE.fxCur = cur;
-    const el = document.getElementById('curRate');
-    if (el && rate) {
-      el.innerHTML = '1 ₪ = <strong>' + rate.toFixed(2) + ' ' + cur + '</strong>';
+    if (!rate) throw new Error('no rate');
+    try { localStorage.setItem(KEY, JSON.stringify({ rate: rate, at: Date.now() })); } catch (e) {}
+    showRate(rate, false);
+  } catch (e) {
+    if (!cached) {
+      const el = document.getElementById('curRate');
+      if (el) el.textContent = 'אין שער זמין — חבר לאינטרנט פעם אחת כדי לשמור אותו';
     }
-  } catch(e) {
-    const el = document.getElementById('curRate');
-    if (el) el.textContent = 'שגיאה בטעינת שער';
   }
+}
+
+// Precomputed notes, so the common question is answered without typing anything.
+function renderFxGrid(cur, rate) {
+  const grid = document.getElementById('fxGrid');
+  if (!grid || !rate) return;
+  const sym = (curTour() || {}).currencySymbol || '';
+  const perUnit = 1 / rate;
+  grid.innerHTML = [5, 10, 20, 50, 100, 200].map(n =>
+    '<div class="fx-cell"><div class="fx-from">' + sym + n + '</div>' +
+    '<div class="fx-to">₪' + Math.round(n * perUnit).toLocaleString('en-US') + '</div></div>'
+  ).join('');
 }
 
 function convertFromIls() {
@@ -3161,6 +3262,13 @@ async function init() {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
 }
+
+(function () {
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (e) {}
+  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+})();
 
 if (window.DB) init();
 else window.addEventListener('db-ready', init);
