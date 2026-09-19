@@ -145,6 +145,13 @@ header {
   gap: 14px;
   position: relative;
 }
+.now-card { background: linear-gradient(135deg, rgba(249,115,22,0.14), rgba(249,115,22,0.05)); border: 1px solid rgba(249,115,22,0.4); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
+.now-head { font-size: 11.5px; font-weight: 700; color: var(--accent-2); letter-spacing: .04em; margin-bottom: 2px; }
+.now-day { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+.now-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(249,115,22,0.18); }
+.now-time { font-size: 15px; font-weight: 700; color: var(--accent-2); font-variant-numeric: tabular-nums; direction: ltr; min-width: 44px; }
+.now-act { flex: 1; font-size: 13.5px; line-height: 1.5; }
+.now-next { opacity: .62; }
 .map-wrap { position: relative; height: 58vh; min-height: 300px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface); margin-bottom: 12px; }
 #mapCanvas { position: absolute; inset: 0; }
 .map-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; background: var(--surface); color: var(--text-dim); font-size: 13px; line-height: 1.7; }
@@ -1382,6 +1389,7 @@ async function loadTripHome() {
 
   content.innerHTML =
     '<div class="hero">' + heroBg + '<div class="hero-content">' + heroText + '</div></div>' +
+    buildNowHtml(tour) +
     buildAlertsHtml(tour) +
     '<div class="section-title">גישה מהירה</div>' +
     '<div class="quick-grid">' +
@@ -1401,6 +1409,40 @@ async function loadTripHome() {
     '<div style="text-align:center;margin-top:24px;">' +
       '<button class="btn-secondary" onclick="editCurrentTrip()">✏️ ערוך פרטי טיול</button>' +
     '</div>';
+}
+
+// Mid-trip the home screen has one job: say what is next. Everything else on it -
+// the countdown, the quick grid - is planning-time information, and standing in a car
+// park in Troodos is not planning time.
+function buildNowHtml(tour) {
+  if (getTripStatus(tour).status !== 'during') return '';
+  const day = (tour.days || [])[defaultDayIndex(tour)];
+  if (!day || !(day.items || []).length) return '';
+
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const timed = day.items.map(it => {
+    const bits = String(it.time || '').split(':');
+    return { it: it, min: (parseInt(bits[0], 10) || 0) * 60 + (parseInt(bits[1], 10) || 0) };
+  });
+  const ahead = timed.filter(t => t.min >= nowMin);
+  // Past the last item of the day, show it rather than an empty card.
+  const show = (ahead.length ? ahead : timed.slice(-1)).slice(0, 2);
+
+  const rows = show.map((t, i) => {
+    const it = t.it;
+    const nav = (it.lat && it.lng)
+      ? ' <a class="timeline-nav-btn" style="margin:4px 0 0;" href="#" onclick="mapNavigate(' + it.lat + ',' + it.lng + ');return false;">🗺️ נווט</a>'
+      : '';
+    return '<div class="now-row' + (i ? ' now-next' : '') + '">' +
+      '<div class="now-time">' + (it.time || '') + '</div>' +
+      '<div class="now-act">' + it.activity + nav + '</div></div>';
+  }).join('');
+
+  return '<div class="now-card">' +
+    '<div class="now-head">' + (ahead.length ? 'מה עכשיו' : 'סוף היום') + '</div>' +
+    '<div class="now-day">' + day.date + ' · ' + (day.title || '') + '</div>' +
+    rows + '</div>';
 }
 
 function buildAlertsHtml(tour) {
@@ -1728,7 +1770,49 @@ window.seedCyprus = async function() {
     {task:"💳 להכין לדלפק Sixt: כרטיס אשראי פיזי ע\"ש רון עם €800 פנוי + PIN, ואוצ׳ר מודפס",done:false,deadline:"2026-09-30",note:"כרטיסים נטענים/וירטואליים לא מתקבלים"},
     {task:"🗺️ להוריד מפת קפריסין אופליין ב-Google Maps + לשמור את נקודות הטיול",done:false,deadline:"2026-09-30",note:"My Maps לא עובד אופליין - חייב לשמור כל נקודה דרך שמור/רשימה"}
   ],
-  packingList: [],
+  packingList: [
+    {id:"doc1",text:"📄 דרכון",owner:"all",packed:false},
+    {id:"doc2",text:"📄 רישיון נהיגה מקורי - Sixt לא מקבלת צילום או רישיון דיגיטלי",owner:"all",packed:false},
+    {id:"doc3",text:"📄 כרטיס PADI + לוג-בוק",owner:"all",packed:false},
+    {id:"doc4",text:"📄 ואוצ׳ר Sixt מודפס (או שמור להצגה)",owner:"p0",packed:false},
+    {id:"doc5",text:"💳 כרטיס אשראי פיזי ע״ש רון עם €800 פנוי + PIN",owner:"p0",packed:false},
+    {id:"doc6",text:"📄 ביטוח נסיעות + כיסוי לצלילה",owner:"all",packed:false},
+    {id:"cab1",text:"⚠️ כל הנוזלים עד 100 מ״ל בשקית שקופה אחת - אין כבודה רשומה בשתי הטיסות",owner:"all",packed:false},
+    {id:"cab2",text:"🧴 קרם הגנה עד 100 מ״ל - אריזה גדולה תילקח בביקורת",owner:"all",packed:false},
+    {id:"cab3",text:"🎒 טרולי עד 55x40x23 ס״מ + תיק מתחת למושב. זה הכל",owner:"all",packed:false},
+    {id:"div1",text:"🤿 מסכה אישית (התאמה לפנים חשובה יותר מכל ציוד אחר)",owner:"all",packed:false},
+    {id:"div2",text:"🤿 בגד ים ×2 - אחד תמיד רטוב",owner:"all",packed:false},
+    {id:"div3",text:"🤿 חולצת לייקרה / rashguard",owner:"all",packed:false},
+    {id:"div4",text:"🤿 מגבת מיקרופייבר מתייבשת מהר",owner:"all",packed:false},
+    {id:"div5",text:"🤿 מחשב צלילה (למי שיש)",owner:"all",packed:false},
+    {id:"sea1",text:"⛵ שנורקל",owner:"all",packed:false},
+    {id:"sea2",text:"⛵ נרתיק טלפון עמיד למים - לסירה",owner:"all",packed:false},
+    {id:"sea3",text:"⛵ תיק יבש (dry bag) לחפצים בסירה",owner:"p0",packed:false},
+    {id:"sea4",text:"⛵ כמוסות נגד מחלת ים - 4 שעות סירה באקמאס",owner:"p0",packed:false},
+    {id:"sea5",text:"🧢 כובע",owner:"all",packed:false},
+    {id:"sea6",text:"🕶️ משקפי שמש עם רצועה - בסירה הן עפות",owner:"all",packed:false},
+    {id:"bug1",text:"🏍️ נעליים סגורות - חובה לבאגי, גם לקארטינג",owner:"all",packed:false},
+    {id:"bug2",text:"🏍️ מכנס ארוך אחד - שטח ואבק",owner:"all",packed:false},
+    {id:"bug3",text:"🏍️ באף או מטפחת לאבק בטרודוס",owner:"all",packed:false},
+    {id:"clo1",text:"👕 5 חולצות טי",owner:"all",packed:false},
+    {id:"clo2",text:"🩳 2 מכנסיים קצרים",owner:"all",packed:false},
+    {id:"clo3",text:"👔 חולצה נאה אחת לארוחות ערב",owner:"all",packed:false},
+    {id:"clo4",text:"🧥 קפוצ׳ון או ג׳קט קל - אוקטובר, הערבים מתקררים",owner:"all",packed:false},
+    {id:"clo5",text:"🧦 5 תחתונים + 5 גרביים",owner:"all",packed:false},
+    {id:"clo6",text:"🩴 כפכפים",owner:"all",packed:false},
+    {id:"ele1",text:"🔌 מתאם תקע בריטי (Type G, 3 פינים) - קפריסין לא אירופאית! תקע ישראלי לא נכנס",owner:"p0",packed:false},
+    {id:"ele2",text:"🔋 מטען טלפון",owner:"all",packed:false},
+    {id:"ele3",text:"🔋 סוללת גיבוי",owner:"all",packed:false},
+    {id:"ele4",text:"📱 מחזיק טלפון לרכב - 3 ימי נהיגה עם ניווט",owner:"p0",packed:false},
+    {id:"ele5",text:"📷 GoPro + כרטיס זיכרון + מחזיק חזה לבאגי",owner:"all",packed:false},
+    {id:"med1",text:"💊 משככי כאבים, פלסטרים, קיבה",owner:"p0",packed:false},
+    {id:"med2",text:"🧴 אחרי-שמש / אלוורה",owner:"p0",packed:false},
+    {id:"med3",text:"🦟 דוחה חרקים",owner:"p0",packed:false},
+    {id:"med4",text:"🧴 כלי רחצה (≤100 מ״ל כל אחד)",owner:"all",packed:false},
+    {id:"mis1",text:"💧 בקבוק מים רב-פעמי",owner:"all",packed:false},
+    {id:"mis2",text:"📱 eSIM לקפריסין - להתקין ולהפעיל לפני הטיסה",owner:"all",packed:false},
+    {id:"mis3",text:"🗺️ להוריד מפת קפריסין ב-Google Maps + המפה באפליקציה",owner:"all",packed:false}
+  ],
   phrases: [
     {category:"בסיסי",he:"שלום",local:"Γεια σας",translit:"יא סאס"},
     {category:"בסיסי",he:"היי (לא רשמי)",local:"Γεια σου",translit:"יא סו"},
@@ -1797,7 +1881,15 @@ window.seedCyprus = async function() {
     {icon:"\ud83d\udcde",label:"תמיכת Booking.com - מלונות (ישראל)",number:"03-3741783"},
     {icon:"\ud83d\udcde",label:"Booking.com מחו\"ל - עובד מקפריסין",number:"+44 20 3320 2739"}
   ],
-  transport: []
+  transport: [
+    {icon:"\ud83d\ude95",name:"Bolt",recommended:true,desc:"האפליקציה המרכזית בקפריסין - לרנקה, לימסול, ניקוסיה ופאפוס. יש לה נקודת איסוף מסומנת בשדה התעופה בלרנקה, מה שהופך אותה לבחירה הנכונה לנחיתה ביום 1 ולנסיעה לשדה ביום 2. התעריף מוצג מראש באפליקציה לפני האישור.",priceInfo:"מחיר מוצג מראש, בלי מיקוח",android:"https://play.google.com/store/apps/details?id=ee.mtakso.client",web:"https://bolt.eu/en/airports/lca/"},
+    {icon:"\ud83d\ude96",name:"inDrive",desc:"אתה מציע מחיר והנהג מאשר או דוחה. שימושי כשה-Bolt מתייקר בשעות עומס או כשאין רכב פנוי.",priceInfo:"אתה קובע את ההצעה",android:"https://play.google.com/store/apps/details?id=sinet.startup.inDriver",web:"https://indrive.com/"},
+    {icon:"\ud83d\ude95",name:"Yango",desc:"גיבוי ל-Bolt. פועלת בקפריסין אבל עם פחות נהגים - שווה להתקין כאלטרנטיבה ולא כראשית.",web:"https://yango.com/"},
+    {icon:"\ud83c\udde8\ud83c\uddfe",name:"CabCY",desc:"אפליקציה קפריסאית מקומית, פופולרית בין המקומיים - לימסול, ניקוסיה ולרנקה.",web:"https://cabcy.com/"},
+    {icon:"\ud83d\udcde",name:"Alfa Taxi",desc:"מוניות ותיקות, פועלות בכל הערים כולל העברות לשדה התעופה. אפשר להזמין טלפונית מראש - שימושי אם רוצים להבטיח מונית לשעה מסוימת ולא להסתמך על אפליקציה.",web:"https://www.alfataxi.com.cy/"},
+    {icon:"\ud83d\ude8c",name:"Intercity Buses",desc:"אוטובוסים בין-עירוניים לרנקה-לימסול-פאפוס. זול משמעותית ממונית אבל איטי ובתדירות נמוכה. רלוונטי רק כגיבוי - בטיול הזה יש רכב מ-2.10 בערב.",web:"https://www.intercity-buses.com/"},
+    {icon:"\u274c",name:"אובר (Uber)",desc:"⚠️ לא פועלת בקפריסין בכלל. אל תבזבז זמן בשדה על חיפוש - תוריד Bolt לפני הטיסה."}
+  ]
 };
   try {
     await window.DB.saveTour('cyprus-2026', cyprusData);
