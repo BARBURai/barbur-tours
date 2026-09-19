@@ -4,7 +4,7 @@
 // blob: URL built at runtime, which browsers reject as a worker script - the failure
 // was swallowed by a .catch(()=>{}), so no worker was ever installed and nothing was
 // ever cached. A worker script has to be a real same-origin URL.
-const CACHE = 'barbur-tours-v19';
+const CACHE = 'barbur-tours-v20';
 
 // Everything needed to open the app with no network. The Firebase modules are included
 // because they are ES imports: without them index.html loads and then stalls.
@@ -23,7 +23,17 @@ const SHELL = [
   './vendor/maplibre-gl-worker.mjs',
   './vendor/maplibre-gl.css',
   './vendor/pmtiles.js',
-  './vendor/protomaps-themes-base.js'
+  './vendor/protomaps-themes-base.js',
+  // Hebrew and Latin Rubik subsets. Without these cached the app falls back to the
+  // system font the moment it is opened offline, which is exactly when it is used.
+  './vendor/fonts/rubik-hebrew-400-normal.woff2',
+  './vendor/fonts/rubik-hebrew-600-normal.woff2',
+  './vendor/fonts/rubik-hebrew-700-normal.woff2',
+  './vendor/fonts/rubik-hebrew-800-normal.woff2',
+  './vendor/fonts/rubik-latin-400-normal.woff2',
+  './vendor/fonts/rubik-latin-600-normal.woff2',
+  './vendor/fonts/rubik-latin-700-normal.woff2',
+  './vendor/fonts/rubik-latin-800-normal.woff2'
 ];
 
 const SHELL_FALLBACK = new URL('./index.html', self.location).href;
