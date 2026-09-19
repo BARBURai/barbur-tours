@@ -828,6 +828,8 @@ async function loadTripHome() {
   const tour = STATE.tours.find(t => t.id === STATE.currentTripId);
   if (!tour) return;
 
+  STATE.selectedDay = defaultDayIndex(tour);
+
   fetchWeatherForTour(tour);
   setTimeout(() => { updateNotifBtn(); fireDueNotifications(); }, 800);
 
@@ -1566,6 +1568,18 @@ function setDay(i) {
   if (tour) renderItinerary(tour);
 }
 
+// While a trip is running, the itinerary should open on today rather than always on
+// day one - mid-trip, today is the only day you want to land on.
+function defaultDayIndex(tour) {
+  const days = tour.days || [];
+  if (!days.length || getTripStatus(tour).status !== 'during') return 0;
+  const start = new Date(tour.startDate + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const idx = Math.round((today - start) / (1000*60*60*24));
+  return Math.min(Math.max(idx, 0), days.length - 1);
+}
+
 function curTour() { return STATE.tours.find(t => t.id === STATE.currentTripId); }
 async function saveDays(tour) { await window.DB.saveTour(tour.id, { days: tour.days }); }
 
@@ -2271,16 +2285,26 @@ async function init() {
     return;
   }
 
-  // Pick last used trip, or the nearest upcoming one
-  let tripId = localStorage.getItem('lastTripId');
-  if (!tripId || !STATE.tours.find(t => t.id === tripId)) {
-    const withStatus = STATE.tours.map(t => ({ ...t, _status: getTripStatus(t) }));
-    const upcoming = withStatus.filter(t => t._status.status !== 'past')
-      .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
-    const during = withStatus.find(t => t._status.status === 'during');
-    tripId = during ? during.id : (upcoming.length ? upcoming[0].id : STATE.tours[0].id);
-  }
-  STATE.currentTripId = tripId;
+  // Which trip to open. A remembered choice is honoured only while that trip still
+  // matters: lastTripId is also written by the seed buttons, so loading an old trip's
+  // data used to pin it as the default forever, and a trip that ended months ago would
+  // keep opening instead of the one actually coming up.
+  const withStatus = STATE.tours.map(t => ({
+    id: t.id, startDate: t.startDate, status: getTripStatus(t).status
+  }));
+  const remembered = withStatus.find(t => t.id === localStorage.getItem('lastTripId'));
+  const during = withStatus.find(t => t.status === 'during');
+  const nextUp = withStatus.filter(t => t.status === 'before')
+    .sort((a,b) => new Date(a.startDate) - new Date(b.startDate))[0];
+  const lastPast = withStatus.filter(t => t.status === 'past')
+    .sort((a,b) => new Date(b.startDate) - new Date(a.startDate))[0];
+
+  STATE.currentTripId =
+    (remembered && remembered.status !== 'past' && remembered.id) ||
+    (during && during.id) ||
+    (nextUp && nextUp.id) ||
+    (lastPast && lastPast.id) ||
+    STATE.tours[0].id;
   await loadTripHome();
 
   // Service worker (sw.js). This used to register a blob: URL, which browsers reject as
