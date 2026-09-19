@@ -198,6 +198,18 @@ header {
   gap: 14px;
   position: relative;
 }
+/* Chromium hides closed <details> content through ::details-content rather than
+   display:none on the children, which some layouts slip past. Collapsing is too
+   important here to leave to UA behaviour, so it is stated outright. */
+.fold:not([open]) > *:not(summary),
+.drawer-fold:not([open]) > *:not(summary) { display: none !important; }
+.fold { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.fold > summary { display: flex; align-items: center; gap: 10px; padding: 13px 15px; font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary .fold-sum { flex: 1; font-size: 12.5px; font-weight: 500; color: var(--text-dim); text-align: left; direction: ltr; unicode-bidi: isolate; }
+.fold > summary::after { content: '▾'; color: var(--text-faint); font-size: 12px; }
+.fold[open] > summary::after { content: '▴'; }
+.fold-body { padding: 0 15px 14px; }
 .home-tasks { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 14px 10px; margin-bottom: 14px; }
 .home-task { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .home-task:last-child { border-bottom: 0; }
@@ -326,6 +338,7 @@ header {
 }
 .trip-item-badge.past { background: var(--text-faint); }
 .drawer-footer { padding: 14px 20px 0; border-top: 1px solid var(--border); }
+#drawerTheme { padding: 10px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
 .new-trip-btn {
   width: 100%;
   background: var(--accent); color: #fff; border: none;
@@ -339,6 +352,15 @@ header {
 .view { display: none; padding: 0 18px; }
 .view.active { display: block; }
 
+.hero.hero-compact { min-height: 0; }
+.hero-compact .hero-content { padding: 13px 16px; display: flex; align-items: center; gap: 14px; }
+.hero-compact .hero-main { flex: 1; min-width: 0; }
+.hero-compact .hero-eyebrow { margin-bottom: 1px; }
+.hero-compact .hero-title { font-size: 15px; font-weight: 700; }
+.hero-compact .hero-sub { font-size: 12px; }
+.hero-compact .hero-figure { text-align: center; flex-shrink: 0; }
+.hero-compact .hero-count { font-size: 30px; line-height: 1; margin: 0; }
+.hero-compact .hero-unit { font-size: 11px; color: var(--text-dim); }
 .hero {
   position: relative;
   min-height: 150px;
@@ -365,6 +387,18 @@ header {
   margin: 22px 0 12px;
 }
 .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.drawer-nav { padding: 0 12px 4px; }
+.drawer-nav-item { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; color: var(--text); font-family: inherit; font-size: 14.5px; text-align: right; padding: 11px 10px; border-radius: var(--radius-sm); }
+.drawer-nav-item.active { background: rgba(249,115,22,0.13); color: var(--accent-2); }
+.drawer-nav-icon { font-size: 19px; width: 24px; text-align: center; flex-shrink: 0; }
+.drawer-nav-label { flex: 1; }
+.drawer-nav-label span { display: block; font-size: 11px; color: var(--text-faint); font-weight: 400; }
+.drawer-fold { margin: 6px 12px 4px; border-top: 1px solid var(--border); padding-top: 8px; }
+.drawer-fold > summary { font-size: 12.5px; color: var(--text-dim); padding: 8px 10px; cursor: pointer; list-style: none; }
+.drawer-fold > summary::-webkit-details-marker { display: none; }
+.drawer-fold > summary::after { content: ' ▾'; color: var(--text-faint); }
+.drawer-fold[open] > summary::after { content: ' ▴'; }
+.drawer-tool-btn { display: block; width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-family: inherit; margin-bottom: 7px; }
 .drawer-theme-btn { display: flex; align-items: center; gap: 11px; width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-family: inherit; margin: 0 0 10px; }
 .drawer-theme-switch { width: 40px; height: 23px; border-radius: 12px; background: var(--border); position: relative; flex-shrink: 0; transition: background .2s; }
 .drawer-theme-switch.on { background: var(--accent); }
@@ -601,7 +635,6 @@ header {
     <div class="header-trip-dates" id="headerTripDates">טוען...</div>
   </div>
   <div class="header-flag" id="headerFlag">🧳</div>
-  <button id="notifBtn" class="notif-btn" onclick="toggleNotifications()" title="התראות">🔔</button>
 </header>
 
 <!-- Shown whenever the screen is being filled from saved data rather than a live read. -->
@@ -615,18 +648,9 @@ header {
     <div class="drawer-sub">הטיולים שלי</div>
   </div>
   <div class="drawer-scroll" id="drawerScroll">
-    <div class="loader"><div class="spinner"></div>טוען טיולים...</div>
+    <div class="loader"><div class="spinner"></div>טוען...</div>
   </div>
   <div id="drawerTheme"></div>
-  <div class="drawer-footer">
-    <button class="new-trip-btn" onclick="seedGeorgia()" style="background:var(--green);margin-bottom:8px;" id="seedBtn">🔄 עדכן טיול גאורגיה</button>
-    <button class="new-trip-btn" onclick="seedKorea()" style="background:#3a6bc4;margin-bottom:8px;" id="seedKoreaBtn">🇰🇷 טען טיול קוריאה</button>
-    <button class="new-trip-btn" onclick="seedCyprus()" style="background:#e8a33d;margin-bottom:8px;" id="seedCyprusBtn">🇨🇾 טען טיול קפריסין</button>
-    <button class="new-trip-btn" onclick="openNewTripForm()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      טיול חדש
-    </button>
-  </div>
 </div>
 
 <!-- Home View -->
@@ -793,6 +817,8 @@ const FLAG_OPTIONS = ['🇰🇷','🇬🇪','🇮🇹','🇬🇷','🇯🇵','�
 
 // ---------- Drawer ----------
 function openDrawer() {
+  renderDrawer();
+
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
 }
@@ -1406,31 +1432,79 @@ function formatDates(tour) {
 }
 
 // ---------- Render drawer trip list ----------
+// Every screen in the app, in the order they matter on a trip.
+const DRAWER_NAV = [
+  { view: 'home',      icon: '🏠', label: 'בית' },
+  { view: 'itinerary', icon: '📅', label: 'יומן המסע' },
+  { view: 'map',       icon: '🗺️', label: 'מפה', sub: 'אופליין + GPS' },
+  { view: 'bookings',  icon: '🎫', label: 'הזמנות' },
+  { view: 'emergency', icon: '🆘', label: 'חירום' },
+  { view: 'phrases',   icon: '💬', label: 'שיחון' },
+  { view: 'transport', icon: '🚕', label: 'תחבורה' },
+  { view: 'currency',  icon: '💱', label: 'המרת מטבע' },
+  { view: 'packing',   icon: '🧳', label: 'מה לקחת' },
+  { view: 'prep',      icon: '✅', label: 'הכנות' }
+];
+
+// The drawer used to be a list of trips and four loud seed buttons, most of which are
+// irrelevant once a trip exists. It is the navigation now: the current trip at the top,
+// then every screen, with old trips and the data tools folded away.
 function renderDrawer() {
   const scroll = document.getElementById('drawerScroll');
   if (STATE.tours.length === 0) {
-    scroll.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-faint);font-size:14px;">אין טיולים עדיין.<br>לחץ "טיול חדש" להתחיל.</div>';
+    scroll.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-faint);font-size:14px;">אין טיולים עדיין.</div>' +
+      drawerToolsHtml();
+    renderDrawerTheme();
     return;
   }
 
-  // Sort: upcoming/during first (by start date asc), then past (by start date desc)
   const withStatus = STATE.tours.map(t => ({ ...t, _status: getTripStatus(t) }));
-  const upcoming = withStatus.filter(t => t._status.status !== 'past')
-    .sort((a,b) => new Date(a.startDate) - new Date(b.startDate));
+  const active = withStatus.filter(t => t._status.status !== 'past')
+    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   const past = withStatus.filter(t => t._status.status === 'past')
-    .sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
   let html = '';
-  if (upcoming.length) {
-    html += '<div class="drawer-section-label">קרובים ונוכחיים</div>';
-    upcoming.forEach(t => html += drawerTripItem(t));
+  if (active.length) {
+    html += '<div class="drawer-section-label">הטיול הנוכחי</div>';
+    active.forEach(t => html += drawerTripItem(t));
   }
+
+  html += '<div class="drawer-section-label">מסכים</div><div class="drawer-nav">' +
+    DRAWER_NAV.map(n =>
+      '<button class="drawer-nav-item' + (STATE.currentView === n.view ? ' active' : '') + '" onclick="drawerGo(\'' + n.view + '\')">' +
+        '<span class="drawer-nav-icon">' + n.icon + '</span>' +
+        '<span class="drawer-nav-label">' + n.label +
+          (n.sub ? '<span>' + n.sub + '</span>' : '') + '</span>' +
+      '</button>').join('') + '</div>';
+
   if (past.length) {
-    html += '<div class="drawer-section-label">טיולים שהיו</div>';
-    past.forEach(t => html += drawerTripItem(t));
+    html += '<details class="drawer-fold"><summary>טיולים קודמים (' + past.length + ')</summary>' +
+      past.map(t => drawerTripItem(t)).join('') + '</details>';
   }
+
+  html += drawerToolsHtml();
   scroll.innerHTML = html;
   renderDrawerTheme();
+}
+
+// Loading trip data overwrites what is in Firestore, so these do not belong next to
+// everyday navigation. Folded shut, at the bottom, with the warning attached.
+function drawerToolsHtml() {
+  return '<details class="drawer-fold"><summary>כלים וניהול נתונים</summary>' +
+    '<div style="padding:4px 4px 10px;">' +
+      '<div style="font-size:11px;color:var(--text-faint);line-height:1.6;margin-bottom:10px;">' +
+        '⚠️ טעינת טיול דורסת את היומן, ההכנות והציוד שלו ב-Firestore.</div>' +
+      '<button class="new-trip-btn" onclick="openNewTripForm()" style="margin-bottom:10px;">➕ טיול חדש</button>' +
+      '<button class="drawer-tool-btn" onclick="seedCyprus()" id="seedCyprusBtn">🇨🇾 טען מחדש את קפריסין</button>' +
+      '<button class="drawer-tool-btn" onclick="seedGeorgia()" id="seedBtn">🇬🇪 טען מחדש את גאורגיה</button>' +
+      '<button class="drawer-tool-btn" onclick="seedKorea()" id="seedKoreaBtn">🇰🇷 טען מחדש את קוריאה</button>' +
+    '</div></details>';
+}
+
+function drawerGo(view) {
+  closeDrawer();
+  navigate(view);
 }
 
 // The theme switch lives here rather than in the header, which was already carrying a
@@ -1439,7 +1513,16 @@ function renderDrawerTheme() {
   const host = document.getElementById('drawerTheme');
   if (!host) return;
   const light = currentTheme() === 'light';
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  const on = perm === 'granted';
+  const notifLabel = perm === 'denied' ? 'התראות חסומות בדפדפן'
+                   : on ? 'התראות על משימות דחופות' : 'הפעל התראות';
   host.innerHTML =
+    '<button class="drawer-theme-btn" id="notifBtn" onclick="toggleNotifications()">' +
+      '<span>' + (on ? '🔔' : '🔕') + '</span>' +
+      '<span style="flex:1;">' + notifLabel + '</span>' +
+      '<span class="drawer-theme-switch' + (on ? ' on' : '') + '"><i></i></span>' +
+    '</button>' +
     '<button class="drawer-theme-btn" onclick="toggleTheme()">' +
       '<span>' + (light ? '☀️' : '🌙') + '</span>' +
       '<span style="flex:1;">' + (light ? 'מצב בהיר' : 'מצב כהה') + '</span>' +
@@ -1499,10 +1582,12 @@ async function loadTripHome() {
   let heroText = '';
   if (status.status === 'before') {
     if (status.days <= 7) {
-      heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
-        '<div class="hero-title">✈️ עד הטיסה</div>' +
-        '<div class="hero-count" id="tripCountdown" style="font-variant-numeric:tabular-nums;">--:--:--</div>' +
-        '<div class="hero-sub">' + status.days + ' ימים · ' + formatDates(tour) + '</div>';
+      heroText = '<div class="hero-main">' +
+          '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+          '<div class="hero-title">✈️ עד הטיסה</div>' +
+          '<div class="hero-sub">' + formatDates(tour) + '</div></div>' +
+        '<div class="hero-figure"><div class="hero-count" id="tripCountdown" style="font-variant-numeric:tabular-nums;">--:--:--</div>' +
+          '<div class="hero-unit">שעות</div></div>';
       // Start countdown after render - target the actual flight departure time
       // (not midnight of the start date), based on the device's local time.
       const flightDateObj = getFlightDateTime(tour);
@@ -1523,37 +1608,32 @@ async function loadTripHome() {
         window._tripCd = setInterval(upd, 1000);
       }, 60);
     } else {
-      heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
-        '<div class="hero-title">הטיול מתחיל בעוד</div>' +
-        '<div class="hero-count">' + status.days + '</div>' +
-        '<div class="hero-sub">' + (status.days === 1 ? 'יום' : 'ימים') + '</div>';
+      heroText = '<div class="hero-main">' +
+          '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+          '<div class="hero-title">הטיול מתחיל בעוד</div>' +
+          '<div class="hero-sub">' + formatDates(tour) + '</div></div>' +
+        '<div class="hero-figure"><div class="hero-count">' + status.days + '</div>' +
+          '<div class="hero-unit">' + (status.days === 1 ? 'יום' : 'ימים') + '</div></div>';
     }
   } else if (status.status === 'during') {
-    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
-      '<div class="hero-title">🎉 הטיול קורה עכשיו!</div>' +
-      '<div class="hero-sub">' + formatDates(tour) + '</div>';
+    heroText = '<div class="hero-main">' +
+        '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+        '<div class="hero-title">🎉 הטיול קורה עכשיו</div>' +
+        '<div class="hero-sub">' + formatDates(tour) + '</div></div>';
   } else {
-    heroText = '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
-      '<div class="hero-title">✨ טיול שהיה</div>' +
-      '<div class="hero-sub">' + formatDates(tour) + '</div>';
+    heroText = '<div class="hero-main">' +
+        '<div class="hero-eyebrow">' + (tour.flag||'') + ' ' + tour.title + '</div>' +
+        '<div class="hero-title">✨ טיול שהיה</div>' +
+        '<div class="hero-sub">' + formatDates(tour) + '</div></div>';
   }
 
   content.innerHTML =
-    '<div class="hero">' + heroBg + '<div class="hero-content">' + heroText + '</div></div>' +
+    '<div class="hero' + (tour.coverImage ? '' : ' hero-compact') + '">' + heroBg +
+      '<div class="hero-content">' + heroText + '</div></div>' +
     buildNowHtml(tour) +
     buildAlertsHtml(tour) +
     buildWeatherStripHtml(tour) +
     buildCostHtml(tour) +
-    '<div class="section-title">גישה מהירה</div>' +
-    '<div class="quick-grid">' +
-      '<div class="quick-card" onclick="navigate(\'itinerary\')"><div class="icon">📅</div><div class="label">יומן המסע</div><div class="sub">תוכנית יומית</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'currency\')"><div class="icon">💱</div><div class="label">מטבע</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'phrases\')"><div class="icon">💬</div><div class="label">שיחון</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'emergency\')"><div class="icon">🆘</div><div class="label">חירום</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'transport\')"><div class="icon">🚕</div><div class="label">תחבורה</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'prep\')"><div class="icon">✅</div><div class="label">הכנות</div></div>' +
-      '<div class="quick-card" onclick="navigate(\'packing\')"><div class="icon">🧳</div><div class="label">מה לקחת</div></div>' +
-    '</div>' +
     (tour.driveFolder ?
       '<div style="margin-top:16px;"><a href="' + tour.driveFolder + '" target="_blank" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--text);"><span style="font-size:22px;">📁</span><div style="flex:1;"><div style="font-weight:600;font-size:15px;">מסמכי הטיול</div><div style="font-size:12px;color:var(--text-dim);">כרטיסים, קבלות, ביטוח ב-Drive</div></div><span style="color:var(--text-faint);">↗</span></a></div>'
       : '') +
@@ -1636,7 +1716,12 @@ function buildWeatherStripHtml(tour) {
   const caveat = (st.status === 'before' && st.days > 7)
     ? '<div class="wx-note">תחזית ל-' + st.days + ' ימים קדימה היא אינדיקציה בלבד — היא תתייצב ככל שמתקרבים.</div>'
     : '';
-  return '<div class="section-title">מזג אוויר בימי הטיול</div><div class="wx-strip">' + cells + '</div>' + caveat;
+  const range = briefs.filter(Boolean);
+  const summary = range.length
+    ? Math.min(...range.map(b => b.min)) + '–' + Math.max(...range.map(b => b.max)) + '°'
+    : '';
+  return '<details class="fold" open><summary>🌤️ מזג אוויר<span class="fold-sum">' + summary + '</span></summary>' +
+    '<div class="fold-body"><div class="wx-strip">' + cells + '</div>' + caveat + '</div></details>';
 }
 
 // Rates taken from the trip's own paperwork, where the same amount appears in two
@@ -1667,12 +1752,12 @@ function buildCostHtml(tour) {
   const total = priced.reduce((a, r) => a + r.ils, 0);
   const heads = (tour.travelers || []).length || 1;
   const fmt = n => '₪' + Math.round(n).toLocaleString('en-US');
-  return '<div class="section-title">עלויות ששולמו</div><div class="cost-card">' +
-    '<div class="cost-total">' + fmt(total) + '</div>' +
-    '<div class="cost-per">' + fmt(total / heads) + ' לאדם · ' + heads + ' משתתפים</div>' +
-    priced.map(r => '<div class="cost-row"><span>' + r.label + '</span><b>' + fmt(r.ils) + '</b></div>').join('') +
-    '<div class="cost-foot">לא כולל פעילויות שטרם הוזמנו, דלק, אוכל וקניות. המרות לפי השערים שבמסמכי ההזמנה עצמם.</div>' +
-    '</div>';
+  return '<details class="fold"><summary>💰 עלויות ששולמו<span class="fold-sum">' + fmt(total) + '</span></summary>' +
+    '<div class="fold-body">' +
+      '<div class="cost-per" style="margin-bottom:8px;">' + fmt(total / heads) + ' לאדם · ' + heads + ' משתתפים</div>' +
+      priced.map(r => '<div class="cost-row"><span>' + r.label + '</span><b>' + fmt(r.ils) + '</b></div>').join('') +
+      '<div class="cost-foot">לא כולל פעילויות שטרם הוזמנו, דלק, אוכל וקניות. המרות לפי השערים שבמסמכי ההזמנה עצמם.</div>' +
+    '</div></details>';
 }
 
 function buildAlertsHtml(tour) {
@@ -3238,16 +3323,10 @@ function toggleNotifications() {
   }
 }
 
+// The notification control lives in the drawer now - it is a setting you touch once,
+// not something that earns a permanent slot in the header next to the trip name.
 function updateNotifBtn() {
-  const btn = document.getElementById('notifBtn');
-  if (!btn) return;
-  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  btn.className = 'notif-btn';
-  if (perm === 'granted') { btn.classList.add('enabled'); btn.innerHTML = '🔔'; }
-  else if (perm === 'denied') { btn.classList.add('denied'); btn.innerHTML = '🔕'; }
-  else { btn.innerHTML = '🔔'; }
-  const urgent = getUrgentTasks();
-  if (urgent.length > 0) btn.innerHTML += '<span class="notif-count">' + urgent.length + '</span>';
+  renderDrawerTheme();
 }
 
 function fireDueNotifications() {
@@ -3276,6 +3355,8 @@ function fireDueNotifications() {
 
 // ---------- Init ----------
 async function init() {
+  window._initRan = true;
+
   // History for back button
   history.replaceState({ view: 'home' }, '');
   window.addEventListener('popstate', (e) => {
@@ -3324,12 +3405,40 @@ async function init() {
     STATE.tours[0].id;
   await loadTripHome();
 
-  // Service worker (sw.js). This used to register a blob: URL, which browsers reject as
-  // a worker script - the error was swallowed, so no worker ran and nothing was cached.
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
 }
+
+// The service worker is registered here rather than at the end of init(). init() only
+// runs on the db-ready event, which the Firebase module fires after loading from
+// gstatic - so if that module ever failed to load, the worker was never registered and
+// the app could never work offline at all. The one thing that makes offline possible
+// cannot depend on a network fetch succeeding.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// If Firebase never loads - no network on a cold start, or gstatic unreachable - the
+// db-ready event never fires and init() would wait forever behind a spinner. Fall back
+// to the saved snapshot so the trip is still readable.
+setTimeout(() => {
+  if (!window.DB && !window._initRan) {
+    window.DB = {
+      fromCache: true,
+      lastSync: null,
+      listTours: async () => {
+        try {
+          const snap = JSON.parse(localStorage.getItem('toursSnapshot') || 'null');
+          if (snap && snap.tours && snap.tours.length) { window.DB.lastSync = snap.at; return snap.tours; }
+        } catch (e) {}
+        throw new Error('offline');
+      },
+      getTour: async () => null,
+      saveTour: async () => { throw new Error('offline'); },
+      deleteTour: async () => { throw new Error('offline'); },
+      watchTour: () => (() => {})
+    };
+    init();
+  }
+}, 6000);
 
 (function () {
   let saved = null;
