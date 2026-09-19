@@ -262,6 +262,8 @@ header {
 .map-full-btn { position: absolute; top: 10px; left: 10px; z-index: 6; width: 40px; height: 40px;
   border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
   color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); }
+.map-tool-icon { padding-left: 10px; padding-right: 10px; }
+.map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
 .map-missing { margin-top: 12px; padding: 11px 13px; border: 1px dashed var(--border);
   border-radius: var(--radius-sm); background: var(--surface); }
 .map-missing-head { font-size: 13.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
@@ -1042,6 +1044,19 @@ function mapNavigate(lat, lng) {
   catch (e) { clearTimeout(fallback); window.location.href = web; }
 }
 
+// google.navigation: goes straight to Google. A geo: URI instead asks Android which
+// app should take it, so Maps.me, Organic Maps or anything else installed can answer -
+// which matters off-road, where Google has no route and an offline app does. iOS has no
+// geo: handler, so it falls back to the same web URL as the Google button.
+function mapNavigateAny(lat, lng, name) {
+  const label = encodeURIComponent(name || '');
+  const web = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+  const fallback = setTimeout(() => { window.location.href = web; }, 1200);
+  window.addEventListener('blur', () => clearTimeout(fallback), { once: true });
+  try { window.location.href = 'geo:' + lat + ',' + lng + '?q=' + lat + ',' + lng + '(' + label + ')'; }
+  catch (e) { clearTimeout(fallback); window.location.href = web; }
+}
+
 function mapStop() {
   if (MAP_WATCH !== null) { navigator.geolocation.clearWatch(MAP_WATCH); MAP_WATCH = null; }
   if (MAP) { MAP.remove(); MAP = null; }
@@ -1267,7 +1282,9 @@ function mapDrawPins(tour) {
       (pt.sub ? '<div class="map-pop-sub">' + pt.sub + '</div>' : '') +
       (MAP_POS ? '<div class="map-pop-sub">' + mapFmtDist(mapDist(MAP_POS, pt)) + ' · ' +
         Math.round(mapBearing(MAP_POS, pt)) + '° ' + mapCompass(mapBearing(MAP_POS, pt)) + '</div>' : '') +
-      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט לכאן</button>';
+      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט ב-Google</button>' +
+      '<button class="map-pop-btn map-pop-btn-alt" onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' +
+        JSON.stringify(pt.name) + ')">📍 אפליקציה אחרת</button>';
     return new MAP_LIBS.maplibregl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([pt.lng, pt.lat])
       .setPopup(new MAP_LIBS.maplibregl.Popup({ offset: 16, closeButton: false, maxWidth: '240px' }).setHTML(html))
@@ -1411,6 +1428,8 @@ function mapRenderList(tour) {
         (pt.sub ? '<div class="map-pt-sub">' + pt.sub + '</div>' : '') +
       '</div>' + dist +
       '<button class="map-tool" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">נווט</button>' +
+      '<button class="map-tool map-tool-icon" title="פתח באפליקציית מפות אחרת (Maps.me וכו׳)" ' +
+        'onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ')">📍</button>' +
       '</div>';
   }).join('');
 
