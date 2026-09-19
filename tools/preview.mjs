@@ -95,12 +95,32 @@ function serve() {
     const path = decodeURIComponent(req.url.split('?')[0]);
     const file = join(ROOT, path === '/' ? 'index.html' : path);
     if (!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
-    try {
-      const body = await readFile(file);
-      res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream' }).end(body);
-    } catch {
-      res.writeHead(404).end('not found');
+    let body;
+    try { body = await readFile(file); }
+    catch { res.writeHead(404).end('not found'); return; }
+
+    const type = TYPES[extname(file)] || 'application/octet-stream';
+    // The basemap is a .pmtiles archive read with HTTP Range requests - the library
+    // never fetches the whole 49MB file. A server that answers 200 with the lot makes
+    // the map screen fail here for a reason that does not exist in production, which
+    // would make this tool useless for exactly the screen it is most needed on.
+    const range = req.headers.range && /^bytes=(\d*)-(\d*)$/.exec(req.headers.range);
+    if (range) {
+      const start = range[1] ? Number(range[1]) : 0;
+      const end = range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
+      if (start > end || start >= body.length) {
+        res.writeHead(416, { 'Content-Range': `bytes */${body.length}` }).end();
+        return;
+      }
+      res.writeHead(206, {
+        'Content-Type': type,
+        'Content-Range': `bytes ${start}-${end}/${body.length}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': end - start + 1
+      }).end(body.subarray(start, end + 1));
+      return;
     }
+    res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes' }).end(body);
   });
   return new Promise(ok => server.listen(0, '127.0.0.1', () => ok({ server, port: server.address().port })));
 }
