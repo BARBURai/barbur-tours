@@ -1695,7 +1695,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 8, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 9, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -1816,16 +1816,24 @@ function priceToIls(str) {
 function buildEstimatesHtml(tour, heads, fmt) {
   const est = tour.estimates || [];
   if (!est.length) return '';
+  // Some of these are priced per head and some are one price for the whole group - a
+  // boat or a buggy is hired once, not once each. Multiplying those by heads inflated
+  // the estimate by hundreds of euro.
   const rows = est.map(e => {
-    const ils = (e.perPerson || 0) * heads * (FX_ILS[e.currency] || 1);
-    return { label: e.label, note: e.note, per: e.perPerson, cur: e.currency, ils: ils };
+    const perHead = e.perPerson != null;
+    const amount = perHead ? e.perPerson : (e.total || 0);
+    const ils = (perHead ? amount * heads : amount) * (FX_ILS[e.currency] || 1);
+    return { label: e.label, note: e.note, amount: amount, perHead: perHead, cur: e.currency, ils: ils };
   });
   const total = rows.reduce((a, r) => a + r.ils, 0);
   const sym = { EUR: '€', USD: '$' }[rows[0].cur] || '';
   return '<div class="cost-sep">עוד לא שולם — הערכה</div>' +
     rows.map(r => '<div class="cost-row"><span>' + r.label +
       (r.note ? ' <span style="color:var(--text-faint);font-size:11px;">' + r.note + '</span>' : '') +
-      '</span><b>' + sym + r.per + ' × ' + heads + '</b></div>').join('') +
+      '</span><b>' + sym + r.amount +
+      (r.perHead ? ' × ' + heads
+                 : ' <span style="color:var(--text-faint);font-size:11px;font-weight:500;">סה״כ</span>') +
+      '</b></div>').join('') +
     '<div class="cost-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:8px;">' +
       '<span style="font-weight:600;color:var(--text);">סה״כ צפוי להוסיף</span><b>' + fmt(total) + '</b></div>';
 }
@@ -2092,7 +2100,7 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 8,
+  dataVersion: 9,
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2190,8 +2198,8 @@ window.seedCyprus = async function() {
   ],
   estimates: [
     {label:"🤿 צלילות זנוביה",perPerson:140,currency:"EUR",note:"מקדמה שולמה"},
-    {label:"⛵ סירה בלאצ׳י",perPerson:300,currency:"EUR"},
-    {label:"🏍️ באגי/ATV",perPerson:200,currency:"EUR"}
+    {label:"⛵ סירה בלאצ׳י",total:300,currency:"EUR",note:"לכל השלושה · 4 שעות"},
+    {label:"🏍️ באגי/ATV",total:200,currency:"EUR",note:"לכל השלושה"}
   ],
   packingList: [
     {id:"doc1",text:"📄 דרכון",owner:"all",packed:false},
