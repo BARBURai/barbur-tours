@@ -237,8 +237,6 @@ header {
 .day-nav-btn:disabled { opacity: .3; color: var(--text-faint); }
 .day-nav-label { flex: 1; text-align: center; font-size: 17px; font-weight: 700; }
 .day-nav-label span { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-faint); margin-top: 2px; }
-.day-map-btn { display: block; width: 100%; background: var(--surface); border: 1px solid rgba(249,115,22,0.45); color: var(--accent-2); border-radius: var(--radius); padding: 13px; font-size: 14.5px; font-weight: 700; font-family: inherit; margin: 16px 0 6px; box-shadow: var(--shadow); }
-.day-map-btn span { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-dim); margin-top: 3px; }
 .day-nav-hint { text-align: center; font-size: 12.5px; color: var(--text-faint); margin: -6px 0 12px; }
 .phrase-card { position: relative; }
 .phrase-speak { position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 50%; font-size: 18px; display: flex; align-items: center; justify-content: center; }
@@ -257,6 +255,19 @@ header {
 .now-next { opacity: .62; }
 .map-wrap { position: relative; height: 58vh; min-height: 300px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface); margin-bottom: 12px; }
 #mapCanvas { position: absolute; inset: 0; }
+/* Fullscreen is the whole point of a map on a phone: 58vh is enough to know roughly
+   where a pin is and never enough to read the streets around it. */
+.map-wrap.map-full { position: fixed; inset: 0; z-index: 1200; height: 100dvh; max-height: none;
+  min-height: 0; margin: 0; border: 0; border-radius: 0; }
+.map-full-btn { position: absolute; top: 10px; left: 10px; z-index: 6; width: 40px; height: 40px;
+  border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); }
+.map-tool-icon { padding-left: 10px; padding-right: 10px; }
+.map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
+.map-missing { margin-top: 12px; padding: 11px 13px; border: 1px dashed var(--border);
+  border-radius: var(--radius-sm); background: var(--surface); }
+.map-missing-head { font-size: 13.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
+.map-missing-item { font-size: 13px; color: var(--text-faint); line-height: 1.7; }
 .map-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; background: var(--surface); color: var(--text-dim); font-size: 14.5px; line-height: 1.7; }
 .map-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .map-tool { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 7px 12px; font-size: 14px; font-weight: 600; }
@@ -808,9 +819,11 @@ header {
     <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     <span>יומן</span>
   </button>
-  <button class="nav-btn" data-view="bookings" onclick="navigate('bookings')">
-    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2v2z"/></svg>
-    <span>הזמנות</span>
+  <!-- The drawer holds all ten screens; the bar has room for four. A button that opens
+       the drawer reaches every one of them, where a fifth shortcut reached one. -->
+  <button class="nav-btn" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+    <span>הכל</span>
   </button>
   <button class="nav-btn" data-view="map" onclick="navigate('map')">
     <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 3L3 5.5v15L9 18l6 3 6-2.5v-15L15 6 9 3z"/><path d="M9 3v15M15 6v15"/></svg>
@@ -957,15 +970,51 @@ function mapTypeIcon(t) {
 }
 
 // Every place in the trip that carries coordinates, tagged with the day it belongs to.
+// Anything with a location belongs on the map. Hotels were the only booking that ever
+// reached it, which is why the car hire and the airport - the two fixed points the rest
+// of the trip hangs off - were simply absent, with nothing on screen to say why.
+const BOOKING_PINS = [
+  { key: 'hotels', icon: '🏨', name: b => b.name,             sub: b => b.city || b.address || '' },
+  { key: 'cars',   icon: '🚗', name: b => b.company || 'רכב', sub: b => [b.pickup, b.dropoff].filter(Boolean).join(' → ') }
+];
+
+// Coordinates come back as whatever was typed into the seed, and the WellClub pair are
+// strings. Coercing once here keeps every distance and bounds calculation downstream
+// doing arithmetic rather than string concatenation.
+function mapCoord(v) {
+  const n = Number(v);
+  return Number.isFinite(n) && n !== 0 ? n : null;
+}
+
+// Booked places with no coordinates, so the map can say what it is not showing instead
+// of leaving the owner to wonder where his car hire went.
+function mapMissingPlaces(tour) {
+  const out = [];
+  BOOKING_PINS.forEach(cfg => {
+    ((tour.bookings || {})[cfg.key] || []).forEach(b => {
+      if (mapCoord(b.lat) === null || mapCoord(b.lng) === null) {
+        out.push({ icon: cfg.icon, name: cfg.name(b), sub: cfg.sub(b) });
+      }
+    });
+  });
+  return out;
+}
+
 function mapPoints(tour) {
   const pts = [];
-  ((tour.bookings && tour.bookings.hotels) || []).forEach(h => {
-    if (h.lat && h.lng) pts.push({ name: h.name, sub: h.city || '', lat: h.lat, lng: h.lng, day: 'all', icon: '🏨' });
+  BOOKING_PINS.forEach(cfg => {
+    ((tour.bookings || {})[cfg.key] || []).forEach(b => {
+      const lat = mapCoord(b.lat), lng = mapCoord(b.lng);
+      if (lat !== null && lng !== null) {
+        pts.push({ name: cfg.name(b), sub: cfg.sub(b), lat: lat, lng: lng, day: 'all', icon: cfg.icon });
+      }
+    });
   });
   (tour.days || []).forEach((d, i) => {
     (d.items || []).forEach(it => {
-      if (it.lat && it.lng) {
-        pts.push({ name: it.activity, sub: d.date + ' · ' + it.time, lat: it.lat, lng: it.lng, day: i, icon: mapTypeIcon(it.type) });
+      const lat = mapCoord(it.lat), lng = mapCoord(it.lng);
+      if (lat !== null && lng !== null) {
+        pts.push({ name: it.activity, sub: d.date + ' · ' + it.time, lat: lat, lng: lng, day: i, icon: mapTypeIcon(it.type) });
       }
     });
   });
@@ -995,6 +1044,19 @@ function mapNavigate(lat, lng) {
   catch (e) { clearTimeout(fallback); window.location.href = web; }
 }
 
+// google.navigation: goes straight to Google. A geo: URI instead asks Android which
+// app should take it, so Maps.me, Organic Maps or anything else installed can answer -
+// which matters off-road, where Google has no route and an offline app does. iOS has no
+// geo: handler, so it falls back to the same web URL as the Google button.
+function mapNavigateAny(lat, lng, name) {
+  const label = encodeURIComponent(name || '');
+  const web = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+  const fallback = setTimeout(() => { window.location.href = web; }, 1200);
+  window.addEventListener('blur', () => clearTimeout(fallback), { once: true });
+  try { window.location.href = 'geo:' + lat + ',' + lng + '?q=' + lat + ',' + lng + '(' + label + ')'; }
+  catch (e) { clearTimeout(fallback); window.location.href = web; }
+}
+
 function mapStop() {
   if (MAP_WATCH !== null) { navigator.geolocation.clearWatch(MAP_WATCH); MAP_WATCH = null; }
   if (MAP) { MAP.remove(); MAP = null; }
@@ -1014,7 +1076,7 @@ async function renderMap(tour) {
   c.innerHTML =
     '<div class="section-title">מפה</div>' +
     '<div style="font-size:13px;color:var(--text-faint);margin-bottom:8px;line-height:1.6;">' +
-      'בחר יום כדי לראות רק את הנקודות שלו · 🎯 מרכז על המיקום שלך · 🥾 מדגיש שבילי עפר (שימושי בהרים, מבלגן בעיר)' +
+      'כברירת מחדל מוצג כל הטיול · בחר יום כדי לסנן · ⛶ מסך מלא · 🎯 מרכז על המיקום שלך · 🥾 מדגיש שבילי עפר (שימושי בהרים, מבלגן בעיר)' +
     '</div>' +
     '<div id="mapStatus" style="font-size:13.5px;color:var(--text-dim);margin-bottom:10px;"></div>' +
     '<div id="mapDlWrap"></div>' +
@@ -1024,7 +1086,11 @@ async function renderMap(tour) {
       '<button class="map-tool" onclick="mapCenterMe()">🎯 מרכז עליי</button>' +
       '<button class="map-tool" onclick="mapFitPoints(true)">↔️ הצג הכל</button>' +
     '</div>' +
-    '<div class="map-wrap"><div id="mapCanvas"></div><div class="map-note" id="mapNote">טוען מפה…</div></div>' +
+    '<div class="map-wrap">' +
+      '<div id="mapCanvas"></div>' +
+      '<button class="map-full-btn" id="mapFullBtn" onclick="mapToggleFull()" title="מסך מלא">⛶</button>' +
+      '<div class="map-note" id="mapNote">טוען מפה…</div>' +
+    '</div>' +
     '<div class="section-title">נקודות הטיול</div>' +
     '<div id="mapList"></div>';
 
@@ -1209,14 +1275,16 @@ function mapDrawPins(tour) {
   MAP_MARKERS = pts.map((pt, i) => {
     const el = document.createElement('div');
     el.className = 'map-pin' + (pt.day === 'all' ? ' pin-hotel' : '');
-    el.innerHTML = '<b>' + (pt.day === 'all' ? '🏨' : (i + 1)) + '</b>';
+    el.innerHTML = '<b>' + (pt.day === 'all' ? pt.icon : (i + 1)) + '</b>';
     el.title = pt.name;
     const html =
       '<div class="map-pop-name">' + pt.icon + ' ' + pt.name + '</div>' +
       (pt.sub ? '<div class="map-pop-sub">' + pt.sub + '</div>' : '') +
       (MAP_POS ? '<div class="map-pop-sub">' + mapFmtDist(mapDist(MAP_POS, pt)) + ' · ' +
         Math.round(mapBearing(MAP_POS, pt)) + '° ' + mapCompass(mapBearing(MAP_POS, pt)) + '</div>' : '') +
-      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט לכאן</button>';
+      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט ב-Google</button>' +
+      '<button class="map-pop-btn map-pop-btn-alt" onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' +
+        JSON.stringify(pt.name) + ')">📍 אפליקציה אחרת</button>';
     return new MAP_LIBS.maplibregl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([pt.lng, pt.lat])
       .setPopup(new MAP_LIBS.maplibregl.Popup({ offset: 16, closeButton: false, maxWidth: '240px' }).setHTML(html))
@@ -1250,11 +1318,6 @@ function mapCenterMe() {
 }
 
 // Called from the itinerary: open the map already framed on that day.
-function showDayOnMap(i) {
-  MAP_DAY = i;
-  navigate('map');
-}
-
 function mapSetDay(d) {
   MAP_DAY = d;
   const tour = curTour();
@@ -1275,6 +1338,28 @@ function renderMapChips(tour) {
   wrap.innerHTML = ['<button class="map-tool' + (MAP_DAY === 'all' ? ' on' : '') + '" onclick="mapSetDay(\'all\')">כל הטיול</button>']
     .concat(days.map((d, i) => '<button class="map-tool' + (MAP_DAY === i ? ' on' : '') + '" onclick="mapSetDay(' + i + ')">' + d.date + '</button>'))
     .join('');
+}
+
+// MapLibre reads its canvas size from the container, so growing the box is only half
+// the job - without resize() the map keeps drawing at the old dimensions.
+function mapToggleFull() {
+  const wrap = document.querySelector('.map-wrap');
+  if (!wrap) return;
+  const on = wrap.classList.toggle('map-full');
+  document.body.style.overflow = on ? 'hidden' : '';
+  const btn = document.getElementById('mapFullBtn');
+  if (btn) { btn.textContent = on ? '✕' : '⛶'; btn.title = on ? 'צא ממסך מלא' : 'מסך מלא'; }
+  // Re-checked inside the timer, not only before it: leaving the map screen in that
+  // window runs mapStop(), which nulls MAP out from under the callback.
+  setTimeout(() => { if (MAP) { MAP.resize(); mapFitPoints(false); } }, 80);
+}
+
+// Leaving the map screen while it is fullscreen would otherwise strand the page with
+// overflow hidden and nothing visible to scroll.
+function mapExitFull() {
+  const wrap = document.querySelector('.map-wrap');
+  if (wrap && wrap.classList.contains('map-full')) mapToggleFull();
+  else document.body.style.overflow = '';
 }
 
 function mapToggleTrails() {
@@ -1321,7 +1406,13 @@ function mapRenderList(tour) {
   const el = document.getElementById('mapList');
   if (!el) return;
   const pts = mapVisiblePoints(tour);
-  if (!pts.length) { el.innerHTML = '<div class="packing-empty">אין נקודות עם קואורדינטות ביום הזה</div>'; return; }
+  if (!pts.length) {
+    const none = mapMissingPlaces(tour);
+    el.innerHTML = '<div class="packing-empty">אין נקודות עם קואורדינטות ביום הזה</div>' +
+      (none.length ? '<div class="map-missing"><div class="map-missing-head">אין קואורדינטות, ולכן לא על המפה:</div>' +
+        none.map(m => '<div class="map-missing-item">' + m.icon + ' ' + m.name + '</div>').join('') + '</div>' : '');
+    return;
+  }
 
   const rows = pts.map(pt => {
     let dist = '';
@@ -1337,11 +1428,21 @@ function mapRenderList(tour) {
         (pt.sub ? '<div class="map-pt-sub">' + pt.sub + '</div>' : '') +
       '</div>' + dist +
       '<button class="map-tool" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">נווט</button>' +
+      '<button class="map-tool map-tool-icon" title="פתח באפליקציית מפות אחרת (Maps.me וכו׳)" ' +
+        'onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ')">📍</button>' +
       '</div>';
   }).join('');
 
+  const missing = mapMissingPlaces(tour);
+  const missingHtml = missing.length ?
+    '<div class="map-missing"><div class="map-missing-head">אין קואורדינטות, ולכן לא על המפה:</div>' +
+      missing.map(m => '<div class="map-missing-item">' + m.icon + ' ' + m.name +
+        (m.sub ? ' · ' + m.sub : '') + '</div>').join('') +
+    '</div>' : '';
+
   el.innerHTML = (MAP_POS ? '' :
-    '<div style="font-size:13px;color:var(--text-faint);margin-bottom:8px;">מרחק ואזימוט יופיעו ברגע שה-GPS ייתפס</div>') + rows;
+    '<div style="font-size:13px;color:var(--text-faint);margin-bottom:8px;">מרחק ואזימוט יופיעו ברגע שה-GPS ייתפס</div>') +
+    rows + missingHtml;
 }
 
 // ---------- Theme ----------
@@ -1406,7 +1507,7 @@ window.addEventListener('offline', updateOfflineBar);
 function navigate(view, skipHistory) {
   // Leaving the map releases the GPS watch - keeping it running in the background
   // drains the battery for a screen nobody is looking at.
-  if (STATE.currentView === 'map' && view !== 'map') mapStop();
+  if (STATE.currentView === 'map' && view !== 'map') { mapExitFull(); mapStop(); }
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const viewEl = document.getElementById('view-' + view);
   if (viewEl) viewEl.classList.add('active');
@@ -1695,7 +1796,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 9, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 11, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2100,7 +2201,7 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 9,
+  dataVersion: 11,
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2125,7 +2226,7 @@ window.seedCyprus = async function() {
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
     ],
     cars: [
-      {company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
+      {lat:34.8751,lng:33.6249,company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
     ]
   },
   days: [
@@ -2152,14 +2253,19 @@ window.seedCyprus = async function() {
       {time:"19:30",activity:"נסיעה לכלורקה/פאפוס (כ-130 ק\"מ, 1:15 בכביש המהיר)",type:"logistics"},
       {time:"20:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel",lat:34.7881,lng:32.4090}
     ],notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
-    {date:"3.10",day_of_week:"שבת",title:"באגי/ATV בשטח + ספא",location:"פיסורי או טרודוס",summary:"טיול שטח 4 שעות, ואחריו ספא בריזורט וערב בקאטו פאפוס",items:[
-      {time:"09:30",activity:"יציאה מ-WellClub",type:"logistics"},
-      {time:"10:00",activity:"טיול באגי/ATV 4 שעות - פיסורי (כ-40 דק׳) או הרי טרודוס",type:"sightseeing",lat:34.6686,lng:32.7021},
-      {time:"14:30",activity:"ארוחה בכפר אחרי הטיול",type:"food"},
-      {time:"16:00",activity:"חזרה ל-WellClub",type:"logistics"},
-      {time:"18:00",activity:"ספא ווולנס בריזורט",type:"hotel"},
+    {date:"3.10",day_of_week:"שבת",title:"רייזרים באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"לולאת שטח בחצי האי אקמאס על רייזרים, ואחריה ספא בריזורט וערב בקאטו פאפוס",items:[
+      {time:"08:15",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
+      {time:"09:15",activity:"איסוף הרייזרים - Sammer Rent a Car, לאצ׳י",type:"logistics",lat:35.03961,lng:32.39958},
+      {time:"09:45",activity:"מרחץ אפרודיטה - סוף האספלט ותחילת שביל העפר של השמורה",type:"sightseeing",lat:35.05639,lng:32.33472},
+      {time:"10:30",activity:"תצפית הבלגונה הכחולה - הנקודה הגבוהה על הרכס",type:"sightseeing",lat:35.08183,lng:32.30605},
+      {time:"11:45",activity:"חוף הצבים - מפרץ לארה, רחצה בחוף הפראי",type:"sightseeing",lat:34.95611,lng:32.31222},
+      {time:"13:15",activity:"צהריים ב-Viklari (The Last Castle) - על המצוק מעל קניון אווקאס",type:"food",lat:34.91689,lng:32.32833},
+      {time:"14:45",activity:"חזרה צפונה ללאצ׳י בשבילי הרכס (כ-24 ק\"מ בשטח, 75-90 דק׳)",type:"logistics"},
+      {time:"16:15",activity:"החזרת הרייזרים ב-Sammer",type:"logistics",lat:35.03961,lng:32.39958},
+      {time:"17:00",activity:"חזרה ל-WellClub",type:"logistics"},
+      {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel"},
       {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
-    ],notes:["⚠️ הבאגי טרם הוזמן - לבדוק Summer Quad Rentals (פיסורי) ואפשרויות בטרודוס","⚠️ לשאול במפורש על בן 18: איתן נולד 8.9.2008. זו השאלה שתקבע אם הוא נוהג או רק נוסע","לוודא רכבים שמתאימים ל-1.92 מ׳"]},
+    ],notes:["⚠️ הרייזרים טרם הוזמנו - Sammer Rent a Car, לאצ׳י. הנקודה שמורה בפריט של 09:15 ביומן","🕐 הלולאה היא כ-44 ק\"מ בקו אווירי, כ-70 ק\"מ בשבילים בפועל. עם עצירות, רחצה בלארה וצהריים ב-Viklari זה יום של 6-7 שעות השכרה, לא 4. לתאם מול Sammer לפני","⚠️ חוף לארה הוא שמורת קינון של צבי ים ויש הגבלות על כניסת רכב בעונה - לוודא מול Sammer שהמסלול מותר ב-3.10","⚠️ לשאול במפורש על בן 18: איתן נולד 8.9.2008. זו השאלה שתקבע אם הוא נוהג או רק נוסע","⚠️ לוודא רכבים שמתאימים ל-1.92 מ׳","📍 הקואורדינטות נבדקו: Sammer יושב כ-130 מ׳ ממרינת לאצ׳י של יום 4.10, כלומר מאומת. מרחץ אפרודיטה שונה בכ-900 מ׳ ממקור חיצוני - כדאי לאמת אותו על המפה לפני היציאה"]},
     {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
       {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics"},
       {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
@@ -2583,12 +2689,6 @@ function renderItinerary(tour) {
     });
   }
 
-  const dayPts = (day.items || []).filter(it => it.lat && it.lng).length;
-  if (dayPts) {
-    html += '<button class="day-map-btn" onclick="showDayOnMap(' + STATE.selectedDay + ')">' +
-      '🗺️ הצג את היום הזה על המפה' +
-      '<span>' + dayPts + ' נקודות · עובד גם בלי קליטה</span></button>';
-  }
 
   container.innerHTML = html;
   initItinerarySwipe();
