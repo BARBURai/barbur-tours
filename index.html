@@ -264,6 +264,17 @@ header {
   color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); }
 .map-tool-icon { padding-left: 10px; padding-right: 10px; }
 .map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
+.nav-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 13px 15px; margin-top: 16px; box-shadow: var(--shadow); }
+.nav-card-head { font-size: 15.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.nav-card-sep { font-size: 12.5px; color: var(--text-faint); margin: 10px 0 2px;
+  border-top: 1px solid var(--border); padding-top: 8px; }
+.nav-row { display: flex; align-items: center; gap: 8px; padding: 9px 0;
+  border-top: 1px solid var(--border); }
+.nav-card-head + .nav-row, .nav-card-sep + .nav-row { border-top: 0; }
+.nav-row-main { flex: 1; min-width: 0; }
+.nav-row-name { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.nav-row-sub { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
 .map-missing { margin-top: 12px; padding: 11px 13px; border: 1px dashed var(--border);
   border-radius: var(--radius-sm); background: var(--surface); }
 .map-missing-head { font-size: 13.5px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; }
@@ -993,7 +1004,8 @@ function mapMissingPlaces(tour) {
   BOOKING_PINS.forEach(cfg => {
     ((tour.bookings || {})[cfg.key] || []).forEach(b => {
       if (mapCoord(b.lat) === null || mapCoord(b.lng) === null) {
-        out.push({ icon: cfg.icon, name: cfg.name(b), sub: cfg.sub(b) });
+        out.push({ icon: cfg.icon, name: cfg.name(b), sub: cfg.sub(b),
+                   search: b.address ? (b.name ? b.name + ', ' + b.address : b.address) : (b.name || cfg.name(b)) });
       }
     });
   });
@@ -1055,6 +1067,13 @@ function mapNavigateAny(lat, lng, name) {
   window.addEventListener('blur', () => clearTimeout(fallback), { once: true });
   try { window.location.href = 'geo:' + lat + ',' + lng + '?q=' + lat + ',' + lng + '(' + label + ')'; }
   catch (e) { clearTimeout(fallback); window.location.href = web; }
+}
+
+// A booked place can carry a street address and no coordinates. Google resolves the
+// address itself, which is exact - better than a pin guessed onto the right street and
+// far better than an entry the traveller cannot tap.
+function mapSearchUrl(query) {
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
 }
 
 function mapStop() {
@@ -1437,7 +1456,9 @@ function mapRenderList(tour) {
   const missingHtml = missing.length ?
     '<div class="map-missing"><div class="map-missing-head">אין קואורדינטות, ולכן לא על המפה:</div>' +
       missing.map(m => '<div class="map-missing-item">' + m.icon + ' ' + m.name +
-        (m.sub ? ' · ' + m.sub : '') + '</div>').join('') +
+        (m.sub ? ' · ' + m.sub : '') +
+        (m.search ? ' <a class="timeline-nav-btn" target="_blank" href="' + mapSearchUrl(m.search) +
+          '">🔎 חפש בגוגל</a>' : '') + '</div>').join('') +
     '</div>' : '';
 
   el.innerHTML = (MAP_POS ? '' :
@@ -1777,6 +1798,7 @@ async function loadTripHome() {
       '<div class="hero-content">' + heroText + '</div></div>' +
     buildUpdateHtml(tour) +
     buildNowHtml(tour) +
+    buildTodayNavHtml(tour) +
     buildAlertsHtml(tour) +
     buildWeatherStripHtml(tour) +
     buildCostHtml(tour) +
@@ -1866,6 +1888,49 @@ function weatherBrief(tour, day) {
     max: Math.round(w.daily.temperature_2m_max[i]),
     min: Math.round(w.daily.temperature_2m_min[i])
   };
+}
+
+// Mid-trip the home screen is the one that gets opened, usually standing beside a car
+// with the engine running. Hunting for a navigation link through the itinerary is the
+// wrong thing to ask of someone in that position, so every place today can be reached
+// from here: the day's own stops in order, then the fixed points - tonight's hotel and
+// the hire desk - which are what "take me back" means.
+function buildTodayNavHtml(tour) {
+  if (getTripStatus(tour).status !== 'during') return '';
+  const idx = defaultDayIndex(tour);
+  const day = (tour.days || [])[idx];
+  if (!day) return '';
+
+  const pts = mapPoints(tour).filter(p => p.day === idx || p.day === 'all');
+  if (!pts.length) return '';
+  const stops = pts.filter(p => p.day !== 'all');
+  const fixed = pts.filter(p => p.day === 'all');
+
+  const row = pt =>
+    '<div class="nav-row">' +
+      '<div class="nav-row-main">' +
+        '<div class="nav-row-name">' + pt.icon + ' ' + pt.name + '</div>' +
+        (pt.sub ? '<div class="nav-row-sub">' + pt.sub + '</div>' : '') +
+      '</div>' +
+      '<a class="timeline-nav-btn" href="#" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ');return false;">🗺️ נווט</a>' +
+      '<a class="timeline-nav-btn" title="אפליקציית מפות אחרת" href="#" onclick="mapNavigateAny(' +
+        pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ');return false;">📍</a>' +
+    '</div>';
+
+  // An address with no pin still gets a tappable row - Google resolves it exactly.
+  const byAddress = mapMissingPlaces(tour).filter(m => m.search).map(m =>
+    '<div class="nav-row">' +
+      '<div class="nav-row-main"><div class="nav-row-name">' + m.icon + ' ' + m.name + '</div>' +
+        '<div class="nav-row-sub">לפי כתובת</div></div>' +
+      '<a class="timeline-nav-btn" target="_blank" href="' + mapSearchUrl(m.search) + '">🔎 גוגל</a>' +
+    '</div>').join('');
+
+  return '<div class="nav-card">' +
+    '<div class="nav-card-head">🗺️ ניווט להיום · ' + day.date + '</div>' +
+    stops.map(row).join('') +
+    (fixed.length || byAddress ? '<div class="nav-card-sep">קבוע לאורך הטיול</div>' : '') +
+    fixed.map(row).join('') + byAddress +
+  '</div>';
 }
 
 function buildWeatherStripHtml(tour) {
