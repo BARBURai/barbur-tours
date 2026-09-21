@@ -269,6 +269,20 @@ header {
   line-height: 1; cursor: pointer; box-shadow: var(--shadow); font-family: inherit;
   display: flex; align-items: center; justify-content: center; }
 .map-tool-icon { padding-left: 10px; padding-right: 10px; }
+.eat-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.eat-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.eat-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+/* A Latin restaurant name in a Hebrew line: isolate so it cannot disturb the Hebrew
+   around it, and direction:ltr so the neutrals inside it - the brackets in
+   "Viklari (The Last Castle)", an apostrophe, an ampersand - resolve against a
+   left-to-right paragraph rather than the inherited RTL one. Measured in the browser:
+   the name reads left to right, first character leftmost. */
+.eat-name { font-weight: 600; font-size: 16px; direction: ltr; unicode-bidi: isolate; }
+.eat-kind { font-size: 13px; color: var(--accent-2); }
+.eat-area { font-size: 13.5px; color: var(--text-faint); margin-top: 3px; }
+.eat-why { font-size: 14.5px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
+.eat-warn { font-size: 13.5px; color: var(--red); margin-top: 5px; line-height: 1.5; }
+.eat-note { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
 .map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
 .change-card { background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.05));
   border: 1px solid rgba(34,197,94,0.5); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; }
@@ -1081,6 +1095,37 @@ function mapNavigate(lat, lng) {
 // error to catch. Two buttons that both looked like navigation, one of them dead, were
 // worse than one - so the way out is Google, and the way in is showOnMap().
 
+// Where to eat, day by day. The owner asked for real places rather than "we will find
+// something": three men, five days, and a different town almost every evening. Each
+// entry is a named restaurant with the reason it earned its place on the list.
+//
+// None of them carries coordinates. Getting a restaurant's pin right means the owner
+// long-pressing it in Google Maps, which is not worth doing twenty-odd times for places
+// nobody has committed to - so the link is a Google Maps search by name and town, the
+// same route mapSearchUrl() already takes for a booked place with an address and no pin.
+// Google resolves those exactly, which beats a pin guessed onto the right street.
+function buildEatHtml(day) {
+  const eat = day.eat;
+  if (!eat || !eat.places || !eat.places.length) return '';
+  const rows = eat.places.map(pl =>
+    '<div class="eat-row">' +
+      '<div class="eat-head"><span class="eat-name">' + pl.name + '</span>' +
+        (pl.kind ? '<span class="eat-kind">' + pl.kind + '</span>' : '') + '</div>' +
+      (pl.area ? '<div class="eat-area">' + pl.area + '</div>' : '') +
+      '<div class="eat-why">' + pl.why + '</div>' +
+      (pl.warn ? '<div class="eat-warn">' + linkPhones(pl.warn) + '</div>' : '') +
+      '<div style="margin-top:8px;">' +
+        '<a class="timeline-nav-btn" target="_blank" href="' + mapSearchUrl(pl.search) + '">\ud83d\udd0e גוגל מפות</a>' +
+        (pl.phone ? ' <span class="eat-area" style="margin-right:8px;">' + linkPhones(pl.phone) + '</span>' : '') +
+      '</div>' +
+    '</div>').join('');
+  return '<details class="fold"><summary>\ud83c\udf7d\ufe0f איפה לאכול<span class="fold-sum">' +
+    eat.places.length + '</span></summary>' +
+    '<div class="fold-body">' +
+      (eat.note ? '<div class="eat-note">' + eat.note + '</div>' : '') + rows +
+    '</div></details>';
+}
+
 // A booked place can carry a street address and no coordinates. Google resolves the
 // address itself, which is exact - better than a pin guessed onto the right street and
 // far better than an entry the traveller cannot tap.
@@ -1870,7 +1915,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 21, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 22, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2351,8 +2396,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 21,
-  lastUpdate: {at:"2026-09-21",what:"אפשר עכשיו להחליק (swipe) בין המסכים בכל האפליקציה, לא רק בין ימים ביומן. למפה נוספו כפתורי זום גדולים. כפתור \"אפליקציה אחרת\" הוסר - הוא לא עבד בטלפון, ובמקומו נשארו שני כפתורים ברורים: נווט ב-Google, או הצג במפה שלנו שעובדת בלי קליטה."},
+  dataVersion: 22,
+  lastUpdate: {at:"2026-09-21",what:"לכל יום ביומן נוספה רשימת מסעדות אמיתיות - איפה לאכול באותו יום ובאותו אזור, עם הסיבה לכל מקום וקישור לגוגל מפות. פתחו את היום ביומן וחפשו את הקיפול איפה לאכול. כולל היום של הרייזר, שבו החשוב באמת הוא שעל המסלול עצמו אין כלום."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2393,7 +2438,7 @@ window.seedCyprus = async function() {
       {time:"15:00",lat:34.914397,lng:33.633846,activity:"מונית לפיניקודס - צ׳ק-אין ב-Leonardo Boutique Hotel Larnaca (כ-10 דק׳ מהשדה)",type:"hotel"},
       {time:"17:00",activity:"הליכה בטיילת פיניקודס והמרינה - לאתר את Alpha Divers לקראת מחר",type:"sightseeing",lat:34.9128,lng:33.6404},
       {time:"20:00",activity:"ארוחת ערב ובירות בפיניקודס או בעיר העתיקה של לרנקה",type:"food",lat:34.9128,lng:33.6404}
-    ],notes:["⚠️ אין רכב ביום הזה - הרכב נאסף רק מחר ב-19:00. הכל בהליכה או מונית קצרה","המלון 7 דק׳ הליכה ממועדון Alpha Divers והמרינה - בדיוק בשביל הצלילה של מחר","לילה 1: Leonardo Boutique Hotel Larnaca, אישור P205050"]},
+    ],eat:{"note": "אין רכב היום - הכל בהליכה מהמלון. פיניקודס והעיר העתיקה הן טווח של רבע שעה ברגל.", "places": [{"name": "To Arxontikon", "kind": "מזה דגים ובשר", "area": "טיילת פיניקודס · הליכה מהמלון", "why": "האחוזה היחידה מהמאה ה-19 ששרדה על הטיילת, ופתוחה לצהריים ולערב. מזה הדגים שלהם נפרש על עשרים מנות, מדיונון ועד סופיה. זו ארוחת הערב הראשונה, לא נשנוש.", "search": "To Arxontikon restaurant Finikoudes Larnaca"}, {"name": "Psariko", "kind": "מזה קפריסאי", "area": "העיר העתיקה · ליד מוזיאון פיירידס", "why": "תמנון בגריל, קופס, קפטדס ושרימפס סגנאקי - מזה קלאסי, חמש דקות פנימה מהטיילת ורחוק מהתפריטים המתורגמים.", "search": "Psariko restaurant Larnaca old town"}, {"name": "To Petrino", "kind": "גריל", "area": "העיר העתיקה", "why": "ארבעים שנה אותה משפחה. גריל מעורב לשניים - נקניק, צלעות טלה, עוף, חלומי, תפוחי אדמה וסלט - בסביבות €16 עם יין הבית. מחיר של מקומיים, לא של טיילת.", "search": "To Petrino tavern Larnaca"}, {"name": "Maqam Al-Sultan", "kind": "לבנוני", "area": "טיילת פיניקודס", "why": "כמה דלתות מ-To Arxontikon. מנות גדולות ומזה לבנוני - עובד טוב לשלושה רעבים אחרי יום טיסה.", "search": "Maqam Al Sultan restaurant Finikoudes Larnaca"}, {"name": "Aldente Cucina Italiana", "kind": "איטלקי", "area": "טיילת פיניקודס", "why": "פסטה ופיצה מתנור עצים, אם מתחשק משהו פשוט וישיר במקום מזה ארוך.", "search": "Aldente Cucina Italiana Finikoudes Larnaca"}]},notes:["⚠️ אין רכב ביום הזה - הרכב נאסף רק מחר ב-19:00. הכל בהליכה או מונית קצרה","המלון 7 דק׳ הליכה ממועדון Alpha Divers והמרינה - בדיוק בשביל הצלילה של מחר","לילה 1: Leonardo Boutique Hotel Larnaca, אישור P205050"]},
     {date:"2.10",day_of_week:"שישי",title:"צלילת זנוביה, לרנקה ומעבר לפאפוס",location:"לרנקה → כלורקה",summary:"צלילה כפולה לזנוביה, צהריים בטברנות הדגים, סיבוב בעיר העתיקה, ואיסוף הרכב ב-19:00",items:[
       {time:"07:00",lat:34.914397,lng:33.633846,activity:"צ׳ק-אאוט מ-Leonardo - להשאיר את התיקים בקבלה. לפני האיסוף",type:"hotel"},
       {time:"07:30",activity:"Alpha Divers אוספים מהמלון - להיות מוכנים בלובי",type:"logistics",lat:34.914397,lng:33.633846},
@@ -2407,7 +2452,7 @@ window.seedCyprus = async function() {
       {time:"19:00",activity:"איסוף הרכב מ-Sixt, אולם נכנסים (הזמנה 1PFCCC)",type:"car",lat:34.8751,lng:33.6249},
       {time:"19:30",activity:"נסיעה לכלורקה/פאפוס (כ-130 ק\"מ, 1:15 בכביש המהיר)",type:"logistics"},
       {time:"20:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel",lat:34.7881,lng:32.4090}
-    ],notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
+    ],eat:{"note": "הצהריים הן ברחוב הדייגים פיאלה פאשה, בהליכה מהמרינה אחרי הצלילה. הערב כבר בכלורקה, אחרי נסיעה של שעה ורבע - ובשעה כזו כדאי לוודא טלפונית שהמטבח עוד פתוח.", "places": [{"name": "Zephyros", "kind": "דגים", "area": "פיאלה פאשה · על הים", "why": "הקלאסיקה של הרחוב: דגים טריים, מנות פתיחה של ים ונוף לנמל הדייגים. מתמלא במקומיים, ובצהריים של שישי זה אומר להגיע מוקדם או לחכות.", "search": "Zephyros Beach Tavern Larnaca"}, {"name": "Stefanos", "kind": "דגים", "area": "פיאלה פאשה", "why": "דג שלם על הפחמים ותמנון בגריל. פשוט ומדויק, בלי הצגה - בדיוק מה שרוצים אחרי שתי צלילות.", "search": "Stefanos fish tavern Piale Pasha Larnaca"}, {"name": "Salamis Fish Tavern", "kind": "דגים", "area": "פיאלה פאשה · מרפסת מעל החוף", "why": "מרפסות מעל אחד החופים העירוניים, דגים בלי עודף רוטב. האופציה כששתי הקודמות מלאות.", "search": "Salamis Fish Tavern Larnaca"}, {"name": "Psarolimano Fish Tavern", "kind": "מזה דגים", "area": "נמל מקנזי", "why": "מול נמל הדייגים של מקנזי, עם מזה דגים שמככב בביקורות ונוף פנורמי לנמל.", "warn": "⚠️ זה כבר לא הליכה מהמרינה - כשני ק\"מ דרומה, ואין רכב עד 19:00. רק אם לוקחים מונית.", "search": "Psarolimano Fish Tavern Mackenzie Larnaca"}, {"name": "Saint George Fish Tavern", "kind": "דגים", "area": "כלורקה · לערב, ליד WellClub", "why": "מזה מסורתי ודגים מעל מפרץ הקורל, דקות מהמלון. האופציה ההגיונית לערב שמתחיל אחרי תשע.", "warn": "⚠️ בשעה כזו - טלפון לפני, לוודא שהמטבח עוד עובד", "search": "Saint George Fish Tavern Chlorakas Paphos"}, {"name": "Kasparis Tavern", "kind": "טברנה מקומית", "area": "כלורקה", "why": "טברנה משפחתית שמקבלת שבחים חריגים גם ממקומיים וגם מאורחים. אופציה שנייה לערב, ובלי תלות ברכב אם המלון קרוב.", "search": "Kasparis Tavern Chlorakas Paphos"}]},notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
     {date:"3.10",day_of_week:"שבת",title:"רייזר באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"Polaris RZR ליום שלם בחצי האי אקמאס, ואחריו ספא בריזורט וערב בקאטו פאפוס",items:[
       {time:"08:00",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
       {time:"08:45",activity:"איסוף ה-Polaris RZR ב-PR Rentals, לאצ׳י - מול Ploutarxos (חלון הגעה עד 10:00)",type:"logistics",lat:35.032397,lng:32.414374},
@@ -2420,7 +2465,7 @@ window.seedCyprus = async function() {
       {time:"17:15",activity:"חזרה ל-WellClub",type:"logistics"},
       {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel"},
       {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
-    ],notes:["✅ הוזמן ומאושר: PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · 4 מקומות · €220 כולל מע\"מ · איש קשר: Ploutarxos · prrentalsltd.com","💳 בדלפק: פיקדון מוחזר של €1000, בכרטיס או במזומן. ביטוח צד ג׳ כלול. השתתפות עצמית במקרה אובדן מוחלט - €8000. שימו לב שגם Sixt תופסת €800 באותם ימים","🧭 יש להם אפליקציית ניווט משלהם לשבילי הפארק - Ploutarxos אישר שהיא מכסה את המסלולים המומלצים","🕐 החלון הוא 08:30-17:00, יום שלם. הלולאה היא כ-69 ק\"מ בשבילים ועם עצירות, רחצה בלארה וצהריים ב-Viklari היא 6-7 שעות - נכנסת בנוחות","✅ נסגר: רישיון B/B1 רגיל מספיק, ושלושת הנהגים רשומים בהזמנה - איתן בן 18, אורי בן 21 ורון בן 55. איתן נוהג","⚠️ לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳","🐢 חוף לארה הוא שמורת קינון של צבי ים. מותר להגיע, אבל אסור לרדת עם הרייזר לקו החוף או לחול הרך - חונים באזור המוגדר והולכים ברגל את השאר","🧭 כלול בהשכרה: משקפי מגן, צידנית לאוכל ושתייה, וגישה לאפליקציית הניווט שלהם לשבילי אקמאס והבלו לגון","📍 PR Rentals יושבים על כביש E713 ליד חניית Venetico Cafe - כקילומטר וחצי ממרינת לאצ׳י שממנה יוצאת הסירה למחרת","✅ ארבע נקודות המסלול אומתו מחדש מול גוגל מפות. מרחץ אפרודיטה תוקן בכקילומטר מזרחה, והתצפית זוהתה כפסגת Moutti Tis Sotiras וזזה כשלושה ק\"מ דרומה - היא יושבת כעת פחות משני ק\"מ מהבלגונה, כמו שתצפית אמורה"]},
+    ],eat:{"note": "על המסלול עצמו אין כלום - בין מרחץ אפרודיטה לחוף לארה לא עוברים ליד שום דבר פתוח. הצידנית שכלולה בהשכרת הרייזר היא לא קישוט.", "places": [{"name": "Viklari (The Last Castle)", "kind": "בשר על הגחלים", "area": "מעל קניון אווקאס · כבר ביומן ב-13:30", "why": "תפריט אחד ואין ממנו סטייה: חזיר, עוף וטלה על שיפוד מסתובב, עם צ'יפס עבה, סלט ולחם. צהריים בלבד, נסגר בחמש. הנוף מעל אקמאס ומפרץ לארה הוא חצי מהסיבה לעלות לשם.", "warn": "שווה טלפון מראש בשבת - המקום מתמלא. טלפון: +357 99489000", "search": "Viklari The Last Castle Peyia Cyprus"}, {"name": "Hondros", "kind": "טברנה קפריסאית", "area": "קאטו פאפוס · לערב", "why": "הטברנה הוותיקה באזור, פתוחה מאז 1951. מזה ובשרים על תנור פחמים, וישיבה בחוץ במרחק צעדים מהנמל.", "search": "Hondros tavern Kato Paphos"}, {"name": "Ristorante Bacco", "kind": "איטלקי", "area": "קאטו פאפוס · לערב", "why": "איטלקי במרחק הליכה ממלונות קאטו פאפוס, עם כינור חי בערב. אם אחרי יום שלם של אבק ורייזר רוצים משהו אחר מבשר על הגחלים.", "search": "Ristorante Bacco Kato Paphos"}]},notes:["✅ הוזמן ומאושר: PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · 4 מקומות · €220 כולל מע\"מ · איש קשר: Ploutarxos · prrentalsltd.com","💳 בדלפק: פיקדון מוחזר של €1000, בכרטיס או במזומן. ביטוח צד ג׳ כלול. השתתפות עצמית במקרה אובדן מוחלט - €8000. שימו לב שגם Sixt תופסת €800 באותם ימים","🧭 יש להם אפליקציית ניווט משלהם לשבילי הפארק - Ploutarxos אישר שהיא מכסה את המסלולים המומלצים","🕐 החלון הוא 08:30-17:00, יום שלם. הלולאה היא כ-69 ק\"מ בשבילים ועם עצירות, רחצה בלארה וצהריים ב-Viklari היא 6-7 שעות - נכנסת בנוחות","✅ נסגר: רישיון B/B1 רגיל מספיק, ושלושת הנהגים רשומים בהזמנה - איתן בן 18, אורי בן 21 ורון בן 55. איתן נוהג","⚠️ לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳","🐢 חוף לארה הוא שמורת קינון של צבי ים. מותר להגיע, אבל אסור לרדת עם הרייזר לקו החוף או לחול הרך - חונים באזור המוגדר והולכים ברגל את השאר","🧭 כלול בהשכרה: משקפי מגן, צידנית לאוכל ושתייה, וגישה לאפליקציית הניווט שלהם לשבילי אקמאס והבלו לגון","📍 PR Rentals יושבים על כביש E713 ליד חניית Venetico Cafe - כקילומטר וחצי ממרינת לאצ׳י שממנה יוצאת הסירה למחרת","✅ ארבע נקודות המסלול אומתו מחדש מול גוגל מפות. מרחץ אפרודיטה תוקן בכקילומטר מזרחה, והתצפית זוהתה כפסגת Moutti Tis Sotiras וזזה כשלושה ק\"מ דרומה - היא יושבת כעת פחות משני ק\"מ מהבלגונה, כמו שתצפית אמורה"]},
     {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
       {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics"},
       {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
@@ -2429,7 +2474,7 @@ window.seedCyprus = async function() {
       {time:"14:30",activity:"ארוחת דגים במרינה (Yiannakis / Periyiali)",type:"food"},
       {time:"16:30",activity:"חזרה ל-WellClub",type:"logistics"},
       {time:"18:00",activity:"ספא ווולנס, ערב רגוע",type:"hotel"}
-    ],notes:["⚠️ הסירה טרם הוזמנה - Latchi Watersports Centre / Latchi Marine Boat Rentals, מנוע 50-80 כ\"ס","⚠️ לשאול גם פה על גיל מינימלי לנהיגה בסירה - לרוב 18+ גם כשלא צריך רישיון שיט","לבדוק תחזית רוח וים יום לפני - הבלו לגון חשוף כשיש רוח מערבית","חילוץ ימי: 1441 (חיוג חינם) - מופיע במסך החירום"]},
+    ],eat:{"note": "השמות שבאמת יושבים על הנמל הם אלה שכאן, ולא Yiannakis או Periyiali שכתובים ביומן. הצהריים ממש איפה שמחזירים את הסירה.", "places": [{"name": "Porto Latchi", "kind": "דגים", "area": "על מרינת לאצ׳י", "why": "ממש על המרינה, דגים טריים ונוף לנמל - המקום שאליו יוצאים מהסירה בלי להיכנס לרכב.", "search": "Porto Latchi seafood restaurant Latchi"}, {"name": "Yiangos and Peter Fish Tavern", "kind": "דגים", "area": "נמל לאצ׳י", "why": "טברנת דגים ותיקה על הנמל עצמו, מהמוכרות באזור.", "search": "Yiangos and Peter Fish Tavern Latchi"}, {"name": "Psaropoulos", "kind": "מזה דגים", "area": "לאצ׳י", "why": "מזה דגים בתמורה הוגנת ונוף לים. פחות מצוחצח מהשכנים, וזה לא חיסרון.", "search": "Psaropoulos fish tavern Latchi"}, {"name": "Phidias Tavern", "kind": "טברנה מקומית", "area": "קורל ביי · לערב", "why": "בבעלות מקומית יותר משלושים שנה, מנות מקומיות במחיר הגיוני, בקצה של רצועת קורל ביי הפונה לפאפוס.", "search": "Phidias Tavern Coral Bay Paphos"}, {"name": "Saint George Fish Tavern", "kind": "דגים", "area": "כלורקה · לערב", "why": "דקות מ-WellClub, נוף למפרץ הקורל. ערב קצר אחרי הספא, בלי נסיעה.", "search": "Saint George Fish Tavern Chlorakas Paphos"}]},notes:["⚠️ הסירה טרם הוזמנה - Latchi Watersports Centre / Latchi Marine Boat Rentals, מנוע 50-80 כ\"ס","⚠️ לשאול גם פה על גיל מינימלי לנהיגה בסירה - לרוב 18+ גם כשלא צריך רישיון שיט","לבדוק תחזית רוח וים יום לפני - הבלו לגון חשוף כשיש רוח מערבית","חילוץ ימי: 1441 (חיוג חינם) - מופיע במסך החירום"]},
     {date:"5.10",day_of_week:"שני",title:"קארטינג, סלע אפרודיטה וטיסה הביתה",location:"פאפוס → לרנקה",summary:"קארטינג ליד המלון, נסיעה חופית מזרחה, ארוחה בלרנקה וטיסה",items:[
       {time:"11:00",activity:"צ׳ק-אאוט מ-WellClub",type:"hotel"},
       {time:"11:30",activity:"קארטינג תחרותי ב-Paphos Karting Centre, ירוסקיפו (כ-15 דק׳ מהמלון)",type:"sightseeing"},
@@ -2441,7 +2486,7 @@ window.seedCyprus = async function() {
       {time:"19:30",activity:"ביטחון ודרכונים - טרולי בלבד, בלי כבודה רשומה",type:"flight"},
       {time:"22:05",activity:"טיסת חזור ישראייר 6H584 → תל אביב",type:"flight"},
       {time:"23:10",activity:"נחיתה בנתב\"ג",type:"flight"}
-    ],notes:["לתדלק לפני ההחזרה - מדיניות מלא-למלא, אחרת Sixt גובה לפי המחיר שלהם","בלי כבודה רשומה: 19:30 ביטחון ל-22:05 זה נוח. אם מתעכבים - לדלג על הארוחה בפיניקודס","סלע אפרודיטה: 15 דק׳ עצירה מהכביש, חניה מעל הצוק"]},
+    ],eat:{"note": "יום שני, וחלק מהמקומות בירוסקיפו סגורים בימי שני - הצצה בגוגל לפני שנוסעים חוסכת נסיעה סרק. הארוחה בלרנקה היא ב-17:30, מוקדם, אבל המטבחים על הטיילת פועלים ברצף.", "places": [{"name": "7 St. George's Tavern", "kind": "מזה", "area": "ירוסקיפו · דקות מהקארטינג", "why": "מזה מחומרי גלם מקומיים ואורגניים, בחצר כפרית. הקרוב ביותר למסלול הקארטינג, וההזדמנות האחרונה למזה אמיתי בטיול.", "search": "7 St Georges Tavern Geroskipou Paphos"}, {"name": "Christos Grill", "kind": "גריל קפריסאי", "area": "פאפוס", "why": "גריל מעורב במנות נדיבות, פשוט וזול יחסית. טוב כשרוצים לאכול מהר ולהמשיך מזרחה.", "search": "Christos Grill Paphos"}, {"name": "To Arxontikon", "kind": "מזה דגים ובשר", "area": "טיילת פיניקודס, לרנקה · לארוחת 17:30", "why": "חוזרים לטיילת שבה התחיל הטיול. השדה עשר דקות משם, והמטבח פועל גם בשעה מוקדמת.", "search": "To Arxontikon restaurant Finikoudes Larnaca"}, {"name": "Maqam Al-Sultan", "kind": "לבנוני", "area": "טיילת פיניקודס, לרנקה", "why": "מהיר יותר ממזה מלא, על אותה טיילת, אם הזמן לפני הטיסה לוחץ.", "search": "Maqam Al Sultan restaurant Finikoudes Larnaca"}]},notes:["לתדלק לפני ההחזרה - מדיניות מלא-למלא, אחרת Sixt גובה לפי המחיר שלהם","בלי כבודה רשומה: 19:30 ביטחון ל-22:05 זה נוח. אם מתעכבים - לדלג על הארוחה בפיניקודס","סלע אפרודיטה: 15 דק׳ עצירה מהכביש, חניה מעל הצוק"]},
   ],
   prep: [
     {task:"🏨 לבטל את Ajax Hotel",done:true,note:"✅ בוטל. הלינה עברה ללאונרדו (לילה 1) ו-WellClub (לילות 2-4)"},
@@ -2846,6 +2891,8 @@ function renderItinerary(tour) {
         '</div></div>';
     }
   });
+
+  html += buildEatHtml(day);
 
   // Notes with color coding
   if (day.notes && day.notes.length) {
