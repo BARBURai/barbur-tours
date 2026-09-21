@@ -14,7 +14,7 @@
 //   npm run places
 //   npm run places -- --snapshot t.json
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Archive, layer, tileXY, fromTile, metres, findArchive, NO_ARCHIVE } from './pmtiles-lib.mjs';
@@ -186,4 +186,17 @@ if (miss.length) {
   console.log('\nnot present in the basemap by name (cannot confirm or deny from here):');
   for (const r of miss) console.log(`  ${r.name}  (${r.what})`);
 }
+// What this run could not vouch for, written down rather than left to whoever reports.
+coverage({
+  verified: good.length,
+  unverified: miss.map(r => `${r.name} — לא קיים ב-OpenStreetMap בשם, אז אי אפשר לאשר או להפריך`),
+  decided: declared.map(r => `${r.name} — מצביע במכוון למקום אחר: ${declaredFor(r.name).why}`)
+});
 process.exit(off.length ? 1 : 0);
+
+function coverage(data) {
+  try {
+    mkdirSync(join(ROOT, '.preview', 'coverage'), { recursive: true });
+    writeFileSync(join(ROOT, '.preview', 'coverage', 'places.json'), JSON.stringify(data));
+  } catch {}
+}

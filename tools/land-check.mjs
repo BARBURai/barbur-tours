@@ -15,7 +15,7 @@
 //   npm run land                        - live trip data
 //   npm run land -- --snapshot t.json
 
-import { openSync, readSync, closeSync, readFileSync, existsSync } from 'node:fs';
+import { openSync, readSync, closeSync, readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -450,4 +450,11 @@ if (offshore.length) {
     console.log(`     ${[...new Set(p.uses)].join(' · ')}`);
   }
 }
+try {
+  mkdirSync(join(ROOT, '.preview', 'coverage'), { recursive: true });
+  writeFileSync(join(ROOT, '.preview', 'coverage', 'land.json'), JSON.stringify({
+    verified: land.length,
+    decided: declared.map(p => `${p.declared.what} — במים במכוון: ${p.declared.why}`)
+  }));
+} catch {}
 process.exit(offshore.length ? 1 : 0);
