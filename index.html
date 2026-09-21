@@ -264,6 +264,13 @@ header {
   color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); }
 .map-tool-icon { padding-left: 10px; padding-right: 10px; }
 .map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
+.change-card { background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.05));
+  border: 1px solid rgba(34,197,94,0.5); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; }
+.change-head { font-size: 16.5px; font-weight: 800; color: var(--green); margin-bottom: 6px; }
+.change-body { font-size: 14.5px; line-height: 1.65; color: var(--text); }
+.change-btn { margin-top: 11px; width: 100%; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px;
+  font-family: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; }
 .nav-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 13px 15px; margin-top: 16px; box-shadow: var(--shadow); }
 .nav-card-head { font-size: 15.5px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
@@ -985,8 +992,11 @@ function mapTypeIcon(t) {
 // reached it, which is why the car hire and the airport - the two fixed points the rest
 // of the trip hangs off - were simply absent, with nothing on screen to say why.
 const BOOKING_PINS = [
-  { key: 'hotels', icon: '🏨', name: b => b.name,             sub: b => b.city || b.address || '' },
-  { key: 'cars',   icon: '🚗', name: b => b.company || 'רכב', sub: b => [b.pickup, b.dropoff].filter(Boolean).join(' → ') }
+  { key: 'hotels',     icon: '🏨', name: b => b.name,             sub: b => b.city || b.address || '' },
+  { key: 'cars',       icon: '🚗', name: b => b.company || 'רכב', sub: b => [b.pickup, b.dropoff].filter(Boolean).join(' → ') },
+  // A booked dive or boat is a place you have to be at a time, exactly like a hotel or
+  // a hire desk. There was no category for it, so it existed only inside the day.
+  { key: 'activities', icon: '🤿', name: b => b.name,             sub: b => b.when || b.city || '' }
 ];
 
 // Coordinates come back as whatever was typed into the seed, and the WellClub pair are
@@ -1796,6 +1806,7 @@ async function loadTripHome() {
   content.innerHTML =
     '<div class="hero' + (tour.coverImage ? '' : ' hero-compact') + '">' + heroBg +
       '<div class="hero-content">' + heroText + '</div></div>' +
+    buildChangeHtml(tour) +
     buildUpdateHtml(tour) +
     buildNowHtml(tour) +
     buildTodayNavHtml(tour) +
@@ -1818,10 +1829,42 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 14, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 15, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
+
+// The trip changes quietly: data is written straight to Firestore and the page is
+// redeployed, so what is on the phone can move without a word to the person holding it.
+// The reseed card below only fires on a version mismatch, and that mismatch is
+// deliberately never allowed to happen - because pressing it wipes the packing and prep
+// ticks. So there was no signal at all. This is the signal: it names what changed, it
+// is dismissed with one tap, and it destroys nothing.
+const SEEN_UPDATE_KEY = 'seenTripUpdate';
+
+function buildChangeHtml(tour) {
+  const u = tour.lastUpdate;
+  if (!u || !u.at || !u.what) return '';
+  if (getTripStatus(tour).status === 'past') return '';
+  let seen = null;
+  try { seen = localStorage.getItem(SEEN_UPDATE_KEY + ':' + tour.id); } catch (e) {}
+  if (seen === u.at) return '';
+  const shown = String(u.at).slice(8, 10) + '.' + String(u.at).slice(5, 7);
+  return '<div class="change-card" id="changeCard">' +
+      '<div class="change-head">🆕 הטיול עודכן · ' + shown + '</div>' +
+      '<div class="change-body">' + u.what + '</div>' +
+      '<button class="change-btn" onclick="dismissChange()">הבנתי, תודה</button>' +
+    '</div>';
+}
+
+function dismissChange() {
+  const tour = curTour();
+  if (tour && tour.lastUpdate && tour.lastUpdate.at) {
+    try { localStorage.setItem(SEEN_UPDATE_KEY + ':' + tour.id, tour.lastUpdate.at); } catch (e) {}
+  }
+  const el = document.getElementById('changeCard');
+  if (el) el.remove();
+}
 
 function buildUpdateHtml(tour) {
   const seed = TRIP_SEEDS[tour.id];
@@ -2266,7 +2309,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 14,
+  dataVersion: 15,
+  lastUpdate: {at:"2026-09-21",what:"נוסף מרכז הצלילה Alpha Divers כהזמנה עם מיקום, ואיתו אזהרה: המרכז יושב בפילה ולא במרינה. יום 3.10 עודכן ל-PR Rentals עם הרייזר, המלון בלרנקה קיבל מיקום, ומסך הבית קיבל כרטיס ניווט ליום."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2289,6 +2333,9 @@ window.seedCyprus = async function() {
     hotels: [
       {lat:34.914397,lng:33.633846,name:"Leonardo Boutique Hotel Larnaca",city:"לרנקה",checkin:"1.10 15:00",checkout:"2.10",nights:1,confirmation:"P205050",phone:"+357 2404 0000",address:"Constantinou Kalogera 57, Larnaca 6021, Cyprus",price:"€276.00 (₪960.89)",note:"✅ מאושר. 2 חדרים נפרדים (Standard עם נוף לעיר): 2 מבוגרים + מבוגר אחד. ארוחת בוקר בופה כלולה. 7 דק׳ הליכה מ-Alpha Divers והמרינה - לכן אין צורך ברכב ביום הראשון. מייל: reservations@lbl.leonardohotelscyprus.com. ביטול חינם עד 28.9; 3 ימים או פחות לפני ההגעה - 50% דמי ביטול; אי-הופעה - 100%"},
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
+    ],
+    activities: [
+      {lat:34.976798,lng:33.682612,name:"Alpha Divers Scuba Diving Centre",when:"2.10 09:00 · שתי צלילות לזנוביה",city:"פילה",address:"Pyla Gardens, Zinonos 1-2, Dhekelia Rd 7081",note:"⚠️ נקודת המפגש טרם אושרה. המרכז עצמו יושב בפילה, כשמונה ק\"מ מהמלון - לא מרחק הליכה. היומן מניח מפגש במרינת לרנקה, שהיא כן כקילומטר מהמלון. לאשר מולם לאן להגיע ב-08:45"}
     ],
     cars: [
       {lat:35.032397,lng:32.414374,company:"PR Rentals - Polaris RZR 1000cc XP · 4 מקומות",pickup:"3.10 08:45",dropoff:"3.10 16:30",confirmation:"PR Rentals LTD, לאצ׳י · Ploutarxos · prrentalsltd.com",note:"€220 כולל מע\"מ 19% וביטוח בסיסי. רישיון B/B1. כולל משקפי מגן, צידנית וגישה לאפליקציית הניווט שלהם. פתוח: גובה ההשתתפות העצמית"},
@@ -2362,6 +2409,7 @@ window.seedCyprus = async function() {
     {task:"🏍️ להזמין רייזר ל-3.10",done:true,note:"✅ PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · €220 · מול Ploutarxos. רישיון B/B1 מספיק ושלושת הנהגים רשומים"},
     {task:"🏍️ לברר מול PR Rentals את ההשתתפות העצמית בביטוח",done:false,deadline:"2026-09-28",note:"מה משלמים במקרה נזק לרכב. גם לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳, ושחוף לארה פתוח לרכב ב-3.10"},
     {task:"🏁 להזמין קארטינג ל-5.10 בבוקר",done:false,deadline:"2026-09-28",note:"Paphos Karting Centre, ירוסקיפו. טל׳ 99620916. כ-15 דק׳ מ-WellClub"},
+    {task:"🤿 לאשר מול Alpha Divers לאן להגיע ב-08:45 - המרינה או המרכז בפילה",done:false,deadline:"2026-09-28",note:"גוגל ממקם את Alpha Divers Scuba Diving Centre בפילה, כשמונה ק\"מ מהמלון. היומן מניח הליכה של שבע דקות למרינה. אחד מהשניים לא נכון, וזו הצלילה של 2.10 בבוקר"},
     {task:"🤿 לאשר שעה ופרטים מול Alpha Divers",done:false,deadline:"2026-09-28",note:"מקדמה שולמה ✅. המלון 7 דק׳ הליכה מהם. לאמת שעת התייצבות ל-2.10 בבוקר"},
     {task:"🚗 לברר אם אורי יכול להתווסף כנהג - איתן לא יכול (בן 18)",done:false,deadline:"2026-09-28",note:"איתן נולד 8.9.2008 (18) - Sixt דורשת 21+, פסול. אורי נולד 17.8.2005 (21) - צריך רישיון מעל שנתיים + צפוי היטל נהג צעיר. חשוב במיוחד בגלל הנסיעה הלילית ב-2.10 אחרי הצלילות"},
     {task:"📄 לבדוק תוקף דרכונים",done:true,note:"✅ כולם תקפים לפי כרטיסי העלייה: רון 02/2029, אורי 08/2033, איתן 05/2027"},
@@ -3105,6 +3153,20 @@ function renderBookings(tour) {
         (c.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + c.confirmation + '</div>' : '') +
         (c.note ? '<div class="booking-detail">' + linkPhones(c.note) + '</div>' : '') +
         (c.doc_url ? '<a class="doc-link" href="' + c.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
+        '</div>';
+    });
+  }
+
+  if (b.activities && b.activities.length) {
+    html += '<div class="booking-group-title">🤿 פעילויות</div>';
+    b.activities.forEach(a => {
+      html += '<div class="booking-card">' +
+        '<div class="booking-card-head"><div class="booking-card-title">' + (a.name || 'פעילות') + '</div>' +
+        '<div class="booking-card-date">' + (a.when || '') + '</div></div>' +
+        (a.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + a.confirmation + '</div>' : '') +
+        (a.address ? '<div class="booking-detail">' + a.address + '</div>' : '') +
+        (a.note ? '<div class="booking-detail">' + linkPhones(a.note) + '</div>' : '') +
+        (a.doc_url ? '<a class="doc-link" href="' + a.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
     });
   }
