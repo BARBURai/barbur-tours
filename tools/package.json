@@ -3,6 +3,11 @@
   "private": true,
   "type": "module",
   "description": "Development tooling only. The app itself has no dependencies and no build step - this folder is kept separate so it stays that way.",
-  "scripts": { "preview": "node preview.mjs" },
-  "devDependencies": { "playwright-core": "^1.48.0" }
+  "scripts": {
+    "preview": "node preview.mjs",
+    "bidi": "node bidi-check.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.48.0"
+  }
 }
