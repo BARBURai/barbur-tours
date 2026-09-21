@@ -3,8 +3,34 @@
 // OpenStreetMap data, it works with no network, and it is the very basemap the app
 // draws, so an answer from here is an answer about what the traveller will see.
 
-import { openSync, readSync, closeSync } from 'node:fs';
+import { openSync, readSync, closeSync, existsSync, readdirSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
+import { join } from 'node:path';
+
+// Which basemap answers for this trip. Hardcoding cyprus.pmtiles worked for exactly one
+// trip; the next one is a different country and a different file. Prefer a file named
+// after the trip, fall back to the only .pmtiles present, and return null rather than
+// throwing - a missing basemap is a state the checks have to report clearly, not a
+// stack trace.
+export function findArchive(root, tripId) {
+  if (tripId) {
+    const named = join(root, tripId.replace(/-\d{4}$/, '') + '.pmtiles');
+    if (existsSync(named)) return named;
+    const exact = join(root, tripId + '.pmtiles');
+    if (existsSync(exact)) return exact;
+  }
+  const all = readdirSync(root).filter(f => f.endsWith('.pmtiles'));
+  if (all.length === 1) return join(root, all[0]);
+  return null;                       // none, or several with no way to choose
+}
+
+// The one message every geographic check prints when there is no basemap, so the reason
+// reads the same wherever it surfaces.
+export const NO_ARCHIVE = [
+  'אין קובץ מפה (.pmtiles) לטיול הזה, ולכן אי אפשר לאמת שום נקודה מכאן.',
+  'הבעלים חותך אותו פעם אחת עם pmtiles extract - ראה "טיול חדש - סדר הפעולות" ב-CLAUDE.md.',
+  'עד שהוא קיים, מקומות נכנסים עם search בלבד ובלי lat/lng.'
+].join('\n');
 
 class Reader {
   constructor(buf) { this.b = buf; this.p = 0; }
