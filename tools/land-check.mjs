@@ -15,7 +15,7 @@
 //   npm run land                        - live trip data
 //   npm run land -- --snapshot t.json
 
-import { openSync, readSync, closeSync, readFileSync } from 'node:fs';
+import { openSync, readSync, closeSync, readFileSync, existsSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -304,6 +304,14 @@ const CONTROLS = [
   { name: 'אמצע המפרץ בין פאפוס לאקמאס', lat: 34.9500, lng: 32.2000, expect: 'sea' }
 ];
 
+// Some points belong in the water - a boat anchorage is the obvious one. They are
+// declared, with a reason, so this run can go green on a correct trip. A check that can
+// never pass is a check people stop reading, and then it misses the real thing.
+const EXC_FILE = join(ROOT, 'tools', 'water-exceptions.json');
+const EXCEPTIONS = existsSync(EXC_FILE) ? JSON.parse(readFileSync(EXC_FILE, 'utf8')).points : [];
+const isDeclared = p => EXCEPTIONS.find(e =>
+  Math.abs(e.lat - p.lat) < 0.0005 && Math.abs(e.lng - p.lng) < 0.0005);
+
 const arc = new Archive(ARCHIVE);
 const Z = 15;                                             // the archive's deepest zoom: the sharpest coastline it has
 const cache = new Map();
@@ -387,10 +395,22 @@ if (!controlsOk) {
 // at this zoom. Only a point far enough out that navigation would visibly send someone
 // into the sea is reported as a fault.
 const REAL = 60;
-const offshore = sea.filter(p => p.metres >= REAL).sort((a, b) => b.metres - a.metres);
-const edge = sea.filter(p => p.metres < REAL).sort((a, b) => b.metres - a.metres);
+const declared = [];
+const unexpected = sea.filter(p => {
+  const e = isDeclared(p);
+  if (e) { p.declared = e; declared.push(p); return false; }
+  return true;
+});
+const offshore = unexpected.filter(p => p.metres >= REAL).sort((a, b) => b.metres - a.metres);
+const edge = unexpected.filter(p => p.metres < REAL).sort((a, b) => b.metres - a.metres);
 
-console.log(`\non land: ${land.length} · on the waterline: ${edge.length} · out in the water: ${offshore.length}`);
+console.log(`\non land: ${land.length} · on the waterline: ${edge.length} · out in the water: ${offshore.length}` +
+  (declared.length ? ` · declared exceptions: ${declared.length}` : ''));
+
+for (const p of declared) {
+  console.log(`\ndeclared exception: ${p.declared.what} - ${Math.round(p.metres)}m into the water`);
+  console.log(`  ${p.declared.why}`);
+}
 
 if (edge.length) {
   console.log(`\nwithin ${REAL}m of the shore - fine, that is the coastline's own rounding:`);

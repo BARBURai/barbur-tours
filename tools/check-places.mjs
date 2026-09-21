@@ -14,7 +14,7 @@
 //   npm run places
 //   npm run places -- --snapshot t.json
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Archive, layer, tileXY, fromTile, metres } from './pmtiles-lib.mjs';
@@ -43,6 +43,13 @@ async function loadTrip() {
   if (!res.ok) throw new Error(`Firestore returned ${res.status}; pass --snapshot <file>.`);
   return Object.fromEntries(Object.entries((await res.json()).fields).map(([k, v]) => [k, plain(v)]));
 }
+
+// A pin that deliberately differs from OSM is a decision, and it is written down with
+// its reason rather than left to fail every run. A gate that can never pass is a gate
+// people stop reading.
+const EXC_FILE = join(ROOT, 'tools', 'place-exceptions.json');
+const EXCEPTIONS = existsSync(EXC_FILE) ? JSON.parse(readFileSync(EXC_FILE, 'utf8')).places : [];
+const declaredFor = name => EXCEPTIONS.find(e => String(name).toLowerCase().includes(e.name.toLowerCase()));
 
 const arc = new Archive(join(ROOT, 'cyprus.pmtiles'));
 
@@ -145,7 +152,9 @@ arc.close();
 
 const NEAR = 120;                    // a pin this close is the same place by any reading
 const good = rows.filter(r => r.verdict === 'found' && r.hit.d <= NEAR);
-const off  = rows.filter(r => r.verdict === 'found' && r.hit.d > NEAR).sort((a, b) => b.hit.d - a.hit.d);
+const allOff = rows.filter(r => r.verdict === 'found' && r.hit.d > NEAR).sort((a, b) => b.hit.d - a.hit.d);
+const declared = allOff.filter(r => declaredFor(r.name));
+const off = allOff.filter(r => !declaredFor(r.name));
 const miss = rows.filter(r => r.verdict !== 'found');
 
 console.log(`looked up ${rows.length} named places in the basemap's own OpenStreetMap data\n`);
@@ -159,6 +168,13 @@ if (off.length) {
     console.log(`     we send you to   ${r.lat}, ${r.lng}`);
     console.log(`     the map has it at ${r.hit.lat.toFixed(5)}, ${r.hit.lng.toFixed(5)}  ("${r.hit.name}"${r.hit.kind ? ', ' + r.hit.kind : ''})`);
     console.log(`     that is ${(r.hit.d / 1000).toFixed(2)} km away`);
+  }
+}
+if (declared.length) {
+  console.log('\ndeliberately different from the map, with a reason on file:');
+  for (const r of declared) {
+    console.log(`  ${r.name} - ${(r.hit.d / 1000).toFixed(2)} km from the OSM point`);
+    console.log(`     ${declaredFor(r.name).why}`);
   }
 }
 if (miss.length) {
