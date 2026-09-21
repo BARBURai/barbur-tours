@@ -1859,7 +1859,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 19, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 20, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2342,8 +2342,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 19,
-  lastUpdate: {at:"2026-09-21",what:"ארבע נקודות המסלול באקמאס אומתו מחדש. מרחץ אפרודיטה זז כקילומטר, והתצפית זוהתה כפסגת Moutti Tis Sotiras וזזה כשלושה ק״מ. גם תשובת הביטוח של PR Rentals נכנסה, ואיתה אזהרה על שתי תפיסות אשראי שחופפות ב-3.10."},
+  dataVersion: 20,
+  lastUpdate: {at:"2026-09-21",what:"Alpha Divers אוספים מהמלון ב-07:30, ולכן בוקר 2.10 נבנה מחדש - הצ׳ק-אאוט הוקדם לשבע ואין יותר הליכה למרינה. שאלת האשראי נסגרה. נוספה משימה לבקש מ-PR Rentals את אפליקציית הניווט שלהם."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2368,7 +2368,7 @@ window.seedCyprus = async function() {
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
     ],
     activities: [
-      {lat:34.9219,lng:33.6386,name:"Alpha Divers - מפגש במרינת לרנקה",when:"2.10 08:45 · שתי צלילות לזנוביה",city:"מרינת לרנקה",address:"המשרד הרשום: Pyla Gardens, Zinonos 1-2, Dhekelia Rd 7081, פילה",note:"הסיכה מובילה למרינה, כי משם יוצאת הסירה לזנוביה והיא כקילומטר מהמלון. הכתובת הרשומה של Alpha Divers היא בפילה, כשבעה ק\"מ צפונית-מזרחית מהמרינה - זה המשרד והמחסן, לא נקודת המפגש. כדאי לוודא איתם בהודעה לפני 2.10"}
+      {lat:34.9219,lng:33.6386,name:"Alpha Divers - צלילות זנוביה",when:"2.10 · איסוף מהמלון ב-07:30",city:"מרינת לרנקה",address:"המשרד הרשום: Pyla Gardens, Zinonos 1-2, Dhekelia Rd 7081, פילה",note:"✅ אושר: הם במרינה, והם אוספים מהמלון ב-07:30 - אין צורך להגיע בעצמכם. הסיכה מובילה למרינה, משם יוצאת הסירה. הכתובת בפילה היא המשרד והמחסן בלבד"}
     ],
     cars: [
       {lat:35.032397,lng:32.414374,company:"PR Rentals - Polaris RZR 1000cc XP · 4 מקומות",pickup:"3.10 08:45",dropoff:"3.10 16:30",confirmation:"PR Rentals LTD, לאצ׳י · Ploutarxos · prrentalsltd.com",note:"€220 כולל מע\"מ 19%. ביטוח צד ג׳ כלול במחיר. פיקדון מוחזר של €1000 בכרטיס או במזומן בדלפק. ההשתתפות העצמית במקרה אובדן מוחלט היא €8000. רישיון B/B1. כולל משקפי מגן, צידנית וגישה לאפליקציית הניווט שלהם לשבילי הפארק. הגעה בין 08:30 ל-10:00"},
@@ -2386,8 +2386,8 @@ window.seedCyprus = async function() {
       {time:"20:00",activity:"ארוחת ערב ובירות בפיניקודס או בעיר העתיקה של לרנקה",type:"food",lat:34.9128,lng:33.6404}
     ],notes:["⚠️ אין רכב ביום הזה - הרכב נאסף רק מחר ב-19:00. הכל בהליכה או מונית קצרה","המלון 7 דק׳ הליכה ממועדון Alpha Divers והמרינה - בדיוק בשביל הצלילה של מחר","לילה 1: Leonardo Boutique Hotel Larnaca, אישור P205050"]},
     {date:"2.10",day_of_week:"שישי",title:"צלילת זנוביה, לרנקה ומעבר לפאפוס",location:"לרנקה → כלורקה",summary:"צלילה כפולה לזנוביה, צהריים בטברנות הדגים, סיבוב בעיר העתיקה, ואיסוף הרכב ב-19:00",items:[
-      {time:"08:00",lat:34.914397,lng:33.633846,activity:"צ׳ק-אאוט מ-Leonardo - להשאיר את התיקים בקבלה",type:"hotel"},
-      {time:"08:45",activity:"הליכה ל-Alpha Divers במרינה (7 דק׳)",type:"logistics",lat:34.9219,lng:33.6386},
+      {time:"07:00",lat:34.914397,lng:33.633846,activity:"צ׳ק-אאוט מ-Leonardo - להשאיר את התיקים בקבלה. לפני האיסוף",type:"hotel"},
+      {time:"07:30",activity:"Alpha Divers אוספים מהמלון - להיות מוכנים בלובי",type:"logistics",lat:34.914397,lng:33.633846},
       {time:"09:00",activity:"2 צלילות עומק (עד 30 מ׳) לספינת הטבע Zenobia - Alpha Divers",type:"sightseeing",lat:34.8967,lng:33.6408},
       {time:"13:00",activity:"חזרה למרינה וסיום הצלילות (יכול להימשך גם אחרי 13:00)",type:"logistics",lat:34.9219,lng:33.6386},
       {time:"14:00",activity:"ארוחת צהריים בטברנות הדגים של Piale Pasha - רחוב הדייגים על הים, 10 דק׳ הליכה מהמרינה",type:"food",lat:34.9061,lng:33.6398},
@@ -2441,10 +2441,11 @@ window.seedCyprus = async function() {
     {task:"⛵ להזמין סירה בלאצ׳י ל-4.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Latchi Watersports Centre / Latchi Marine Boat Rentals. מנוע 50-80 כ\"ס. לשאול על גיל מינימלי לנהיגה"},
     {task:"🏍️ להזמין רייזר ל-3.10",done:true,note:"✅ PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · €220 · מול Ploutarxos. רישיון B/B1 מספיק ושלושת הנהגים רשומים"},
     {task:"🏍️ לברר מול PR Rentals את ההשתתפות העצמית בביטוח",done:true,note:"✅ ענה Ploutarxos: ביטוח צד ג׳ כלול במחיר. פיקדון מוחזר של €1000 בדלפק, בכרטיס או במזומן. השתתפות עצמית במקרה אובדן מוחלט - €8000"},
-    {task:"💳 לוודא מסגרת אשראי פנויה לשני הפיקדונות יחד",done:false,deadline:"2026-09-30",note:"⚠️ Sixt תופסת €800 מ-2.10, ו-PR Rentals תופסת עוד €1000 ב-3.10 - שני התפיסות חיות באותו זמן על אותו כרטיס. צריך מסגרת פנויה של כ-€1800, או לפצל בין שני כרטיסים, או לשלם את הפיקדון של PR Rentals במזומן"},
+    {task:"💳 לוודא מסגרת אשראי פנויה לשני הפיקדונות יחד",done:true,note:"✅ נבדק, אין בעיה. לידיעה בדלפק: Sixt תופסת €800 מ-2.10, ו-PR Rentals עוד €1000 ב-3.10"},
     {task:"🏁 להזמין קארטינג ל-5.10 בבוקר",done:false,deadline:"2026-09-28",note:"Paphos Karting Centre, ירוסקיפו. טל׳ 99620916. כ-15 דק׳ מ-WellClub"},
-    {task:"🤿 לוודא מול Alpha Divers שהמפגש במרינה ולא במשרד בפילה",done:false,deadline:"2026-09-28",note:"הסיכה באפליקציה מובילה למרינה. הכתובת הרשומה שלהם היא בפילה, כשבעה ק\"מ משם - הודעה אחת סוגרת את זה"},
-    {task:"🤿 לאשר שעה ופרטים מול Alpha Divers",done:false,deadline:"2026-09-28",note:"מקדמה שולמה ✅. המלון 7 דק׳ הליכה מהם. לאמת שעת התייצבות ל-2.10 בבוקר"},
+    {task:"🤿 לוודא מול Alpha Divers שהמפגש במרינה ולא במשרד בפילה",done:true,note:"✅ אושר: הם במרינה, ובכל מקרה אוספים מהמלון ב-07:30"},
+    {task:"🧭 לבקש מ-PR Rentals את אפליקציית הניווט שלהם בהגעה לדלפק",done:false,deadline:"2026-10-03",note:"Ploutarxos אישר שהיא מכסה את שבילי הפארק. שווה להתקין ולהוריד את המפות לפני שיוצאים לשטח"},
+    {task:"🤿 לאשר שעה ופרטים מול Alpha Divers",done:true,note:"✅ אושר: איסוף מהמלון ב-07:30, הצלילות מהמרינה"},
     {task:"🚗 לברר אם אורי יכול להתווסף כנהג - איתן לא יכול (בן 18)",done:false,deadline:"2026-09-28",note:"איתן נולד 8.9.2008 (18) - Sixt דורשת 21+, פסול. אורי נולד 17.8.2005 (21) - צריך רישיון מעל שנתיים + צפוי היטל נהג צעיר. חשוב במיוחד בגלל הנסיעה הלילית ב-2.10 אחרי הצלילות"},
     {task:"📄 לבדוק תוקף דרכונים",done:true,note:"✅ כולם תקפים לפי כרטיסי העלייה: רון 02/2029, אורי 08/2033, איתן 05/2027"},
     {task:"📄 לארוז רישיונות נהיגה מקוריים וכרטיסי PADI",done:false,deadline:"2026-09-28",note:"רישיון דיגיטלי או צילום לא מתקבלים ב-Sixt"},
