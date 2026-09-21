@@ -1920,7 +1920,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 23, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 24, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2401,8 +2401,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 23,
-  lastUpdate: {at:"2026-09-21",what:"שבעת המקומות ששלחת נכנסו, ולכל אחד מהם יש עכשיו כפתור ניווט ישיר ולא רק חיפוש. ארבעה בלרנקה במרחק הליכה מהמלון, Psaropoulos ו-Viklari קיבלו נקודה, וטברנת קתיקאס נכנסה לשני ימים כי היא יושבת בדיוק על הדרך בין המלון ללאצ׳י. סך הכל 32 מקומות בחמישה ימים."},
+  dataVersion: 24,
+  lastUpdate: {at:"2026-09-21",what:"תוקן באג שדיווחת עליו: לחיצה על הספא ב-3.10 פתחה רשימת מלונות בגוגל במקום ניווט, כי לפריט לא הייתה נקודה והקוד ניחש חיפוש מהטקסט. עכשיו 35 פריטים ביומן מנווטים ישירות לנקודה אמיתית - כולל הספא, החזרות למלון והמרינה. פריט שאינו יעד (המראה, ביטחון בשדה) פשוט לא מציג כפתור, במקום כפתור שמוביל למקום אקראי."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2467,22 +2467,22 @@ window.seedCyprus = async function() {
       {time:"13:30",activity:"צהריים ב-Viklari (The Last Castle) - על המצוק מעל קניון אווקאס",type:"food",lat:34.9083,lng:32.3278},
       {time:"15:00",activity:"חזרה צפונה ללאצ׳י בשבילי הרכס (כ-24 ק\"מ בשטח, 75-90 דק׳)",type:"logistics"},
       {time:"16:30",activity:"החזרת הרכב ב-PR Rentals (החלון נסגר ב-17:00)",type:"logistics",lat:35.032397,lng:32.414374},
-      {time:"17:15",activity:"חזרה ל-WellClub",type:"logistics"},
-      {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel"},
+      {time:"17:15",activity:"חזרה ל-WellClub",type:"logistics",lat:34.7881,lng:32.4090},
+      {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel",lat:34.7881,lng:32.409},
       {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
     ],eat:{"note": "על המסלול עצמו אין כלום - בין מרחץ אפרודיטה לחוף לארה לא עוברים ליד שום דבר פתוח. הצידנית שכלולה בהשכרת הרייזר היא לא קישוט.", "places": [{"name": "Viklari (The Last Castle)", "kind": "בשר על הגחלים", "area": "מעל קניון אווקאס · כבר ביומן ב-13:30", "why": "תפריט אחד ואין ממנו סטייה: חזיר, עוף וטלה על שיפוד מסתובב, עם צ'יפס עבה, סלט ולחם. צהריים בלבד, נסגר בחמש. הנוף מעל אקמאס ומפרץ לארה הוא חצי מהסיבה לעלות לשם.", "warn": "שווה טלפון מראש בשבת - המקום מתמלא. טלפון: +357 99489000", "search": "Viklari The Last Castle Peyia Cyprus", "lat": 34.9083, "lng": 32.3278}, {"name": "Hondros", "kind": "טברנה קפריסאית", "area": "קאטו פאפוס · לערב", "why": "הטברנה הוותיקה באזור, פתוחה מאז 1951. מזה ובשרים על תנור פחמים, וישיבה בחוץ במרחק צעדים מהנמל.", "search": "Hondros tavern Kato Paphos"}, {"name": "Ristorante Bacco", "kind": "איטלקי", "area": "קאטו פאפוס · לערב", "why": "איטלקי במרחק הליכה ממלונות קאטו פאפוס, עם כינור חי בערב. אם אחרי יום שלם של אבק ורייזר רוצים משהו אחר מבשר על הגחלים.", "search": "Ristorante Bacco Kato Paphos"}, {"name": "Yiannis Kathikas Tavern", "kind": "מזה כפרי", "area": "כפר קתיקאס · בדרך חזרה מלאצ׳י ל-WellClub", "why": "מזה קפריסאי מלא בטברנה משפחתית בכפר הררי, בדיוק על הדרך חזרה: 13.4 ק״מ מלאצ׳י ו-13.9 ק״מ מהמלון. חלופה לקאטו פאפוס אם אין כוח לצאת שוב אחרי הספא.", "search": "Yiannis Tavern Kathikas Paphos", "lat": 34.9123, "lng": 32.4253}]},notes:["✅ הוזמן ומאושר: PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · 4 מקומות · €220 כולל מע\"מ · איש קשר: Ploutarxos · prrentalsltd.com","💳 בדלפק: פיקדון מוחזר של €1000, בכרטיס או במזומן. ביטוח צד ג׳ כלול. השתתפות עצמית במקרה אובדן מוחלט - €8000. שימו לב שגם Sixt תופסת €800 באותם ימים","🧭 יש להם אפליקציית ניווט משלהם לשבילי הפארק - Ploutarxos אישר שהיא מכסה את המסלולים המומלצים","🕐 החלון הוא 08:30-17:00, יום שלם. הלולאה היא כ-69 ק\"מ בשבילים ועם עצירות, רחצה בלארה וצהריים ב-Viklari היא 6-7 שעות - נכנסת בנוחות","✅ נסגר: רישיון B/B1 רגיל מספיק, ושלושת הנהגים רשומים בהזמנה - איתן בן 18, אורי בן 21 ורון בן 55. איתן נוהג","⚠️ לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳","🐢 חוף לארה הוא שמורת קינון של צבי ים. מותר להגיע, אבל אסור לרדת עם הרייזר לקו החוף או לחול הרך - חונים באזור המוגדר והולכים ברגל את השאר","🧭 כלול בהשכרה: משקפי מגן, צידנית לאוכל ושתייה, וגישה לאפליקציית הניווט שלהם לשבילי אקמאס והבלו לגון","📍 PR Rentals יושבים על כביש E713 ליד חניית Venetico Cafe - כקילומטר וחצי ממרינת לאצ׳י שממנה יוצאת הסירה למחרת","✅ ארבע נקודות המסלול אומתו מחדש מול גוגל מפות. מרחץ אפרודיטה תוקן בכקילומטר מזרחה, והתצפית זוהתה כפסגת Moutti Tis Sotiras וזזה כשלושה ק\"מ דרומה - היא יושבת כעת פחות משני ק\"מ מהבלגונה, כמו שתצפית אמורה"]},
     {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
-      {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics"},
+      {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics",lat:35.0405,lng:32.3986},
       {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
       {time:"10:45",activity:"שייט לחצי האי אקמאס, עגינה בבלו לגון - שנרקול ושחייה",type:"sightseeing",lat:35.0556,lng:32.3406},
       {time:"14:00",activity:"החזרת הסירה במרינת לאצ׳י",type:"logistics",lat:35.0405,lng:32.3986},
-      {time:"14:30",activity:"ארוחת דגים במרינה (Yiannakis / Periyiali)",type:"food"},
-      {time:"16:30",activity:"חזרה ל-WellClub",type:"logistics"},
-      {time:"18:00",activity:"ספא ווולנס, ערב רגוע",type:"hotel"}
+      {time:"14:30",activity:"ארוחת דגים על נמל לאצ׳י - ראה איפה לאכול",type:"food",lat:35.0405,lng:32.3986},
+      {time:"16:30",activity:"חזרה ל-WellClub",type:"logistics",lat:34.7881,lng:32.4090},
+      {time:"18:00",activity:"ספא ווולנס, ערב רגוע",type:"hotel",lat:34.7881,lng:32.409}
     ],eat:{"note": "השמות שבאמת יושבים על הנמל הם אלה שכאן, ולא Yiannakis או Periyiali שכתובים ביומן. הצהריים ממש איפה שמחזירים את הסירה.", "places": [{"name": "Porto Latchi", "kind": "דגים", "area": "על מרינת לאצ׳י", "why": "ממש על המרינה, דגים טריים ונוף לנמל - המקום שאליו יוצאים מהסירה בלי להיכנס לרכב.", "search": "Porto Latchi seafood restaurant Latchi"}, {"name": "Yiangos and Peter Fish Tavern", "kind": "דגים", "area": "נמל לאצ׳י", "why": "טברנת דגים ותיקה על הנמל עצמו, מהמוכרות באזור.", "search": "Yiangos and Peter Fish Tavern Latchi"}, {"name": "Psaropoulos", "kind": "מזה דגים", "area": "לאצ׳י", "why": "מזה דגים בתמורה הוגנת ונוף לים. פחות מצוחצח מהשכנים, וזה לא חיסרון.", "search": "Psaropoulos fish tavern Latchi", "lat": 35.0425, "lng": 32.3956}, {"name": "Phidias Tavern", "kind": "טברנה מקומית", "area": "קורל ביי · לערב", "why": "בבעלות מקומית יותר משלושים שנה, מנות מקומיות במחיר הגיוני, בקצה של רצועת קורל ביי הפונה לפאפוס.", "search": "Phidias Tavern Coral Bay Paphos"}, {"name": "Saint George Fish Tavern", "kind": "דגים", "area": "כלורקה · לערב", "why": "דקות מ-WellClub, נוף למפרץ הקורל. ערב קצר אחרי הספא, בלי נסיעה.", "search": "Saint George Fish Tavern Chlorakas Paphos"}, {"name": "Yiannis Kathikas Tavern", "kind": "מזה כפרי", "area": "כפר קתיקאס · בדרך חזרה ב-16:30", "why": "אותה טברנה כפרית שעל הדרך, הפעם בחזרה מהסירה. מזה מלא בכפר הררי, בלי להוסיף קילומטר לנסיעה.", "search": "Yiannis Tavern Kathikas Paphos", "lat": 34.9123, "lng": 32.4253}]},notes:["⚠️ הסירה טרם הוזמנה - Latchi Watersports Centre / Latchi Marine Boat Rentals, מנוע 50-80 כ\"ס","⚠️ לשאול גם פה על גיל מינימלי לנהיגה בסירה - לרוב 18+ גם כשלא צריך רישיון שיט","לבדוק תחזית רוח וים יום לפני - הבלו לגון חשוף כשיש רוח מערבית","חילוץ ימי: 1441 (חיוג חינם) - מופיע במסך החירום"]},
     {date:"5.10",day_of_week:"שני",title:"קארטינג, סלע אפרודיטה וטיסה הביתה",location:"פאפוס → לרנקה",summary:"קארטינג ליד המלון, נסיעה חופית מזרחה, ארוחה בלרנקה וטיסה",items:[
-      {time:"11:00",activity:"צ׳ק-אאוט מ-WellClub",type:"hotel"},
-      {time:"11:30",activity:"קארטינג תחרותי ב-Paphos Karting Centre, ירוסקיפו (כ-15 דק׳ מהמלון)",type:"sightseeing"},
+      {time:"11:00",activity:"צ׳ק-אאוט מ-WellClub",type:"hotel",lat:34.7881,lng:32.409},
+      {time:"11:30",activity:"קארטינג תחרותי ב-Paphos Karting Centre, ירוסקיפו (כ-15 דק׳ מהמלון)",type:"sightseeing",search:"Paphos Karting Centre Geroskipou"},
       {time:"13:00",activity:"ארוחת צהריים בפאפוס",type:"food"},
       {time:"14:30",activity:"יציאה מזרחה לכיוון לרנקה",type:"logistics"},
       {time:"15:15",activity:"עצירה בסלע אפרודיטה (Petra tou Romiou)",type:"sightseeing",lat:34.6636,lng:32.6269},
@@ -2868,15 +2868,27 @@ function renderItinerary(tour) {
         '<button class="edit-save" onclick="saveInlineItem(' + idx + ')">✓</button>' +
         '<button class="edit-mini-btn" onclick="cancelInlineItem()">✕</button></div></div>';
     } else {
-      let navUrl;
+      // The fallback used to build a Google search out of the Hebrew activity text plus
+      // the day's location, for anything of a likely-sounding type. The day's location
+      // is a route and not a place - "לאצ׳י → חצי האי אקמאס" - so tapping "spa at the
+      // resort" on 3.10 searched Google for "ספא ווולנס בריזורט לאצ׳י → חצי האי אקמאס"
+      // and opened a hotel-booking list for Latchi. Six items were in that state.
+      //
+      // Guessing a place out of prose is a coin flip, and a button that lands somewhere
+      // unpredictable is worse than no button - the same lesson as the geo: button.
+      // A coordinate navigates. An explicit `search` string, written because it is
+      // known to resolve, searches. Anything else gets no button, and the day's own
+      // eat list carries the real places for a line like "lunch in Paphos".
+      let navUrl = null;
       if (item.lat && item.lng) {
         navUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + item.lat + ',' + item.lng;
       } else if (item.place_id) {
         navUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.activity) + '&query_place_id=' + item.place_id;
-      } else {
-        navUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.activity + ' ' + (day.location||''));
+      } else if (item.search) {
+        navUrl = mapSearchUrl(item.search);
       }
-      const navBtn = '<a class="timeline-nav-btn" href="' + navUrl + '" target="_blank">🗺️ נווט</a>' +
+      const navBtn = !navUrl ? '' :
+        '<a class="timeline-nav-btn" href="' + navUrl + '" target="_blank">🗺️ נווט</a>' +
         (item.lat && item.lng
           ? ' <a class="timeline-nav-btn" title="הצג במפה של האפליקציה - עובדת בלי קליטה" href="#" onclick="showOnMap(' +
               item.lat + ',' + item.lng + ',' + STATE.selectedDay + ');return false;">📍 במפה שלנו</a>'
@@ -2885,14 +2897,11 @@ function renderItinerary(tour) {
         '<div class="timeline-time">' + (item.time||'') + '</div>' +
         '<div class="timeline-body">' +
           '<div class="timeline-activity"><span class="timeline-type">' + typeEmoji + '</span> ' + item.activity + '</div>' +
-          // The buttons used to be gated on item type alone, so "collect the Razor from
-          // PR Rentals", "return the car" and "landing at Larnaca" - logistics and
-          // flight - carried exact coordinates and offered no way to use them. Those
-          // are the items most worth navigating to. A real coordinate now always earns
-          // the buttons; the type list still governs the case with no coordinate, where
-          // all the button can do is text-search Google and that is only worth offering
-          // for a named place rather than for "leave the hotel".
-          ((item.lat && item.lng) || ['sightseeing','food','hotel','car'].includes(item.type) ? navBtn : '') +
+          // A real coordinate always earns the buttons, whatever the item's type: the
+          // Razor pickup, the car return and the landing are logistics and flight, and
+          // they are among the things most worth navigating to. navBtn is empty when
+          // there is nothing dependable to navigate to, so no type list is left.
+          navBtn +
         '</div></div>';
     }
   });
