@@ -19,9 +19,9 @@ import { openSync, readSync, closeSync, readFileSync, existsSync } from 'node:fs
 import { gunzipSync } from 'node:zlib';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findArchive, NO_ARCHIVE } from './pmtiles-lib.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const ARCHIVE = join(ROOT, 'cyprus.pmtiles');
 
 // ---------- PMTiles v3 ----------
 
@@ -311,6 +311,24 @@ const EXC_FILE = join(ROOT, 'tools', 'water-exceptions.json');
 const EXCEPTIONS = existsSync(EXC_FILE) ? JSON.parse(readFileSync(EXC_FILE, 'utf8')).points : [];
 const isDeclared = p => EXCEPTIONS.find(e =>
   Math.abs(e.lat - p.lat) < 0.0005 && Math.abs(e.lng - p.lng) < 0.0005);
+
+// No basemap means nothing here can be verified. That is not the trip's fault and it
+// must not read as one - but it must not read as a pass either. A trip carrying
+// coordinates with no map to check them against is exactly the state that put pins in
+// the sea, so that combination fails loudly; a trip with no coordinates yet is fine.
+const ARCHIVE = findArchive(ROOT, tour.id || TRIP);
+if (!ARCHIVE) {
+  console.log(NO_ARCHIVE + '\n');
+  const withCoords = all.length;
+  if (withCoords) {
+    console.error(`\u2717  ${withCoords} נקודות כבר בטיול ואין מול מה לאמת אותן.`);
+    console.error('   זה בדיוק המצב שבו נקודות הגיעו מניחוש. או שמביאים את קובץ המפה,');
+    console.error('   או שמורידים את הנקודות ומשאירים search בלבד.');
+    process.exit(1);
+  }
+  console.log('אין עדיין נקודות בטיול, אז אין מה לאמת. תקין.');
+  process.exit(0);
+}
 
 const arc = new Archive(ARCHIVE);
 const Z = 15;                                             // the archive's deepest zoom: the sharpest coastline it has

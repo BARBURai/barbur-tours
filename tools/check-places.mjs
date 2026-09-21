@@ -17,7 +17,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Archive, layer, tileXY, fromTile, metres } from './pmtiles-lib.mjs';
+import { Archive, layer, tileXY, fromTile, metres, findArchive, NO_ARCHIVE } from './pmtiles-lib.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -51,7 +51,12 @@ const EXC_FILE = join(ROOT, 'tools', 'place-exceptions.json');
 const EXCEPTIONS = existsSync(EXC_FILE) ? JSON.parse(readFileSync(EXC_FILE, 'utf8')).places : [];
 const declaredFor = name => EXCEPTIONS.find(e => String(name).toLowerCase().includes(e.name.toLowerCase()));
 
-const arc = new Archive(join(ROOT, 'cyprus.pmtiles'));
+const ARCHIVE = findArchive(ROOT, TRIP);
+if (!ARCHIVE) {
+  console.log(NO_ARCHIVE);
+  process.exit(0);                   // land-check is the one that fails on this
+}
+const arc = new Archive(ARCHIVE);
 
 // Named points from every tile within `rings` tiles of a centre, as lat/lng.
 function poisAround(lat, lng, rings) {

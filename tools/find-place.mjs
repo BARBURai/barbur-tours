@@ -16,7 +16,7 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Archive, layer, tileXY, fromTile, metres } from './pmtiles-lib.mjs';
+import { Archive, layer, tileXY, fromTile, metres, findArchive, NO_ARCHIVE } from './pmtiles-lib.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -62,7 +62,11 @@ const Z = 15;
 // A wide sweep by default: being slow beats missing the place and inventing one instead.
 const RINGS = nearArg === 'cyprus' ? 40 : 10;
 const kindWanted = opt('kind', null);
-const archive = opt('archive', join(ROOT, 'cyprus.pmtiles'));
+const archive = opt('archive', findArchive(ROOT, null));
+if (!archive) {
+  console.error(NO_ARCHIVE);
+  process.exit(2);
+}
 
 const arc = new Archive(archive);
 const c = tileXY(centre[0], centre[1], Z);

@@ -22,6 +22,7 @@
 
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { readdirSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { join, extname, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -153,6 +154,7 @@ const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT },
 
 const problems = [];
 const offline = new Set();
+const notReady = new Set();
 const origin = () => `http://127.0.0.1:${port}`;
 
 page.on('pageerror', e => problems.push(`page error: ${e.message.split('\n')[0]}`));
@@ -173,8 +175,18 @@ page.on('requestfailed', r => {
   if (r.failure()?.errorText === 'net::ERR_ABORTED') return;
   problems.push(`local request failed: ${r.url().replace(origin(), '')} (${r.failure()?.errorText})`);
 });
+// A basemap that has not been cut yet is a known stage of a new trip, not a broken
+// app: the runbook says the owner produces it before any coordinate is written, and
+// until then the map screen has nothing to draw. Reporting that as a failure would
+// make the gate red on every new trip for a reason nobody can fix by editing code -
+// which is how a gate stops being read. A .pmtiles that exists and still 404s is a
+// real break and is still reported.
+const mapMissing = !readdirSync(ROOT).some(f => f.endsWith('.pmtiles'));
 page.on('response', r => {
-  if (r.status() >= 400 && !external(r.url())) problems.push(`local ${r.status()}: ${r.url().replace(origin(), '')}`);
+  if (r.status() < 400 || external(r.url())) return;
+  const path = r.url().replace(origin(), '');
+  if (mapMissing && path.endsWith('.pmtiles')) { notReady.add(path); return; }
+  problems.push(`local ${r.status()}: ${path}`);
 });
 
 await page.addInitScript(([snapshot, trip, theme]) => {
@@ -211,6 +223,11 @@ for (const view of VIEWS) {
 
 await browser.close();
 server.close();
+
+if (notReady.size) {
+  console.log(`\nאין עדיין קובץ מפה, ולכן מסך המפה ריק: ${[...notReady].join(', ')}`);
+  console.log('זה שלב תקין בטיול חדש - הבעלים חותך אותו פעם אחת. ראה CLAUDE.md.');
+}
 
 if (offline.size) {
   console.log(`\nunreachable from here (the app's offline path was exercised instead): ${[...offline].join(', ')}`);
