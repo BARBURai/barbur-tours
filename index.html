@@ -894,6 +894,9 @@ let MAP_DAY = 'all';
 let MAP_TRAILS = false;
 let MAP_MARKERS = [];
 let MAP_ME = null;
+// A point the user asked to see. Set before navigating to the map, consumed once the
+// map is ready, then cleared so the next visit frames the day normally.
+let MAP_FOCUS = null;
 
 function mapIdb() {
   return new Promise((res, rej) => {
@@ -1084,6 +1087,32 @@ function mapNavigateAny(lat, lng, name) {
 // far better than an entry the traveller cannot tap.
 function mapSearchUrl(query) {
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+}
+
+// Every navigation control so far sends you out of the app, to Google or to whatever
+// the phone offers. In Akamas with no signal those do nothing, and the map that does
+// work is the one in this app with the basemap already on the device. So each point
+// needs a way in as well as a way out.
+function showOnMap(lat, lng, day) {
+  MAP_FOCUS = { lat: Number(lat), lng: Number(lng) };
+  MAP_DAY = (day === undefined || day === null || day === '') ? MAP_DAY : day;
+  if (STATE.currentView === 'map') {
+    // Already here: no reason to tear the map down and rebuild it.
+    const tour = curTour();
+    if (tour) { mapDrawPins(tour); mapRenderList(tour); renderMapChips(tour); }
+    mapApplyFocus();
+  } else {
+    navigate('map');
+  }
+}
+
+// Zoomed in rather than fitted: the point of asking for one place is to see what is
+// around it, which is the thing a bounds fit of the whole day takes away.
+function mapApplyFocus() {
+  if (!MAP || !MAP_FOCUS) return false;
+  MAP.jumpTo({ center: [MAP_FOCUS.lng, MAP_FOCUS.lat], zoom: 15 });
+  MAP_FOCUS = null;
+  return true;
 }
 
 function mapStop() {
@@ -1288,7 +1317,7 @@ function mapBuild(libs, sourceUrl, tour) {
     attributionControl: { compact: true }
   });
   MAP.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
-  MAP.on('load', () => { mapDrawPins(tour); mapFitPoints(false); });
+  MAP.on('load', () => { mapDrawPins(tour); if (!mapApplyFocus()) mapFitPoints(false); });
   MAP.on('error', e => {
     // A tile or glyph failing is not worth blanking the screen over.
     if (e && e.error) console.warn('map', e.error.message || e.error);
@@ -1349,6 +1378,7 @@ function mapCenterMe() {
 // Called from the itinerary: open the map already framed on that day.
 function mapSetDay(d) {
   MAP_DAY = d;
+  MAP_FOCUS = null;
   const tour = curTour();
   if (!tour) return;
   document.querySelectorAll('.map-tools .map-tool').forEach(b => {
@@ -1829,7 +1859,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 16, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 17, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -1899,7 +1929,8 @@ function buildNowHtml(tour) {
   const rows = show.map((t, i) => {
     const it = t.it;
     const nav = (it.lat && it.lng)
-      ? ' <a class="timeline-nav-btn" style="margin:4px 0 0;" href="#" onclick="mapNavigate(' + it.lat + ',' + it.lng + ');return false;">🗺️ נווט</a>'
+      ? ' <a class="timeline-nav-btn" style="margin:4px 0 0;" href="#" onclick="mapNavigate(' + it.lat + ',' + it.lng + ');return false;">🗺️ נווט</a>' +
+        ' <a class="timeline-nav-btn" style="margin:4px 0 0;" href="#" onclick="showOnMap(' + it.lat + ',' + it.lng + ');return false;">📍 במפה שלנו</a>'
       : '';
     return '<div class="now-row' + (i ? ' now-next' : '') + '">' +
       '<div class="now-time">' + (it.time || '') + '</div>' +
@@ -1958,6 +1989,8 @@ function buildTodayNavHtml(tour) {
       '<a class="timeline-nav-btn" href="#" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ');return false;">🗺️ נווט</a>' +
       '<a class="timeline-nav-btn" title="אפליקציית מפות אחרת" href="#" onclick="mapNavigateAny(' +
         pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ');return false;">📍</a>' +
+      '<a class="timeline-nav-btn" title="הצג במפה של האפליקציה" href="#" onclick="showOnMap(' +
+        pt.lat + ',' + pt.lng + ',' + (pt.day === 'all' ? "'all'" : pt.day) + ');return false;">🗺</a>' +
     '</div>';
 
   // An address with no pin still gets a tappable row - Google resolves it exactly.
@@ -2309,8 +2342,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 16,
-  lastUpdate: {at:"2026-09-21",what:"Alpha Divers נוסף כהזמנה, והסיכה שלו מובילה למרינה - משם יוצאת הסירה לזנוביה. חוף לארה: מותר להגיע, אסור לרדת עם הרייזר לחול. יום 3.10 עודכן ל-PR Rentals, המלון בלרנקה קיבל מיקום, ומסך הבית קיבל כרטיס ניווט ליום."},
+  dataVersion: 17,
+  lastUpdate: {at:"2026-09-21",what:"לכל נקודה בטיול יש עכשיו כפתור 📍 שפותח אותה במפה של האפליקציה - זו שעובדת בלי קליטה. קודם כפתורי הניווט הופיעו רק בחלק מסוגי הפריטים, ולכן איסוף הרייזר, החזרת הרכב והנחיתה נשארו בלי שום כפתור למרות שיש להם מיקום מדויק."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2782,12 +2815,23 @@ function renderItinerary(tour) {
       } else {
         navUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.activity + ' ' + (day.location||''));
       }
-      const navBtn = '<a class="timeline-nav-btn" href="' + navUrl + '" target="_blank">🗺️ נווט</a>';
+      const navBtn = '<a class="timeline-nav-btn" href="' + navUrl + '" target="_blank">🗺️ נווט</a>' +
+        (item.lat && item.lng
+          ? ' <a class="timeline-nav-btn" title="הצג במפה של האפליקציה - עובדת בלי קליטה" href="#" onclick="showOnMap(' +
+              item.lat + ',' + item.lng + ',' + STATE.selectedDay + ');return false;">📍 במפה שלנו</a>'
+          : '');
       html += '<div class="timeline-item">' +
         '<div class="timeline-time">' + (item.time||'') + '</div>' +
         '<div class="timeline-body">' +
           '<div class="timeline-activity"><span class="timeline-type">' + typeEmoji + '</span> ' + item.activity + '</div>' +
-          (['sightseeing','food','hotel','car'].includes(item.type) ? navBtn : '') +
+          // The buttons used to be gated on item type alone, so "collect the Razor from
+          // PR Rentals", "return the car" and "landing at Larnaca" - logistics and
+          // flight - carried exact coordinates and offered no way to use them. Those
+          // are the items most worth navigating to. A real coordinate now always earns
+          // the buttons; the type list still governs the case with no coordinate, where
+          // all the button can do is text-search Google and that is only worth offering
+          // for a named place rather than for "leave the hotel".
+          ((item.lat && item.lng) || ['sightseeing','food','hotel','car'].includes(item.type) ? navBtn : '') +
         '</div></div>';
     }
   });
@@ -3136,6 +3180,8 @@ function renderBookings(tour) {
         (h.pin ? '<div class="booking-detail"><strong>PIN:</strong> ' + h.pin + '</div>' : '') +
         (h.price ? '<div class="booking-detail"><strong>מחיר:</strong> ' + h.price + '</div>' : '') +
         (h.address ? '<div class="booking-detail"><strong>כתובת:</strong> ' + h.address + '</div>' : '') +
+        (h.lat && h.lng ? '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="#" onclick="showOnMap(' +
+          h.lat + ',' + h.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
         '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="' + (h.lat && h.lng ? 'https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(h.name + ' ' + (h.city||''))) + '" target="_blank">🗺️ נווט למלון</a></div>' +
         (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + linkPhones(h.phone) + (waLink(h.phone) ? ' <a class="tel-link" style="border:0;" href="' + waLink(h.phone) + '" target="_blank">💬</a>' : '') + '</div>' : '') +
         (h.note ? '<div class="booking-detail">' + linkPhones(h.note) + '</div>' : '') +
@@ -3151,6 +3197,8 @@ function renderBookings(tour) {
         '<div class="booking-card-head"><div class="booking-card-title">' + (c.company||'רכב') + '</div>' +
         '<div class="booking-card-date">' + (c.pickup||'') + ' - ' + (c.dropoff||'') + '</div></div>' +
         (c.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + c.confirmation + '</div>' : '') +
+        (c.lat && c.lng ? '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="#" onclick="showOnMap(' +
+          c.lat + ',' + c.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
         (c.note ? '<div class="booking-detail">' + linkPhones(c.note) + '</div>' : '') +
         (c.doc_url ? '<a class="doc-link" href="' + c.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
@@ -3165,6 +3213,8 @@ function renderBookings(tour) {
         '<div class="booking-card-date">' + (a.when || '') + '</div></div>' +
         (a.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + a.confirmation + '</div>' : '') +
         (a.address ? '<div class="booking-detail">' + a.address + '</div>' : '') +
+        (a.lat && a.lng ? '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="#" onclick="showOnMap(' +
+          a.lat + ',' + a.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
         (a.note ? '<div class="booking-detail">' + linkPhones(a.note) + '</div>' : '') +
         (a.doc_url ? '<a class="doc-link" href="' + a.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
