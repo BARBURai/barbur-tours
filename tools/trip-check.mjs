@@ -13,7 +13,7 @@
 //   npm run trip
 //   npm run trip -- --snapshot t.json
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -190,4 +190,10 @@ if (notes.length) {
 }
 if (!problems.length && !notes.length) console.log('הכל מסתדר: תאריכים, שעות, מרחקים, לינה, רכב ויעדים.');
 else if (!problems.length) console.log('אין בעיות. הפריטים שלמעלה הם הערות בלבד.');
+try {
+  mkdirSync(join(ROOT, '.preview', 'coverage'), { recursive: true });
+  writeFileSync(join(ROOT, '.preview', 'coverage', 'trip.json'), JSON.stringify({
+    watch: notes.map(n => `${n.what} — ${n.detail}`)
+  }));
+} catch {}
 process.exit(problems.length ? 1 : 0);

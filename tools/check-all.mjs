@@ -9,6 +9,7 @@
 //   npm run check -- --snapshot t.json  - against a file, no network
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,5 +58,36 @@ if (failed) {
   console.log('   הפרטים למעלה. לתקן, או לומר לבעלים בפירוש מה נכשל ולמה.');
   process.exit(1);
 }
-console.log('\n\u2713  הכל עובר. הצילומים ב-.preview/ — עכשיו להסתכל עליהם,');
-console.log('   כי שום בדיקה לא אומרת אם המסך קריא.');
+// The boundary of "done", stated by the checks rather than by whoever writes the
+// report. The owner asked to trust the work instead of auditing it; trust needs the
+// limits of a green run to be visible every time, not mentioned when someone remembers.
+const cov = { verified: 0, unverified: [], decided: [], watch: [] };
+const dir = resolve(HERE, '..', '.preview', 'coverage');
+if (existsSync(dir)) {
+  for (const f of readdirSync(dir)) {
+    try {
+      const d = JSON.parse(readFileSync(resolve(dir, f), 'utf8'));
+      cov.verified += d.verified || 0;
+      for (const k of ['unverified', 'decided', 'watch']) if (d[k]) cov[k].push(...d[k]);
+    } catch {}
+  }
+}
+
+console.log('\n\u2713  הכל עובר.');
+if (cov.verified) console.log(`   ${cov.verified} מקומות אומתו מול נתוני המפה.`);
+
+if (cov.unverified.length) {
+  console.log('\nמה שהבדיקות לא יכולות לערוב לו:');
+  for (const u of cov.unverified) console.log(`   · ${u}`);
+}
+if (cov.decided.length) {
+  console.log('\nמה שנראה שגוי אבל הוכרע בכוונה:');
+  for (const d of cov.decided) console.log(`   · ${d}`);
+}
+if (cov.watch.length) {
+  console.log('\nשווה מבט:');
+  for (const w of cov.watch) console.log(`   · ${w}`);
+}
+
+console.log('\nמה ששום בדיקה כאן לא נוגעת בו: מחירים, מספרי טלפון, קודי הזמנה,');
+console.log('שעות פתיחה של מקומות, ואם המסך קריא. לזה יש צילומים ב-.preview/.');
