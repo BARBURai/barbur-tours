@@ -1818,7 +1818,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 13, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 14, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2266,7 +2266,7 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 13,
+  dataVersion: 14,
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2287,7 +2287,7 @@ window.seedCyprus = async function() {
       {date:"5.10",flight:"ישראייר 6H584 (מופעלת ע\"י TradeAir)",route:"לרנקה → TLV",time:"22:05-23:10",confirmation:"4766604",passengers:"3 מבוגרים",price:"$495",note:"טיסה ישירה, 1:05 שעות. כלול: תיק גב/יד + 3 × כבודת יד (טרולי). אין מזוודה רשומה - מעבר ביטחון מהיר"}
     ],
     hotels: [
-      {name:"Leonardo Boutique Hotel Larnaca",city:"לרנקה",checkin:"1.10 15:00",checkout:"2.10",nights:1,confirmation:"P205050",phone:"+357 2404 0000",address:"Constantinou Kalogera 57, Larnaca 6021, Cyprus",price:"€276.00 (₪960.89)",note:"✅ מאושר. 2 חדרים נפרדים (Standard עם נוף לעיר): 2 מבוגרים + מבוגר אחד. ארוחת בוקר בופה כלולה. 7 דק׳ הליכה מ-Alpha Divers והמרינה - לכן אין צורך ברכב ביום הראשון. מייל: reservations@lbl.leonardohotelscyprus.com. ביטול חינם עד 28.9; 3 ימים או פחות לפני ההגעה - 50% דמי ביטול; אי-הופעה - 100%"},
+      {lat:34.914397,lng:33.633846,name:"Leonardo Boutique Hotel Larnaca",city:"לרנקה",checkin:"1.10 15:00",checkout:"2.10",nights:1,confirmation:"P205050",phone:"+357 2404 0000",address:"Constantinou Kalogera 57, Larnaca 6021, Cyprus",price:"€276.00 (₪960.89)",note:"✅ מאושר. 2 חדרים נפרדים (Standard עם נוף לעיר): 2 מבוגרים + מבוגר אחד. ארוחת בוקר בופה כלולה. 7 דק׳ הליכה מ-Alpha Divers והמרינה - לכן אין צורך ברכב ביום הראשון. מייל: reservations@lbl.leonardohotelscyprus.com. ביטול חינם עד 28.9; 3 ימים או פחות לפני ההגעה - 50% דמי ביטול; אי-הופעה - 100%"},
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
     ],
     cars: [
@@ -2301,12 +2301,12 @@ window.seedCyprus = async function() {
       {time:"12:25",activity:"סגירת שער (עלייה מהדלת הקדמית)",type:"flight"},
       {time:"12:55",activity:"המראה (Wizz Air W6 4606)",type:"flight"},
       {time:"14:00",activity:"נחיתה בלרנקה",type:"flight",lat:34.8751,lng:33.6249},
-      {time:"15:00",activity:"מונית לפיניקודס - צ׳ק-אין ב-Leonardo Boutique Hotel Larnaca (כ-10 דק׳ מהשדה)",type:"hotel"},
+      {time:"15:00",lat:34.914397,lng:33.633846,activity:"מונית לפיניקודס - צ׳ק-אין ב-Leonardo Boutique Hotel Larnaca (כ-10 דק׳ מהשדה)",type:"hotel"},
       {time:"17:00",activity:"הליכה בטיילת פיניקודס והמרינה - לאתר את Alpha Divers לקראת מחר",type:"sightseeing",lat:34.9128,lng:33.6404},
       {time:"20:00",activity:"ארוחת ערב ובירות בפיניקודס או בעיר העתיקה של לרנקה",type:"food",lat:34.9128,lng:33.6404}
     ],notes:["⚠️ אין רכב ביום הזה - הרכב נאסף רק מחר ב-19:00. הכל בהליכה או מונית קצרה","המלון 7 דק׳ הליכה ממועדון Alpha Divers והמרינה - בדיוק בשביל הצלילה של מחר","לילה 1: Leonardo Boutique Hotel Larnaca, אישור P205050"]},
     {date:"2.10",day_of_week:"שישי",title:"צלילת זנוביה, לרנקה ומעבר לפאפוס",location:"לרנקה → כלורקה",summary:"צלילה כפולה לזנוביה, צהריים בטברנות הדגים, סיבוב בעיר העתיקה, ואיסוף הרכב ב-19:00",items:[
-      {time:"08:00",activity:"צ׳ק-אאוט מ-Leonardo - להשאיר את התיקים בקבלה",type:"hotel"},
+      {time:"08:00",lat:34.914397,lng:33.633846,activity:"צ׳ק-אאוט מ-Leonardo - להשאיר את התיקים בקבלה",type:"hotel"},
       {time:"08:45",activity:"הליכה ל-Alpha Divers במרינה (7 דק׳)",type:"logistics",lat:34.9219,lng:33.6386},
       {time:"09:00",activity:"2 צלילות עומק (עד 30 מ׳) לספינת הטבע Zenobia - Alpha Divers",type:"sightseeing",lat:34.8967,lng:33.6408},
       {time:"13:00",activity:"חזרה למרינה וסיום הצלילות (יכול להימשך גם אחרי 13:00)",type:"logistics",lat:34.9219,lng:33.6386},
