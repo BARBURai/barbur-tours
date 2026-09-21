@@ -24,7 +24,9 @@ const STEPS = [
   { name: 'land',    why: 'no point sends anyone into the sea',
     cmd: ['node', ['land-check.mjs', ...extra]] },
   { name: 'places',  why: 'every named place sits where the map says it sits',
-    cmd: ['node', ['check-places.mjs', ...extra]] }
+    cmd: ['node', ['check-places.mjs', ...extra]] },
+  { name: 'trip',    why: 'the plan holds up: dates, times, travel time, a bed every night',
+    cmd: ['node', ['trip-check.mjs', ...extra]] }
 ];
 
 const results = [];
@@ -34,17 +36,26 @@ for (const s of STEPS) {
   results.push({ ...s, code: r.status });
 }
 
+const HE = {
+  preview: 'כל המסכים נטענים, בלי שגיאות',
+  bidi:    'המספרים בעברית לא מתהפכים',
+  land:    'אף נקודה לא שולחת אותך לים',
+  places:  'כל מקום יושב איפה שהמפה אומרת',
+  trip:    'התוכנית מחזיקה: תאריכים, שעות, מרחקים, לינה'
+};
+
 console.log('\n════════════════════════════════════════');
 let failed = 0;
 for (const r of results) {
   const ok = r.code === 0;
   if (!ok) failed++;
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${r.name.padEnd(8)} ${r.why}`);
+  console.log(`  ${ok ? '\u2713' : '\u2717'}  ${(HE[r.name] || r.why)}`);
 }
+console.log('════════════════════════════════════════');
 if (failed) {
-  console.log('\nNOT READY. Fix the failures above, or state each one explicitly to the owner');
-  console.log('as a known exception with the reason. Never ship past a FAIL in silence.');
+  console.log(`\n\u2717  ${failed} מתוך ${results.length} נכשלו. לא מוכן לשליחה.`);
+  console.log('   הפרטים למעלה. לתקן, או לומר לבעלים בפירוש מה נכשל ולמה.');
   process.exit(1);
 }
-console.log('\nAll gates pass. Screenshots are in .preview/ - now look at them, because');
-console.log('none of this tells you whether the screen reads well.');
+console.log('\n\u2713  הכל עובר. הצילומים ב-.preview/ — עכשיו להסתכל עליהם,');
+console.log('   כי שום בדיקה לא אומרת אם המסך קריא.');
