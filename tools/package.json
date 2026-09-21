@@ -5,7 +5,9 @@
   "description": "Development tooling only. The app itself has no dependencies and no build step - this folder is kept separate so it stays that way.",
   "scripts": {
     "preview": "node preview.mjs",
-    "bidi": "node bidi-check.mjs"
+    "bidi": "node bidi-check.mjs",
+    "land": "node land-check.mjs",
+    "places": "node check-places.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.48.0"
