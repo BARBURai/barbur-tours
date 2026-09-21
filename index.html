@@ -1796,7 +1796,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 11, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 12, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2201,7 +2201,7 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 11,
+  dataVersion: 12,
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2226,6 +2226,7 @@ window.seedCyprus = async function() {
       {name:"WellClub Resort - Suites & Wellness",city:"כלורקה, פאפוס",checkin:"2.10 15:00",checkout:"5.10 11:00",nights:3,confirmation:"5290124468",phone:"+357 26 332770",address:"Chlorakas Ave 67, Chloraka, 8220, Cyprus",price:"US$905 (€789.60)",lat:34.7881,lng:32.4090,note:"✅ מאושר. סוויטת משפחה 2 חדרי שינה עם נוף לים, 4 מיטות יחיד מלאות + ספת מיטה, 2 חדרי רחצה, מטבחון ומיקרוגל. ארוחת בוקר כלולה. חניה פרטית חינם - לא צריך להזמין. WiFi חינם. ספא ווולנס באתר. ⚠️ ביטול חינם רק עד 7 ימים לפני ההגעה (25.9) - מ-26.9 המחיר המלא. ⚠️ ההגעה מתוכננת ל-~20:45 - כדאי להודיע להם"}
     ],
     cars: [
+      {company:"PR Rentals - Polaris RZR 1000cc XP · 4 מקומות",pickup:"3.10 08:45",dropoff:"3.10 16:30",confirmation:"PR Rentals LTD, לאצ׳י · Ploutarxos · prrentalsltd.com",note:"€220 כולל מע\"מ 19% וביטוח בסיסי. רישיון B/B1. כולל משקפי מגן, צידנית וגישה לאפליקציית הניווט שלהם. פתוח: גובה ההשתתפות העצמית"},
       {lat:34.8751,lng:33.6249,company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
     ]
   },
@@ -2253,19 +2254,19 @@ window.seedCyprus = async function() {
       {time:"19:30",activity:"נסיעה לכלורקה/פאפוס (כ-130 ק\"מ, 1:15 בכביש המהיר)",type:"logistics"},
       {time:"20:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel",lat:34.7881,lng:32.4090}
     ],notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
-    {date:"3.10",day_of_week:"שבת",title:"רייזרים באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"לולאת שטח בחצי האי אקמאס על רייזרים, ואחריה ספא בריזורט וערב בקאטו פאפוס",items:[
-      {time:"08:15",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
-      {time:"09:15",activity:"איסוף הרייזרים - Sammer Rent a Car, לאצ׳י",type:"logistics",lat:35.03961,lng:32.39958},
-      {time:"09:45",activity:"מרחץ אפרודיטה - סוף האספלט ותחילת שביל העפר של השמורה",type:"sightseeing",lat:35.05639,lng:32.33472},
+    {date:"3.10",day_of_week:"שבת",title:"רייזר באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"Polaris RZR ליום שלם בחצי האי אקמאס, ואחריו ספא בריזורט וערב בקאטו פאפוס",items:[
+      {time:"08:00",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
+      {time:"08:45",activity:"איסוף ה-Polaris RZR ב-PR Rentals, לאצ׳י - מול Ploutarxos",type:"logistics"},
+      {time:"09:30",activity:"מרחץ אפרודיטה - סוף האספלט ותחילת שביל העפר של השמורה",type:"sightseeing",lat:35.05639,lng:32.33472},
       {time:"10:30",activity:"תצפית הבלגונה הכחולה - הנקודה הגבוהה על הרכס",type:"sightseeing",lat:35.08183,lng:32.30605},
-      {time:"11:45",activity:"חוף הצבים - מפרץ לארה, רחצה בחוף הפראי",type:"sightseeing",lat:34.95611,lng:32.31222},
-      {time:"13:15",activity:"צהריים ב-Viklari (The Last Castle) - על המצוק מעל קניון אווקאס",type:"food",lat:34.91689,lng:32.32833},
-      {time:"14:45",activity:"חזרה צפונה ללאצ׳י בשבילי הרכס (כ-24 ק\"מ בשטח, 75-90 דק׳)",type:"logistics"},
-      {time:"16:15",activity:"החזרת הרייזרים ב-Sammer",type:"logistics",lat:35.03961,lng:32.39958},
-      {time:"17:00",activity:"חזרה ל-WellClub",type:"logistics"},
+      {time:"12:00",activity:"חוף הצבים - מפרץ לארה, רחצה בחוף הפראי",type:"sightseeing",lat:34.95611,lng:32.31222},
+      {time:"13:30",activity:"צהריים ב-Viklari (The Last Castle) - על המצוק מעל קניון אווקאס",type:"food",lat:34.91689,lng:32.32833},
+      {time:"15:00",activity:"חזרה צפונה ללאצ׳י בשבילי הרכס (כ-24 ק\"מ בשטח, 75-90 דק׳)",type:"logistics"},
+      {time:"16:30",activity:"החזרת הרכב ב-PR Rentals (החלון נסגר ב-17:00)",type:"logistics"},
+      {time:"17:15",activity:"חזרה ל-WellClub",type:"logistics"},
       {time:"18:30",activity:"ספא ווולנס בריזורט",type:"hotel"},
       {time:"20:30",activity:"ארוחת ערב בקאטו פאפוס",type:"food",lat:34.7571,lng:32.4089}
-    ],notes:["⚠️ הרייזרים טרם הוזמנו - Sammer Rent a Car, לאצ׳י. הנקודה שמורה בפריט של 09:15 ביומן","🕐 הלולאה היא כ-44 ק\"מ בקו אווירי, כ-70 ק\"מ בשבילים בפועל. עם עצירות, רחצה בלארה וצהריים ב-Viklari זה יום של 6-7 שעות השכרה, לא 4. לתאם מול Sammer לפני","⚠️ חוף לארה הוא שמורת קינון של צבי ים ויש הגבלות על כניסת רכב בעונה - לוודא מול Sammer שהמסלול מותר ב-3.10","⚠️ לשאול במפורש על בן 18: איתן נולד 8.9.2008. זו השאלה שתקבע אם הוא נוהג או רק נוסע","⚠️ לוודא רכבים שמתאימים ל-1.92 מ׳","📍 הקואורדינטות נבדקו: Sammer יושב כ-130 מ׳ ממרינת לאצ׳י של יום 4.10, כלומר מאומת. מרחץ אפרודיטה שונה בכ-900 מ׳ ממקור חיצוני - כדאי לאמת אותו על המפה לפני היציאה"]},
+    ],notes:["✅ הוזמן: PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · 4 מקומות · €220 כולל מע\"מ וביטוח בסיסי · איש קשר: Ploutarxos · prrentalsltd.com","🕐 החלון הוא 08:30-17:00, יום שלם. הלולאה היא כ-70 ק\"מ בשבילים ועם עצירות, רחצה בלארה וצהריים ב-Viklari היא 6-7 שעות - נכנסת בנוחות","✅ נסגר: רישיון B/B1 רגיל מספיק, ושלושת הנהגים רשומים בהזמנה - איתן בן 18, אורי בן 21 ורון בן 55. איתן נוהג","⚠️ פתוח מול Ploutarxos: מה גובה ההשתתפות העצמית בביטוח במקרה נזק לרכב","⚠️ לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳","⚠️ חוף לארה הוא שמורת קינון של צבי ים ויש הגבלות על כניסת רכב בעונה - לוודא מול PR Rentals שהמסלול מותר ב-3.10","🧭 כלול בהשכרה: משקפי מגן, צידנית לאוכל ושתייה, וגישה לאפליקציית הניווט שלהם לשבילי אקמאס והבלו לגון","📍 אין עדיין קואורדינטות ל-PR Rentals - הן יופיעו במסך המפה תחת \"אין קואורדינטות\" עד שיתווספו"]},
     {date:"4.10",day_of_week:"ראשון",title:"סירה עצמאית לבלו לגון ואקמאס",location:"לאצ׳י → אקמאס",summary:"4 שעות סירת מנוע בהגה עצמי, עגינה בבלו לגון, ארוחת דגים במרינה",items:[
       {time:"09:00",activity:"נסיעה מ-WellClub למרינת לאצ׳י (כ-45 דק׳)",type:"logistics"},
       {time:"10:00",activity:"קבלת סירת מנוע בהגה עצמי (ללא רישיון שיט) - 4 שעות",type:"sightseeing",lat:35.0405,lng:32.3986},
@@ -2293,7 +2294,8 @@ window.seedCyprus = async function() {
     {task:"🚗 לבטל את הזמנת Sixt הישנה (8PRF87)",done:true,note:"✅ בוטלה. בתוקף: 736533254 / 1PFCCC, 72 שעות, US$227.88"},
     {task:"🏨 להודיע ל-WellClub על הגעה מאוחרת ב-2.10 סביב 20:45",done:false,deadline:"2026-09-30",note:"טל׳ +357 26 332770. הצ׳ק-אין מ-15:00 אבל עדיף שלא יופתעו"},
     {task:"⛵ להזמין סירה בלאצ׳י ל-4.10, 10:00-14:00",done:false,deadline:"2026-09-25",note:"Latchi Watersports Centre / Latchi Marine Boat Rentals. מנוע 50-80 כ\"ס. לשאול על גיל מינימלי לנהיגה"},
-    {task:"🏍️ להזמין באגי/ATV ל-3.10",done:false,deadline:"2026-09-25",note:"Summer Quad Rentals (פיסורי) או טרודוס. לשאול במפורש על בן 18, ועל רכבים שמתאימים ל-1.92 מ׳"},
+    {task:"🏍️ להזמין רייזר ל-3.10",done:true,note:"✅ PR Rentals LTD, לאצ׳י · Polaris RZR 1000cc XP · €220 · מול Ploutarxos. רישיון B/B1 מספיק ושלושת הנהגים רשומים"},
+    {task:"🏍️ לברר מול PR Rentals את ההשתתפות העצמית בביטוח",done:false,deadline:"2026-09-28",note:"מה משלמים במקרה נזק לרכב. גם לוודא שה-RZR מתאים לנהג בגובה 1.92 מ׳, ושחוף לארה פתוח לרכב ב-3.10"},
     {task:"🏁 להזמין קארטינג ל-5.10 בבוקר",done:false,deadline:"2026-09-28",note:"Paphos Karting Centre, ירוסקיפו. טל׳ 99620916. כ-15 דק׳ מ-WellClub"},
     {task:"🤿 לאשר שעה ופרטים מול Alpha Divers",done:false,deadline:"2026-09-28",note:"מקדמה שולמה ✅. המלון 7 דק׳ הליכה מהם. לאמת שעת התייצבות ל-2.10 בבוקר"},
     {task:"🚗 לברר אם אורי יכול להתווסף כנהג - איתן לא יכול (בן 18)",done:false,deadline:"2026-09-28",note:"איתן נולד 8.9.2008 (18) - Sixt דורשת 21+, פסול. אורי נולד 17.8.2005 (21) - צריך רישיון מעל שנתיים + צפוי היטל נהג צעיר. חשוב במיוחד בגלל הנסיעה הלילית ב-2.10 אחרי הצלילות"},
@@ -2305,7 +2307,7 @@ window.seedCyprus = async function() {
   estimates: [
     {label:"🤿 צלילות זנוביה",perPerson:140,currency:"EUR",note:"מקדמה שולמה"},
     {label:"⛵ סירה בלאצ׳י",total:300,currency:"EUR",note:"לכל השלושה · 4 שעות"},
-    {label:"🏍️ באגי/ATV",total:200,currency:"EUR",note:"לכל השלושה"}
+    {label:"🏍️ רייזר - PR Rentals",total:220,currency:"EUR",note:"הוזמן · לכל השלושה"}
   ],
   packingList: [
     {id:"doc1",text:"📄 דרכון",owner:"all",packed:false},
