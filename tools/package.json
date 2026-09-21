@@ -9,7 +9,8 @@
     "land": "node land-check.mjs",
     "places": "node check-places.mjs",
     "find": "node find-place.mjs",
-    "check": "node check-all.mjs"
+    "check": "node check-all.mjs",
+    "trip": "node trip-check.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.48.0"

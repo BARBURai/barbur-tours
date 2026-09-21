@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# One word, from the repo root: ./check
+#
+# The owner asked that this be very, very simple. It is one command with one answer.
+# Everything it needs it installs by itself the first time, and it works on the live
+# trip by default - "./check trip.json" runs it against a file with no network.
+set -u
+cd "$(dirname "$0")/tools" || exit 1
+[ -d node_modules ] || npm install --silent >/dev/null 2>&1
+exec node check-all.mjs ${1:+--snapshot "../$1"}
