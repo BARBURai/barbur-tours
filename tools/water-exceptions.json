@@ -1,0 +1,11 @@
+{
+  "_why": "Points that are deliberately in the water. A gate that fails forever is a gate people stop reading, so a known and intended exception is declared here with its reason rather than left to fail every run. Adding a line here is a decision - it needs a reason a traveller would accept, not a wish to see the run go green.",
+  "points": [
+    {
+      "lat": 35.0839,
+      "lng": 32.30558,
+      "what": "עגינה בבלו לגון, 4.10",
+      "why": "This is where the boat anchors. A boat anchors in water; the pin is correct."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "_why": "Places whose pin deliberately differs from where OpenStreetMap puts them. Each one is a decision with a reason, not a shortcut to a green run. If you cannot write a reason a traveller would accept, it is not an exception - it is a bug.",
+  "places": [
+    {
+      "name": "Alpha Divers",
+      "why": "OSM and Google both place the registered dive centre in Pyla, 7km away. The owner decided the pin goes to the marina the boat leaves from, and in practice they collect from the hotel at 07:30. His call, settled 21.09 - do not reopen it."
+    },
+    {
+      "name": "Sixt",
+      "why": "The booking says collection is in the arrivals hall, so the pin is the terminal. OSM has a Sixt office 1.6km west, which is their depot."
+    }
+  ]
+}
