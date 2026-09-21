@@ -259,9 +259,15 @@ header {
    where a pin is and never enough to read the streets around it. */
 .map-wrap.map-full { position: fixed; inset: 0; z-index: 1200; height: 100dvh; max-height: none;
   min-height: 0; margin: 0; border: 0; border-radius: 0; }
-.map-full-btn { position: absolute; top: 10px; left: 10px; z-index: 6; width: 40px; height: 40px;
+.map-full-btn { position: absolute; top: 10px; left: 10px; z-index: 6; width: 44px; height: 44px;
   border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
   color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; box-shadow: var(--shadow); }
+.map-zoom { position: absolute; bottom: 16px; left: 10px; z-index: 6; display: flex;
+  flex-direction: column; gap: 6px; }
+.map-zoom-btn { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 25px; font-weight: 600;
+  line-height: 1; cursor: pointer; box-shadow: var(--shadow); font-family: inherit;
+  display: flex; align-items: center; justify-content: center; }
 .map-tool-icon { padding-left: 10px; padding-right: 10px; }
 .map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
 .change-card { background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.05));
@@ -1069,18 +1075,11 @@ function mapNavigate(lat, lng) {
   catch (e) { clearTimeout(fallback); window.location.href = web; }
 }
 
-// google.navigation: goes straight to Google. A geo: URI instead asks Android which
-// app should take it, so Maps.me, Organic Maps or anything else installed can answer -
-// which matters off-road, where Google has no route and an offline app does. iOS has no
-// geo: handler, so it falls back to the same web URL as the Google button.
-function mapNavigateAny(lat, lng, name) {
-  const label = encodeURIComponent(name || '');
-  const web = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
-  const fallback = setTimeout(() => { window.location.href = web; }, 1200);
-  window.addEventListener('blur', () => clearTimeout(fallback), { once: true });
-  try { window.location.href = 'geo:' + lat + ',' + lng + '?q=' + lat + ',' + lng + '(' + label + ')'; }
-  catch (e) { clearTimeout(fallback); window.location.href = web; }
-}
+// There used to be a second button here, mapNavigateAny(), sending a geo: URI so Android
+// would offer every installed map app. On the owner's phone it did nothing at all: a
+// standalone PWA will not navigate itself to a scheme nothing handles, and there is no
+// error to catch. Two buttons that both looked like navigation, one of them dead, were
+// worse than one - so the way out is Google, and the way in is showOnMap().
 
 // A booked place can carry a street address and no coordinates. Google resolves the
 // address itself, which is exact - better than a pin guessed onto the right street and
@@ -1147,6 +1146,10 @@ async function renderMap(tour) {
     '<div class="map-wrap">' +
       '<div id="mapCanvas"></div>' +
       '<button class="map-full-btn" id="mapFullBtn" onclick="mapToggleFull()" title="מסך מלא">⛶</button>' +
+      '<div class="map-zoom">' +
+        '<button class="map-zoom-btn" onclick="mapZoom(1)" title="התקרב">+</button>' +
+        '<button class="map-zoom-btn" onclick="mapZoom(-1)" title="התרחק">−</button>' +
+      '</div>' +
       '<div class="map-note" id="mapNote">טוען מפה…</div>' +
     '</div>' +
     '<div class="section-title">נקודות הטיול</div>' +
@@ -1316,7 +1319,14 @@ function mapBuild(libs, sourceUrl, tour) {
     zoom: 8,
     attributionControl: { compact: true }
   });
-  MAP.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-left');
+  // MapLibre's own NavigationControl used to sit here. Its zoom buttons landed at the
+  // top-left, underneath this app's fullscreen button, so all that showed of it was a
+  // white unthemed compass with no label - the owner's "I do not understand these
+  // options". The zoom buttons below replace it. Rotation goes with it: a traveller
+  // reading a phone in the sun wants north up, and a map twisted by an accidental
+  // two-finger turn had no visible way back once the compass was gone.
+  MAP.dragRotate.disable();
+  MAP.touchZoomRotate.disableRotation();
   MAP.on('load', () => { mapDrawPins(tour); if (!mapApplyFocus()) mapFitPoints(false); });
   MAP.on('error', e => {
     // A tile or glyph failing is not worth blanking the screen over.
@@ -1340,9 +1350,7 @@ function mapDrawPins(tour) {
       (pt.sub ? '<div class="map-pop-sub">' + pt.sub + '</div>' : '') +
       (MAP_POS ? '<div class="map-pop-sub">' + mapFmtDist(mapDist(MAP_POS, pt)) + ' · ' +
         Math.round(mapBearing(MAP_POS, pt)) + '° ' + mapCompass(mapBearing(MAP_POS, pt)) + '</div>' : '') +
-      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט ב-Google</button>' +
-      '<button class="map-pop-btn map-pop-btn-alt" onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' +
-        JSON.stringify(pt.name) + ')">📍 אפליקציה אחרת</button>';
+      '<button class="map-pop-btn" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט ב-Google</button>';
     return new MAP_LIBS.maplibregl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([pt.lng, pt.lat])
       .setPopup(new MAP_LIBS.maplibregl.Popup({ offset: 16, closeButton: false, maxWidth: '240px' }).setHTML(html))
@@ -1421,6 +1429,11 @@ function mapExitFull() {
   else document.body.style.overflow = '';
 }
 
+function mapZoom(step) {
+  if (!MAP) return;
+  MAP.easeTo({ zoom: MAP.getZoom() + step, duration: 220 });
+}
+
 function mapToggleTrails() {
   MAP_TRAILS = !MAP_TRAILS;
   const b = document.getElementById('mapTrailsBtn');
@@ -1486,9 +1499,7 @@ function mapRenderList(tour) {
         '<div class="map-pt-name">' + pt.name + '</div>' +
         (pt.sub ? '<div class="map-pt-sub">' + pt.sub + '</div>' : '') +
       '</div>' + dist +
-      '<button class="map-tool" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">נווט</button>' +
-      '<button class="map-tool map-tool-icon" title="פתח באפליקציית מפות אחרת (Maps.me וכו׳)" ' +
-        'onclick="mapNavigateAny(' + pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ')">📍</button>' +
+      '<button class="map-tool" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ')">🗺️ נווט</button>' +
       '</div>';
   }).join('');
 
@@ -1859,7 +1870,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 20, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 21, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -1987,10 +1998,8 @@ function buildTodayNavHtml(tour) {
         (pt.sub ? '<div class="nav-row-sub">' + pt.sub + '</div>' : '') +
       '</div>' +
       '<a class="timeline-nav-btn" href="#" onclick="mapNavigate(' + pt.lat + ',' + pt.lng + ');return false;">🗺️ נווט</a>' +
-      '<a class="timeline-nav-btn" title="אפליקציית מפות אחרת" href="#" onclick="mapNavigateAny(' +
-        pt.lat + ',' + pt.lng + ',' + JSON.stringify(pt.name) + ');return false;">📍</a>' +
-      '<a class="timeline-nav-btn" title="הצג במפה של האפליקציה" href="#" onclick="showOnMap(' +
-        pt.lat + ',' + pt.lng + ',' + (pt.day === 'all' ? "'all'" : pt.day) + ');return false;">🗺</a>' +
+      '<a class="timeline-nav-btn" title="הצג במפה של האפליקציה - עובדת בלי קליטה" href="#" onclick="showOnMap(' +
+        pt.lat + ',' + pt.lng + ',' + (pt.day === 'all' ? "'all'" : pt.day) + ');return false;">📍 במפה שלנו</a>' +
     '</div>';
 
   // An address with no pin still gets a tappable row - Google resolves it exactly.
@@ -2342,8 +2351,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 20,
-  lastUpdate: {at:"2026-09-21",what:"Alpha Divers אוספים מהמלון ב-07:30, ולכן בוקר 2.10 נבנה מחדש - הצ׳ק-אאוט הוקדם לשבע ואין יותר הליכה למרינה. שאלת האשראי נסגרה. נוספה משימה לבקש מ-PR Rentals את אפליקציית הניווט שלהם."},
+  dataVersion: 21,
+  lastUpdate: {at:"2026-09-21",what:"אפשר עכשיו להחליק (swipe) בין המסכים בכל האפליקציה, לא רק בין ימים ביומן. למפה נוספו כפתורי זום גדולים. כפתור \"אפליקציה אחרת\" הוסר - הוא לא עבד בטלפון, ובמקומו נשארו שני כפתורים ברורים: נווט ב-Google, או הצג במפה שלנו שעובדת בלי קליטה."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2852,7 +2861,6 @@ function renderItinerary(tour) {
 
 
   container.innerHTML = html;
-  initItinerarySwipe();
 }
 
 // Stepping a day at a time, from the arrows or from a swipe.
@@ -2860,32 +2868,59 @@ function stepDay(delta) {
   const tour = curTour();
   const days = (tour && tour.days) || [];
   const next = STATE.selectedDay + delta;
-  if (next < 0 || next >= days.length) return;
+  if (next < 0 || next >= days.length) return false;
   setDay(next);
   window.scrollTo(0, 0);
+  return true;
 }
 
-// Swipe between days. The chips run right-to-left like the rest of the app, so the
-// next day sits to the left and dragging rightward brings it in - the direction a
-// Hebrew book turns.
-function initItinerarySwipe() {
-  const el = document.getElementById('itineraryContent');
-  if (!el || el._swipeReady) return;
-  el._swipeReady = true;
-  let x0 = null, y0 = null;
-  el.addEventListener('touchstart', e => {
+// The screens the bottom bar reaches, in the order it shows them. A swipe walks this
+// list, because reaching the bar one-handed is the thing the bar was meant to spare you.
+// The drawer button is not here: it opens a panel rather than going anywhere.
+const SWIPE_VIEWS = ['home', 'itinerary', 'map', 'packing'];
+
+// One handler for the whole app rather than one per screen. The itinerary keeps its
+// day-stepping - swiping there walks the days first - but when the days run out the
+// same gesture carries on to the next screen instead of dying.
+//
+// Only the map canvas itself is exempt, not the map screen: dragging the map is how you
+// pan it, but the chips above it and the point list below it are ordinary page. The
+// first attempt exempted the whole screen and turned the map into a trap - a swipe
+// carried you in and then no swipe could carry you out, in either direction.
+function initGlobalSwipe() {
+  if (document.body._swipeReady) return;
+  document.body._swipeReady = true;
+  let x0 = null, y0 = null, onMap = false;
+
+  document.body.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { x0 = null; return; }
     x0 = e.touches[0].clientX;
     y0 = e.touches[0].clientY;
+    onMap = !!(e.target && e.target.closest && e.target.closest('.map-wrap'));
   }, { passive: true });
-  el.addEventListener('touchend', e => {
+
+  document.body.addEventListener('touchend', e => {
     if (x0 === null) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0, dy = t.clientY - y0;
     x0 = null;
     // Mostly-vertical movement is the page scrolling, not a swipe.
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    stepDay(dx > 0 ? 1 : -1);
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (onMap) return;
+    const drawer = document.getElementById('drawer');
+    if (drawer && drawer.classList.contains('open')) return;
+    // A modal is open: the gesture belongs to whatever is on top.
+    const modal = document.getElementById('tripFormOverlay');
+    if (modal && modal.classList.contains('open')) return;
+
+    const dir = dx > 0 ? 1 : -1;
+    if (STATE.currentView === 'itinerary' && stepDay(dir)) return;
+
+    const i = SWIPE_VIEWS.indexOf(STATE.currentView);
+    if (i < 0) return;
+    const next = i + dir;
+    if (next < 0 || next >= SWIPE_VIEWS.length) return;
+    navigate(SWIPE_VIEWS[next]);
   }, { passive: true });
 }
 
@@ -3759,6 +3794,7 @@ function fireDueNotifications() {
 // ---------- Init ----------
 async function init() {
   window._initRan = true;
+  initGlobalSwipe();
 
   // History for back button
   history.replaceState({ view: 'home' }, '');
