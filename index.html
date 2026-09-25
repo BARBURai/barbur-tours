@@ -283,6 +283,11 @@ header {
 .eat-why { font-size: 14.5px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
 .eat-warn { font-size: 13.5px; color: var(--red); margin-top: 5px; line-height: 1.5; }
 .eat-note { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+.rain-hint { border-radius: var(--radius); padding: 13px 15px; margin-bottom: 12px; font-size: 15px;
+  line-height: 1.5; border: 1px solid var(--border); background: var(--surface); }
+.rain-hint.wet { border-color: var(--blue); background: linear-gradient(135deg, rgba(59,130,246,0.16), rgba(59,130,246,0.05)); }
+.rain-hint.dry { color: var(--text-dim); }
+.rain-hint-sub { font-size: 13.5px; color: var(--text-dim); margin-top: 5px; }
 .map-pop-btn-alt { margin-top: 6px; background: var(--surface-2); color: var(--text-dim); }
 .change-card { background: linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.05));
   border: 1px solid rgba(34,197,94,0.5); border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; }
@@ -1920,7 +1925,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 25, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 26, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2401,8 +2406,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 25,
-  lastUpdate: {at:"2026-09-21",what:"צדקת בשתי ההערות. בדקתי כל נקודה בטיול מול נתוני OpenStreetMap שבתוך קובץ המפה עצמו, ותיקנתי 19 נקודות שגויות. הגדולות: הבלו לגון היה 4.5 ק״מ מהמקום האמיתי, תצפית הבלגונה 1.4 ק״מ ובתוך הים, ו-Viklari 1.4 ק״מ. טיילת פיניקודס, מצודת לרנקה וטברנות פיאלה פאשה הצביעו לים. בנוסף 10 מסעדות קיבלו נקודה מדויקת מהמפה במקום קישור חיפוש."},
+  dataVersion: 26,
+  lastUpdate: {at:"2026-09-25",what:"נוסף מעיל קל נגד גשם לרשימת הציוד, ומעליה כרטיס שקורא את התחזית האמיתית ואומר בדיוק אם צריך אותו: אם יש גשם הוא מציין באילו ימים ובאיזה אחוז, ואם התחזית יבשה הוא אומר שהמעיל יכול להישאר בבית. הכרטיס מתעדכן לבד ככל שהתחזית מתקרבת."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2543,6 +2548,7 @@ window.seedCyprus = async function() {
     {id:"clo1",text:"👕 5 חולצות טי",owner:"all",packed:false},
     {id:"clo2",text:"🩳 2 מכנסיים קצרים",owner:"all",packed:false},
     {id:"clo3",text:"👔 חולצה נאה אחת לארוחות ערב",owner:"all",packed:false},
+    {id:"clo7",text:"🧥 מעיל קל נגד גשם - רק אם התחזית מראה גשם, ראה הכרטיס למעלה",owner:"all",packed:false},
     {id:"clo4",text:"🧥 קפוצ׳ון או ג׳קט קל - אוקטובר, הערבים מתקררים",owner:"all",packed:false},
     {id:"clo5",text:"🧦 5 תחתונים + 5 גרביים",owner:"all",packed:false},
     {id:"clo6",text:"🩴 כפכפים",owner:"all",packed:false},
@@ -3426,6 +3432,58 @@ function getTravelers(tour) {
   return names;
 }
 
+// Does the forecast actually show rain, and on which days?
+//
+// The owner asked for a light rain jacket "if the weather looks a bit rainy". That is a
+// condition, not a fact, and it is not knowable when the list is written - the trip was
+// seeded days before any forecast existed for it, and this sandbox cannot reach
+// Open-Meteo at all. It is knowable on his phone, which already fetches the forecast
+// for the weather strip on each day.
+//
+// So this reads that same cache and answers on the packing screen: name the days and
+// the chance, or say plainly that the forecast is dry and the jacket can stay home.
+// Rain is judged on the hourly probability rather than the daily weather_code, for the
+// reason already written into getDayWeather: one brief shower flags a whole day.
+function buildRainHintHtml(tour) {
+  if (!STATE.weatherCache) return '';
+  const cities = tour.weatherCities || [];
+  if (!cities.length) return '';
+
+  const wet = [];
+  let anyForecast = false;
+  (tour.days || []).forEach(d => {
+    // Same date arithmetic as the weather strip: build the local date string and look it
+    // up in the forecast's own array. Never round a millisecond difference and never
+    // toISOString() - both shift the day, which is a bug this repo has already had.
+    const parts = String(d.date).split('.');
+    const dayDate = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const target = localDateStr(dayDate);
+
+    let best = 0, sawDay = false;
+    for (const city of cities) {
+      const w = STATE.weatherCache[city];
+      if (!w || !w.hourly || !w.hourly.time) continue;
+      const times = w.hourly.time, probs = w.hourly.precipitation_probability || [];
+      for (let h = 7; h < 23; h++) {                    // the hours anyone is outside
+        const idx = times.indexOf(target + 'T' + String(h).padStart(2, '0') + ':00');
+        if (idx !== -1 && typeof probs[idx] === 'number') { sawDay = true; best = Math.max(best, probs[idx]); }
+      }
+    }
+    if (sawDay) anyForecast = true;
+    if (best >= 30) wet.push({ date: d.date, prob: best });
+  });
+
+  if (!anyForecast) return '';                          // no forecast has reached the phone yet
+
+  if (!wet.length) {
+    return '<div class="rain-hint dry">\u2600\ufe0f התחזית יבשה לכל ימי הטיול. ' +
+      'המעיל נגד גשם יכול להישאר בבית.</div>';
+  }
+  const days = wet.map(w => w.date + ' (' + w.prob + '%)').join(' \u00b7 ');
+  return '<div class="rain-hint wet">\ud83c\udf27\ufe0f התחזית מראה גשם: ' + days +
+    '<div class="rain-hint-sub">שווה מעיל קל נגד גשם - הוא נכנס לכיס ומשנה את היום.</div></div>';
+}
+
 function renderPacking(tour) {
   const container = document.getElementById('packingContent');
   const items = tour.packingList || [];
@@ -3434,6 +3492,7 @@ function renderPacking(tour) {
   const allLabel = travelers.length >= 3 ? 'כולם' : 'שנינו';
 
   let html = '<div class="section-title">מה לקחת</div>' +
+    buildRainHintHtml(tour) +
     '<div class="sync-badge">🔄 מסונכרן בזמן אמת</div>' +
     '<div class="packing-add-row">' +
     '<input class="packing-input" id="packInput" placeholder="הוסף פריט..." onkeydown="if(event.key===\'Enter\')addPackItem()">' +

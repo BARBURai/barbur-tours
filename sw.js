@@ -4,7 +4,7 @@
 // blob: URL built at runtime, which browsers reject as a worker script - the failure
 // was swallowed by a .catch(()=>{}), so no worker was ever installed and nothing was
 // ever cached. A worker script has to be a real same-origin URL.
-const CACHE = 'barbur-tours-v44';
+const CACHE = 'barbur-tours-v45';
 
 // Everything needed to open the app with no network. The Firebase modules are included
 // because they are ES imports: without them index.html loads and then stalls.
