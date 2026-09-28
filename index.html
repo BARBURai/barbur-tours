@@ -224,6 +224,10 @@ header {
 .wx-icon { font-size: 22.5px; margin: 3px 0; }
 .wx-temp { font-size: 14px; font-weight: 700; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; }
 .wx-temp span { color: var(--text-faint); font-weight: 500; margin-right: 3px; }
+.wx-city { font-size: 10.5px; color: var(--text-faint); line-height: 1.3; margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wx-rain { font-size: 10.5px; color: var(--blue); font-weight: 700; line-height: 1.3; margin-top: 1px;
+  direction: ltr; unicode-bidi: isolate; }
 .wx-note { font-size: 12.5px; color: var(--text-faint); line-height: 1.5; margin-bottom: 14px; }
 .cost-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
 .cost-total { font-size: 29px; font-weight: 800; color: var(--accent-2); direction: ltr; unicode-bidi: isolate; text-align: right; }
@@ -1935,7 +1939,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 27, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 28, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2023,18 +2027,37 @@ function buildNowHtml(tour) {
 // question "what will it be like" is asked far more often than it is worth opening the
 // itinerary for.
 function weatherBrief(tour, day) {
-  const cities = tour.weatherCities || [];
-  if (!cities.length || !STATE.weatherCache) return null;
-  let cityKey = cities[0];
-  for (const c of cities) if (day.location && day.location.indexOf(c) >= 0) cityKey = c;
-  const w = STATE.weatherCache[cityKey];
+  if (!STATE.weatherCache) return null;
+  const ranked = dayWeatherRanked(tour, day);
+  if (!ranked.length) return null;
+  const w = STATE.weatherCache[ranked[0].city];
   if (!w || !w.daily || !w.daily.time) return null;
-  const parts = String(day.date).split('.');
-  const d = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-  const i = w.daily.time.indexOf(localDateStr(d));
+  const dateStr = tripDayDateStr(tour, day);
+  const i = w.daily.time.indexOf(dateStr);
   if (i < 0 || !w.daily.temperature_2m_max) return null;
+  // The rain chance has to be passed in. Without it weatherIcon was called with 0, which
+  // is below its "realistically dry" threshold, so the strip on the home screen drew sun
+  // or cloud for every day of every trip and could never disagree with itself - while the
+  // itinerary, which does pass it, showed rain on the same day.
+  //
+  // And it is the wettest of the day's places, not just the one holding most of it: a
+  // cell that draws sun on a day it rains where you actually are is the same bug wearing
+  // a different coat. The temperatures stay with the main place; the day card names which
+  // half of the day the rain belongs to.
+  let rain = 0, code = w.daily.weather_code[i];
+  for (const pick of ranked) {
+    const p = dayRainMax(STATE.weatherCache[pick.city], dateStr, 6, 24);
+    if (p !== null && p > rain) {
+      rain = p;
+      const pw = STATE.weatherCache[pick.city];
+      const pi = pw.daily.time.indexOf(dateStr);
+      if (pi >= 0) code = pw.daily.weather_code[pi];
+    }
+  }
   return {
-    icon: weatherIcon(w.daily.weather_code[i], 0),
+    icon: weatherIcon(code, rain),
+    rain: rain,
+    label: ranked[0].label,
     max: Math.round(w.daily.temperature_2m_max[i]),
     min: Math.round(w.daily.temperature_2m_min[i])
   };
@@ -2092,7 +2115,9 @@ function buildWeatherStripHtml(tour) {
     const w = briefs[i];
     return '<div class="wx-cell' + (w ? '' : ' wx-empty') + '"><div class="wx-date">' + d.date + '</div>' +
       '<div class="wx-icon">' + (w ? w.icon : '—') + '</div>' +
-      (w ? '<div class="wx-temp">' + w.max + '°<span>' + w.min + '°</span></div>'
+      (w ? '<div class="wx-temp">' + w.max + '°<span>' + w.min + '°</span></div>' +
+           '<div class="wx-city">' + w.label + '</div>' +
+           (w.rain >= 20 ? '<div class="wx-rain">☔ ' + w.rain + '%</div>' : '')
          : '<div class="wx-temp" style="color:var(--text-faint);font-weight:500;font-size:11px;">רחוק מדי</div>') +
       '</div>';
   }).join('');
@@ -2416,8 +2441,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 27,
-  lastUpdate: {at:"2026-09-26",what:"בקפריסין נוהגים בצד שמאל, ועד עכשיו האפליקציה לא אמרה על זה מילה. מסך תחבורה נפתח עכשיו בכרטיס שמסביר מה מתהפך - כיכרות, נתיב עקיפה ופניות - ומה נשאר זהה לארץ, כולל הכלל שהנהג תמיד קרוב למרכז הכביש. גם יום 2.10 (הנסיעה הראשונה, בחשכה) ויום 3.10 (הרייזר) מזכירים את זה במקום."},
+  dataVersion: 28,
+  lastUpdate: {at:"2026-09-28",what:"מזג האוויר תוקן. כל יום הראה את לרנקה גם כשהיינו 110 ק\"מ משם, כי ההתאמה חיפשה שם עיר באנגלית בתוך טקסט עברי ולא מצאה - עכשיו היום מותאם לפי הקואורדינטות שלו עצמו, והשם מופיע בעברית. פס מזג האוויר במסך הבית הראה שמש בכל יום גם כשביומן היה גשם - הוא קיבל אפס במקום סיכוי הגשם האמיתי. היום האחרון, שמתחיל בפאפוס ומסתיים בלרנקה, מציג את שתיהן."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2429,6 +2454,7 @@ window.seedCyprus = async function() {
   flag: "🇨🇾",
   coverImage: "",
   weatherCities: ["Larnaca", "Paphos", "Polis", "Limassol"],
+  weatherLabels: {"Larnaca": "לרנקה", "Paphos": "פאפוס וכלורקה", "Polis": "לאצ׳י ופוליס", "Limassol": "לימסול"},
   driveFolder: "https://drive.google.com/drive/folders/1YrgnwwKX238gc1haoDcJli8L8jMD0lwp",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -3110,65 +3136,141 @@ function localDateStr(d) {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
 
+// ---------- Weather: which forecast belongs to a day ----------
+
+// The forecast cities the app already knows, so a day can be matched to one before any
+// network call. fetchWeatherForTour copies this and adds whatever it geocodes.
+const CITY_COORDS = {
+  'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
+  'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
+  'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288],
+  'Paphos': [34.7754, 32.4245], 'Polis': [35.0364, 32.4264]
+};
+
+// The day's date as the forecast itself spells it. Written once because getting it
+// wrong has been a bug here twice: rounding the millisecond difference lands a day
+// early after midday, and toISOString() shifts the day for anyone east of Greenwich.
+function tripDayDateStr(tour, day) {
+  const parts = String(day.date).split('.');
+  const d = new Date(parseInt(String(tour.startDate).split('-')[0]),
+                     parseInt(parts[1]) - 1, parseInt(parts[0]));
+  return localDateStr(d);
+}
+
+// Highest hourly chance of rain on that date, over the hours anyone is actually outside.
+// The daily weather_code reflects the worst moment of the day and flags a whole day as
+// rain from one brief shower, which is why nothing here reads it on its own.
+function dayRainMax(w, dateStr, fromHour, toHour) {
+  if (!w || !w.hourly || !w.hourly.time || !w.hourly.precipitation_probability) return null;
+  const times = w.hourly.time, probs = w.hourly.precipitation_probability;
+  let best = null;
+  for (let h = fromHour; h < toHour; h++) {
+    const i = times.indexOf(dateStr + 'T' + String(h).padStart(2, '0') + ':00');
+    if (i !== -1 && typeof probs[i] === 'number') best = Math.max(best === null ? 0 : best, probs[i]);
+  }
+  return best;
+}
+
+// Which of the trip's forecast cities a day belongs to, best first.
+//
+// This used to be a substring match of the city name inside day.location - but
+// day.location is Hebrew ("לרנקה → חצי האי אקמאס") and the cities are Latin, so it never
+// matched and every day silently fell back to the first city in the list. Every day of
+// the Cyprus trip reported Larnaca, including the two spent 110 km away in Akamas, and
+// nothing about the screen said it was a fallback.
+//
+// It is decided from the day's own coordinates now: each stop goes to its nearest city,
+// and the city holding the most stops wins, ties to the closer one. A plurality and not
+// a centroid, because the centre of "Paphos in the morning, Larnaca airport at night"
+// lands near Limassol, where nobody stops.
+function dayWeatherRanked(tour, day) {
+  const cities = (tour.weatherCities || []).filter(c => STATE.cityCoords && STATE.cityCoords[c]);
+  if (!cities.length) return [];
+  const label = c => (tour.weatherLabels && tour.weatherLabels[c]) || c;
+
+  const stops = (day.items || [])
+    .map(it => ({ lat: mapCoord(it.lat), lng: mapCoord(it.lng) }))
+    .filter(p => p.lat && p.lng);
+  // A day with no coordinates at all still gets an answer rather than nothing: the first
+  // city the trip lists, which is what the old code always returned anyway.
+  if (!stops.length) return [{ city: cities[0], label: label(cities[0]), stops: 0 }];
+
+  const tally = {};
+  for (const p of stops) {
+    let best = null;
+    for (const c of cities) {
+      const cc = STATE.cityCoords[c];
+      const d = mapDist(p, { lat: cc[0], lng: cc[1] });
+      if (!best || d < best.d) best = { c: c, d: d };
+    }
+    tally[best.c] = tally[best.c] || { n: 0, d: 0 };
+    tally[best.c].n++;
+    tally[best.c].d += best.d;
+  }
+  return Object.keys(tally)
+    .map(c => ({ city: c, label: label(c), stops: tally[c].n, dist: tally[c].d / tally[c].n }))
+    .sort((a, b) => (b.stops - a.stops) || (a.dist - b.dist));
+}
+
+// A day that starts in one region and ends in another - the drive back to the airport -
+// has two honest answers, and showing only the winner hides half the day.
+function daySecondCity(ranked) {
+  if (ranked.length < 2) return null;
+  const total = ranked.reduce((n, r) => n + r.stops, 0);
+  return (ranked[1].stops >= 2 && ranked[1].stops >= total / 3) ? ranked[1] : null;
+}
+
 function getDayWeather(tour, day) {
-  const cities = tour.weatherCities || [];
-  if (!cities.length || !STATE.weatherCache) return '';
-  // Match city by location
-  let cityKey = cities[0];
-  for (const c of cities) {
-    if (day.location && day.location.indexOf(c) >= 0) cityKey = c;
-  }
-  const w = STATE.weatherCache[cityKey];
-  if (!w || !w.daily) return '';
-  // Look the day up by its date string. This used to round the difference between
-  // midnight of the trip day and the current moment, which lands a day early whenever
-  // it is run after midday - so the forecast shown belonged to the day before.
-  const parts = day.date.split('.');
-  const dayDate = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1])-1, parseInt(parts[0]));
-  const targetDateStr = localDateStr(dayDate);
-  const diffDays = (w.daily.time || []).indexOf(targetDateStr);
-  if (diffDays < 0) return '';
-  const codes = w.daily.weather_code, maxT = w.daily.temperature_2m_max, minT = w.daily.temperature_2m_min;
-  if (!codes || diffDays >= codes.length) return '';
+  if (!STATE.weatherCache) return '';
+  const ranked = dayWeatherRanked(tour, day);
+  if (!ranked.length) return '';
+  const dateStr = tripDayDateStr(tour, day);
 
-  // Pull real hourly rain chance for this specific date (06:00-24:00), instead of
-  // trusting the single daily weather_code (which reflects the worst moment of the day
-  // and can flag a whole day as "rain" from one brief shower).
-  let hourBlocks = [];
-  let dayMaxRain = 0;
-  if (w.hourly && w.hourly.time && w.hourly.precipitation_probability) {
-    // Note this reuses the local date string above: toISOString() converts to UTC, and
-    // local midnight east of Greenwich is the previous day there, which shifted the
-    // hourly rain lookup by a day as well.
-    const times = w.hourly.time, probs = w.hourly.precipitation_probability;
-    const hourly = [];
-    for (let h = 0; h < 24; h++) {
-      const idx = times.indexOf(targetDateStr + 'T' + String(h).padStart(2,'0') + ':00');
-      if (idx !== -1) hourly.push({hour: h, prob: probs[idx]});
-    }
-    if (hourly.length) {
-      dayMaxRain = Math.max(...hourly.map(l => l.prob));
-      for (let start = 6; start < 24; start += 3) {
-        const block = hourly.filter(l => l.hour >= start && l.hour < start + 3);
-        if (!block.length) continue;
-        const maxProb = Math.max(...block.map(l => l.prob));
-        if (maxProb >= 20) hourBlocks.push(String(start).padStart(2,'0') + '-' + String(start+3).padStart(2,'0') + ': ' + maxProb + '%');
-      }
+  const card = (pick, muted) => {
+    const w = STATE.weatherCache[pick.city];
+    if (!w || !w.daily || !w.daily.time) return '';
+    const i = w.daily.time.indexOf(dateStr);
+    const codes = w.daily.weather_code, maxT = w.daily.temperature_2m_max, minT = w.daily.temperature_2m_min;
+    if (i < 0 || !codes || i >= codes.length) return '';
+    const rain = dayRainMax(w, dateStr, 6, 24);
+    return '<div class="day-weather"><span style="font-size:' + (muted ? '20px' : '24.5px') + ';">' +
+      weatherIcon(codes[i], rain) + '</span>' +
+      '<div><div style="font-weight:600;">' + Math.round(maxT[i]) + '°/' + Math.round(minT[i]) + '°</div>' +
+      '<div style="color:var(--text-dim);font-size:13.5px;">' + pick.label + '</div></div></div>';
+  };
+
+  const main = ranked[0];
+  const w = STATE.weatherCache[main.city];
+  let html = card(main, false);
+  if (!html) return '';
+
+  const second = daySecondCity(ranked);
+  if (second) html += card(second, true);
+
+  // The hours worth naming, taken from whichever of the day's places is wettest - on a
+  // day that crosses the island the rain is often in the half you are not sleeping in,
+  // and the packing screen counts that same number, so the two have to agree.
+  let rainPick = main, dateRain = dayRainMax(w, dateStr, 6, 24) || 0;
+  for (const pick of ranked) {
+    const p = dayRainMax(STATE.weatherCache[pick.city], dateStr, 6, 24);
+    if (p !== null && p > dateRain) { dateRain = p; rainPick = pick; }
+  }
+  const rw = STATE.weatherCache[rainPick.city];
+  const blocks = [];
+  for (let start = 6; start < 24; start += 3) {
+    const p = dayRainMax(rw, dateStr, start, start + 3);
+    if (p !== null && p >= 20) {
+      blocks.push(String(start).padStart(2,'0') + '-' + String(start+3).padStart(2,'0') + ': ' + p + '%');
     }
   }
-
-  const icon = weatherIcon(codes[diffDays], dayMaxRain);
-  const maxTemp = Math.round(maxT[diffDays]), minTemp = Math.round(minT[diffDays]);
-
-  let html = '<div class="day-weather"><span style="font-size:24.5px;">' + icon + '</span>' +
-    '<div><div style="font-weight:600;">' + maxTemp + '°/' + minTemp + '°</div>' +
-    '<div style="color:var(--text-dim);font-size:13.5px;">' + cityKey + '</div></div></div>';
-
-  if (hourBlocks.length) {
-    html += '<div style="font-size:13.5px;color:var(--text-dim);margin-top:4px;">☔ סיכוי גשם: ' + hourBlocks.join(' • ') + '</div>';
+  if (blocks.length) {
+    html += '<div style="font-size:13.5px;color:var(--text-dim);margin-top:4px;">☔ סיכוי גשם' +
+      (rainPick.city === main.city ? '' : ' ב' + rainPick.label) + ': ' + blocks.join(' • ') + '</div>';
   }
-  html += '<div style="font-size:13.5px;color:var(--text-dim);margin-top:2px;">' + clothingAdvice(maxTemp, minTemp, dayMaxRain) + '</div>';
-
+  const i = w.daily.time.indexOf(dateStr);
+  html += '<div style="font-size:13.5px;color:var(--text-dim);margin-top:2px;">' +
+    clothingAdvice(Math.round(w.daily.temperature_2m_max[i]), Math.round(w.daily.temperature_2m_min[i]), dateRain) +
+    '</div>';
   return html;
 }
 
@@ -3219,12 +3321,7 @@ function loadWeatherCache() {
 
 async function fetchWeatherForTour(tour) {
   if (!tour.weatherCities || !tour.weatherCities.length) return;
-  STATE.cityCoords = STATE.cityCoords || {
-    'Tbilisi': [41.7151, 44.8271], 'Telavi': [41.9197, 45.4731],
-    'Seoul': [37.5665, 126.9780], 'Incheon': [37.4563, 126.7052], 'Jeju': [33.4996, 126.5312],
-    'Sokcho': [38.2070, 128.5918], 'Limassol': [34.7071, 33.0226], 'Larnaca': [34.9199, 33.6288],
-    'Paphos': [34.7754, 32.4245], 'Polis': [35.0364, 32.4264]
-  };
+  STATE.cityCoords = STATE.cityCoords || Object.assign({}, CITY_COORDS);
   if (!STATE.weatherCache) STATE.weatherCache = loadWeatherCache();
   // A cached forecast is reused for a few hours, then refreshed - without this check a
   // restored cache would never be updated again.
@@ -3476,22 +3573,14 @@ function buildRainHintHtml(tour) {
   const wet = [];
   let anyForecast = false;
   (tour.days || []).forEach(d => {
-    // Same date arithmetic as the weather strip: build the local date string and look it
-    // up in the forecast's own array. Never round a millisecond difference and never
-    // toISOString() - both shift the day, which is a bug this repo has already had.
-    const parts = String(d.date).split('.');
-    const dayDate = new Date(parseInt(tour.startDate.split('-')[0]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    const target = localDateStr(dayDate);
+    const target = tripDayDateStr(tour, d);
 
     let best = 0, sawDay = false;
-    for (const city of cities) {
-      const w = STATE.weatherCache[city];
-      if (!w || !w.hourly || !w.hourly.time) continue;
-      const times = w.hourly.time, probs = w.hourly.precipitation_probability || [];
-      for (let h = 7; h < 23; h++) {                    // the hours anyone is outside
-        const idx = times.indexOf(target + 'T' + String(h).padStart(2, '0') + ':00');
-        if (idx !== -1 && typeof probs[idx] === 'number') { sawDay = true; best = Math.max(best, probs[idx]); }
-      }
+    for (const pick of dayWeatherRanked(tour, d)) {
+      const p = dayRainMax(STATE.weatherCache[pick.city], target, 7, 23);  // the hours anyone is outside
+      if (p === null) continue;
+      sawDay = true;
+      best = Math.max(best, p);
     }
     if (sawDay) anyForecast = true;
     if (best >= 30) wet.push({ date: d.date, prob: best });
