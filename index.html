@@ -653,6 +653,7 @@ header {
 .booking-card-date { font-size: 14.5px; color: var(--accent); font-weight: 600; }
 .booking-detail { font-size: 14.5px; color: var(--text-dim); margin-top: 4px; display: flex; gap: 6px; }
 .booking-detail strong { color: var(--text); font-weight: 600; }
+.booking-note { display: block; line-height: 1.6; }
 
 /* ---------- Currency ---------- */
 .currency-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
@@ -1939,7 +1940,7 @@ async function loadTripHome() {
 // was being told. Each seed stamps a version; when the page carries a newer one than
 // the device is showing, this says so and offers the single button that closes the gap.
 const TRIP_SEEDS = {
-  'cyprus-2026':  { version: 28, label: 'קפריסין', run: 'seedCyprus' },
+  'cyprus-2026':  { version: 29, label: 'קפריסין', run: 'seedCyprus' },
   'georgia-2026': { version: 1, label: 'גאורגיה', run: 'seedGeorgia' },
   'korea-2026':   { version: 1, label: 'קוריאה',  run: 'seedKorea' }
 };
@@ -2441,8 +2442,8 @@ window.seedKorea = async function() {
 // ---- One-time seed: Cyprus trip ----
 window.seedCyprus = async function() {
   const cyprusData = {
-  dataVersion: 28,
-  lastUpdate: {at:"2026-09-28",what:"מזג האוויר תוקן. כל יום הראה את לרנקה גם כשהיינו 110 ק\"מ משם, כי ההתאמה חיפשה שם עיר באנגלית בתוך טקסט עברי ולא מצאה - עכשיו היום מותאם לפי הקואורדינטות שלו עצמו, והשם מופיע בעברית. פס מזג האוויר במסך הבית הראה שמש בכל יום גם כשביומן היה גשם - הוא קיבל אפס במקום סיכוי הגשם האמיתי. היום האחרון, שמתחיל בפאפוס ומסתיים בלרנקה, מציג את שתיהן."},
+  dataVersion: 29,
+  lastUpdate: {at:"2026-09-30",what:"הוואוצ׳ר של Sixt נקרא, וההזמנה מעודכנת לפיו. CDW וכיסוי גניבה כלולים - אבל עם השתתפות עצמית של €800 לנזק ו-€800 לגניבה, וזה בדיוק הפיקדון שנתפס. מה שהכיסוי לא כולל, מה שצריך להביא לדלפק (כולל כרטיס טיסה בתוקף), ומדיניות הדלק שהיא like-for-like ולא מלא-למלא - הכל יושב עכשיו על ההזמנה, ונוספו שתי משימות הכנה."},
   title: "קפריסין",
   subtitle: "טיול גברים - רון, איתן ואורי",
   travelers: ["רון", "איתן", "אורי"],
@@ -2472,7 +2473,7 @@ window.seedCyprus = async function() {
     ],
     cars: [
       {lat:35.032397,lng:32.414374,company:"PR Rentals - Polaris RZR 1000cc XP · 4 מקומות",pickup:"3.10 08:45",dropoff:"3.10 16:30",confirmation:"PR Rentals LTD, לאצ׳י · Ploutarxos · prrentalsltd.com",note:"€220 כולל מע\"מ 19%. ביטוח צד ג׳ כלול במחיר. פיקדון מוחזר של €1000 בכרטיס או במזומן בדלפק. ההשתתפות העצמית במקרה אובדן מוחלט היא €8000. רישיון B/B1. כולל משקפי מגן, צידנית וגישה לאפליקציית הניווט שלהם לשבילי הפארק. הגעה בין 08:30 ל-10:00"},
-      {lat:34.8751,lng:33.6249,company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה, דלק מלא-למלא. טל׳ Sixt: +357 25312345. ⚠️ פיקדון €800 יוקפא בכרטיס אשראי פיזי ע״ש רון + PIN. ⚠️ נהגים: איתן (בן 18) פסול - Sixt דורשת 21+. אורי (בן 21) עומד בגיל אם רישיונו מעל שנתיים, צפוי היטל נהג צעיר. ⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
+      {lat:34.8751,lng:33.6249,company:"Sixt - Compact SUV (Skoda Kamiq או דומה), אוטומט",pickup:"2.10 19:00",dropoff:"5.10 19:00",confirmation:"Sixt: 1PFCCC · Booking.com: 736533254",price:"US$227.88 (₪692)",note:"✅ מאושר ושולם: US$227.88 (₪692) - 253.24$ פחות 10% הנחת Genius. 72 שעות בדיוק. איסוף והחזרה באולם הנכנסים בנמל התעופה לרנקה. C-SUV מוגבה ומרווח (רלוונטי ל-1.92 מ׳), 5 מקומות, קילומטראז׳ ללא הגבלה. טל׳ Sixt: +357 25312345.\n🛡️ ביטוח, לפי הוואוצ׳ר עצמו: CDW וכיסוי גניבה כלולים במחיר - אבל עם השתתפות עצמית. לנזק €800 כולל מע״מ, ולגניבה €800 כולל מע״מ. אין ביטול השתתפות, והפיקדון של €800 שנתפס בדלפק הוא בדיוק הסכום הזה. הכיסוי לא חל על זכוכית · גלגלים · פנים הרכב · גג · תחתית, ולא על מפתחות · מגבים · פקק דלק · משולש ואפוד חירום. על כל נזק נגבית גם עמלת טיפול מעבר לסכום שיורד מההשתתפות.\n💳 בדלפק יציעו לקנות ביטול השתתפות. מי שרוצה להסתמך על כיסוי CDW של כרטיס האשראי - הוואוצ׳ר דורש מכתב מחברת האשראי שמאשר את הכיסוי, ובלעדיו יתעקשו למכור את שלהם.\n⛽ דלק like-for-like: מקבלים את הרכב במפלס שהוא בו, לא בהכרח מלא, ומחזירים באותו מפלס. ייתכן שיחסמו סכום נוסף לדלק.\n🎫 מה שצריך בדלפק: רישיון נהיגה מקורי לכל נהג (לא דיגיטלי ולא צילום) · דרכון · ואוצ׳ר מודפס או eVoucher · כרטיס טיסה בתוקף, חובה באיסוף משדה תעופה · כרטיס אשראי פיזי ע״ש רון סגל עם PIN.\n⚠️ נהגים: גיל מינימום 21, וכל נהג חייב להחזיק ברישיון מעל שנתיים. איתן (בן 18) פסול. אורי (בן 21) כשיר רק אם רישיונו מעל שנתיים.\n⏰ חייבים להגיע עד שעת האיסוף. אחרי חלון החסד הרכב משוחרר ונגבים דמי ביטול - אם מתעכבים, להתקשר ל-Sixt מראש.\n⚠️ אין רכב ביום 1 ועד 19:00 ביום 2"}
     ]
   },
   days: [
@@ -2498,7 +2499,7 @@ window.seedCyprus = async function() {
       {time:"19:00",activity:"איסוף הרכב מ-Sixt, אולם נכנסים (הזמנה 1PFCCC)",type:"car",lat:34.8751,lng:33.6249},
       {time:"19:30",activity:"נסיעה לכלורקה/פאפוס (כ-130 ק\"מ, 1:15 בכביש המהיר)",type:"logistics"},
       {time:"20:45",activity:"צ׳ק-אין ב-WellClub Resort",type:"hotel",lat:34.7881,lng:32.4090}
-    ],eat:{"note": "הצהריים הן ברחוב הדייגים פיאלה פאשה, בהליכה מהמרינה אחרי הצלילה. הערב כבר בכלורקה, אחרי נסיעה של שעה ורבע - ובשעה כזו כדאי לוודא טלפונית שהמטבח עוד פתוח.", "places": [{"lat": 34.89968, "lng": 33.63829, "name": "Zephyros", "kind": "דגים", "area": "פיאלה פאשה · על הים", "why": "הקלאסיקה של הרחוב: דגים טריים, מנות פתיחה של ים ונוף לנמל הדייגים. מתמלא במקומיים, ובצהריים של שישי זה אומר להגיע מוקדם או לחכות.", "search": "Zephyros Beach Tavern Larnaca"}, {"lat": 34.90434, "lng": 33.63759, "name": "Stefanos", "kind": "דגים", "area": "פיאלה פאשה", "why": "דג שלם על הפחמים ותמנון בגריל. פשוט ומדויק, בלי הצגה - בדיוק מה שרוצים אחרי שתי צלילות.", "search": "Stefanos fish tavern Piale Pasha Larnaca"}, {"lat": 34.89299, "lng": 33.638, "name": "Salamis Fish Tavern", "kind": "דגים", "area": "פיאלה פאשה · מרפסת מעל החוף", "why": "מרפסות מעל אחד החופים העירוניים, דגים בלי עודף רוטב. האופציה כששתי הקודמות מלאות.", "search": "Salamis Fish Tavern Larnaca"}, {"lat": 34.89893, "lng": 33.63857, "name": "Psarolimano Fish Tavern", "kind": "מזה דגים", "area": "נמל מקנזי", "why": "מול נמל הדייגים של מקנזי, עם מזה דגים שמככב בביקורות ונוף פנורמי לנמל.", "warn": "⚠️ זה כבר לא הליכה מהמרינה - כשני ק\"מ דרומה, ואין רכב עד 19:00. רק אם לוקחים מונית.", "search": "Psarolimano Fish Tavern Mackenzie Larnaca"}, {"name": "Militzis Taverna", "kind": "קלפטיקו וסובלה", "area": "ליד מצודת לרנקה · על המסלול של 16:30", "why": "המצודה ורובע סקאלה הם התחנה של 16:30, ו-Militzis יושב 256 מ׳ משם. קלפטיקו בתנור אבן, אם הצלילה הותירה רעב אמיתי ולא רק צמא לקפה.", "search": "Militzis Taverna Larnaca", "lat": 34.90798, "lng": 33.63765}, {"name": "Saint George Fish Tavern", "kind": "דגים", "area": "כלורקה · לערב, ליד WellClub", "why": "מזה מסורתי ודגים מעל מפרץ הקורל, דקות מהמלון. האופציה ההגיונית לערב שמתחיל אחרי תשע.", "warn": "⚠️ בשעה כזו - טלפון לפני, לוודא שהמטבח עוד עובד", "search": "Saint George Fish Tavern Chlorakas Paphos"}, {"lat": 34.81159, "lng": 32.39681, "name": "Kasparis Tavern", "kind": "טברנה מקומית", "area": "כלורקה", "why": "טברנה משפחתית שמקבלת שבחים חריגים גם ממקומיים וגם מאורחים. אופציה שנייה לערב, ובלי תלות ברכב אם המלון קרוב.", "search": "Kasparis Tavern Chlorakas Paphos"}]},notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","⚠️ זו הנסיעה הראשונה בטיול, והיא גם הראשונה בצד שמאל של הכביש - בחשכה ואחרי הצלילות. ההגה בצד ימין והדוושות רגילות. הכלל: הנהג תמיד קרוב למרכז הכביש. בכיכרות מסתובבים עם כיוון השעון ונותנים זכות קדימה מימין. הפירוט המלא במסך תחבורה","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
+    ],eat:{"note": "הצהריים הן ברחוב הדייגים פיאלה פאשה, בהליכה מהמרינה אחרי הצלילה. הערב כבר בכלורקה, אחרי נסיעה של שעה ורבע - ובשעה כזו כדאי לוודא טלפונית שהמטבח עוד פתוח.", "places": [{"lat": 34.89968, "lng": 33.63829, "name": "Zephyros", "kind": "דגים", "area": "פיאלה פאשה · על הים", "why": "הקלאסיקה של הרחוב: דגים טריים, מנות פתיחה של ים ונוף לנמל הדייגים. מתמלא במקומיים, ובצהריים של שישי זה אומר להגיע מוקדם או לחכות.", "search": "Zephyros Beach Tavern Larnaca"}, {"lat": 34.90434, "lng": 33.63759, "name": "Stefanos", "kind": "דגים", "area": "פיאלה פאשה", "why": "דג שלם על הפחמים ותמנון בגריל. פשוט ומדויק, בלי הצגה - בדיוק מה שרוצים אחרי שתי צלילות.", "search": "Stefanos fish tavern Piale Pasha Larnaca"}, {"lat": 34.89299, "lng": 33.638, "name": "Salamis Fish Tavern", "kind": "דגים", "area": "פיאלה פאשה · מרפסת מעל החוף", "why": "מרפסות מעל אחד החופים העירוניים, דגים בלי עודף רוטב. האופציה כששתי הקודמות מלאות.", "search": "Salamis Fish Tavern Larnaca"}, {"lat": 34.89893, "lng": 33.63857, "name": "Psarolimano Fish Tavern", "kind": "מזה דגים", "area": "נמל מקנזי", "why": "מול נמל הדייגים של מקנזי, עם מזה דגים שמככב בביקורות ונוף פנורמי לנמל.", "warn": "⚠️ זה כבר לא הליכה מהמרינה - כשני ק\"מ דרומה, ואין רכב עד 19:00. רק אם לוקחים מונית.", "search": "Psarolimano Fish Tavern Mackenzie Larnaca"}, {"name": "Militzis Taverna", "kind": "קלפטיקו וסובלה", "area": "ליד מצודת לרנקה · על המסלול של 16:30", "why": "המצודה ורובע סקאלה הם התחנה של 16:30, ו-Militzis יושב 256 מ׳ משם. קלפטיקו בתנור אבן, אם הצלילה הותירה רעב אמיתי ולא רק צמא לקפה.", "search": "Militzis Taverna Larnaca", "lat": 34.90798, "lng": 33.63765}, {"name": "Saint George Fish Tavern", "kind": "דגים", "area": "כלורקה · לערב, ליד WellClub", "why": "מזה מסורתי ודגים מעל מפרץ הקורל, דקות מהמלון. האופציה ההגיונית לערב שמתחיל אחרי תשע.", "warn": "⚠️ בשעה כזו - טלפון לפני, לוודא שהמטבח עוד עובד", "search": "Saint George Fish Tavern Chlorakas Paphos"}, {"lat": 34.81159, "lng": 32.39681, "name": "Kasparis Tavern", "kind": "טברנה מקומית", "area": "כלורקה", "why": "טברנה משפחתית שמקבלת שבחים חריגים גם ממקומיים וגם מאורחים. אופציה שנייה לערב, ובלי תלות ברכב אם המלון קרוב.", "search": "Kasparis Tavern Chlorakas Paphos"}]},notes:["כל אחר הצהריים בהליכה - הכל בטווח 10 דק׳ מהמלון והמרינה, בלי צורך ברכב או מונית עד 18:30","אופציה אם נשארה אנרגיה: מונית ל-Hala Sultan Tekke ואגם המלח בדרך לשדה (המונית צריכה להמתין). באוקטובר האגם יבש ואין פלמינגו - הם מגיעים בנובמבר - אבל המסגד עצמו שווה. ⚠️ יום שישי: להגיע אחרי 14:30 בגלל תפילת הצהריים","אופציה קלה יותר באותו כיוון: אמת המים הרומית Kamares, 3 ק\"מ מהעיר לכיוון השדה","⚠️ להודיע ל-WellClub על הגעה מאוחרת (~20:45) - הצ׳ק-אין מ-15:00, אבל עדיף שידעו","⏰ Sixt משחררת את הרכב אם מאחרים לשעת האיסוף וגובה דמי ביטול - אם הצלילה או הערב נמתחים, להתקשר אליהם מראש: +357 25312345","⚠️ 130 ק\"מ בחשכה אחרי 2 צלילות עומק - עייפות אחרי צלילה היא אמיתית. לעצור לקפה, ואם אורי מאושר כנהג - להתחלף","⚠️ זו הנסיעה הראשונה בטיול, והיא גם הראשונה בצד שמאל של הכביש - בחשכה ואחרי הצלילות. ההגה בצד ימין והדוושות רגילות. הכלל: הנהג תמיד קרוב למרכז הכביש. בכיכרות מסתובבים עם כיוון השעון ונותנים זכות קדימה מימין. הפירוט המלא במסך תחבורה","אחרי צלילה ל-30 מ׳ אין לטוס 24 שעות. הטיסה ב-5.10, אין בעיה","לילות 2-4: WellClub Resort, אישור 5290124468"]},
     {date:"3.10",day_of_week:"שבת",title:"רייזר באקמאס + ספא",location:"לאצ׳י → חצי האי אקמאס",summary:"Polaris RZR ליום שלם בחצי האי אקמאס, ואחריו ספא בריזורט וערב בקאטו פאפוס",items:[
       {time:"08:00",activity:"יציאה מ-WellClub לכיוון לאצ׳י (כ-28 ק\"מ, 45-60 דק׳)",type:"logistics"},
       {time:"08:45",activity:"איסוף ה-Polaris RZR ב-PR Rentals, לאצ׳י - מול Ploutarxos (חלון הגעה עד 10:00)",type:"logistics",lat:35.032397,lng:32.414374},
@@ -2532,7 +2533,7 @@ window.seedCyprus = async function() {
       {time:"19:30",activity:"ביטחון ודרכונים - טרולי בלבד, בלי כבודה רשומה",type:"flight"},
       {time:"22:05",activity:"טיסת חזור ישראייר 6H584 → תל אביב",type:"flight"},
       {time:"23:10",activity:"נחיתה בנתב\"ג",type:"flight"}
-    ],eat:{"note": "יום שני, וחלק מהמקומות בירוסקיפו סגורים בימי שני - הצצה בגוגל לפני שנוסעים חוסכת נסיעה סרק. הארוחה בלרנקה היא ב-17:30, מוקדם, אבל המטבחים על הטיילת פועלים ברצף.", "places": [{"lat": 34.76176, "lng": 32.44139, "name": "7 St. George's Tavern", "kind": "מזה", "area": "ירוסקיפו · דקות מהקארטינג", "why": "מזה מחומרי גלם מקומיים ואורגניים, בחצר כפרית. הקרוב ביותר למסלול הקארטינג, וההזדמנות האחרונה למזה אמיתי בטיול.", "search": "7 St Georges Tavern Geroskipou Paphos"}, {"name": "Christos Grill", "kind": "גריל קפריסאי", "area": "פאפוס", "why": "גריל מעורב במנות נדיבות, פשוט וזול יחסית. טוב כשרוצים לאכול מהר ולהמשיך מזרחה.", "search": "Christos Grill Paphos"}, {"name": "To Arxontikon", "kind": "מזה דגים ובשר", "area": "טיילת פיניקודס, לרנקה · לארוחת 17:30", "why": "חוזרים לטיילת שבה התחיל הטיול. השדה עשר דקות משם, והמטבח פועל גם בשעה מוקדמת.", "search": "To Arxontikon restaurant Finikoudes Larnaca"}, {"lat": 34.91104, "lng": 33.63766, "name": "Maqam Al-Sultan", "kind": "לבנוני", "area": "טיילת פיניקודס, לרנקה", "why": "מהיר יותר ממזה מלא, על אותה טיילת, אם הזמן לפני הטיסה לוחץ.", "search": "Maqam Al Sultan restaurant Finikoudes Larnaca"}, {"name": "Souvlaki.gr", "kind": "סובלאקי", "area": "לרנקה · כ-420 מ׳ מהמלון הישן", "why": "הכי מהיר שיש לפני טיסה: פיתה ביד, בלי להמתין למלצר. הביטוח אם 17:30 מתהפך ל-18:15.", "search": "Souvlaki.gr Larnaca", "lat": 34.91125, "lng": 33.63642}, {"name": "Ocean Basket", "kind": "דגים ומאכלי ים", "area": "לרנקה · לכיוון פיניקודס", "why": "דגים לשיתוף במחיר ידוע מראש, וההזמנה יוצאת מהר. טוב כשרוצים לסיים את הטיול בדגים בלי להמר על זמן.", "search": "Ocean Basket Finikoudes Larnaca", "lat": 34.91536, "lng": 33.63782}]},notes:["לתדלק לפני ההחזרה - מדיניות מלא-למלא, אחרת Sixt גובה לפי המחיר שלהם","בלי כבודה רשומה: 19:30 ביטחון ל-22:05 זה נוח. אם מתעכבים - לדלג על הארוחה בפיניקודס","סלע אפרודיטה: 15 דק׳ עצירה מהכביש, חניה מעל הצוק"]},
+    ],eat:{"note": "יום שני, וחלק מהמקומות בירוסקיפו סגורים בימי שני - הצצה בגוגל לפני שנוסעים חוסכת נסיעה סרק. הארוחה בלרנקה היא ב-17:30, מוקדם, אבל המטבחים על הטיילת פועלים ברצף.", "places": [{"lat": 34.76176, "lng": 32.44139, "name": "7 St. George's Tavern", "kind": "מזה", "area": "ירוסקיפו · דקות מהקארטינג", "why": "מזה מחומרי גלם מקומיים ואורגניים, בחצר כפרית. הקרוב ביותר למסלול הקארטינג, וההזדמנות האחרונה למזה אמיתי בטיול.", "search": "7 St Georges Tavern Geroskipou Paphos"}, {"name": "Christos Grill", "kind": "גריל קפריסאי", "area": "פאפוס", "why": "גריל מעורב במנות נדיבות, פשוט וזול יחסית. טוב כשרוצים לאכול מהר ולהמשיך מזרחה.", "search": "Christos Grill Paphos"}, {"name": "To Arxontikon", "kind": "מזה דגים ובשר", "area": "טיילת פיניקודס, לרנקה · לארוחת 17:30", "why": "חוזרים לטיילת שבה התחיל הטיול. השדה עשר דקות משם, והמטבח פועל גם בשעה מוקדמת.", "search": "To Arxontikon restaurant Finikoudes Larnaca"}, {"lat": 34.91104, "lng": 33.63766, "name": "Maqam Al-Sultan", "kind": "לבנוני", "area": "טיילת פיניקודס, לרנקה", "why": "מהיר יותר ממזה מלא, על אותה טיילת, אם הזמן לפני הטיסה לוחץ.", "search": "Maqam Al Sultan restaurant Finikoudes Larnaca"}, {"name": "Souvlaki.gr", "kind": "סובלאקי", "area": "לרנקה · כ-420 מ׳ מהמלון הישן", "why": "הכי מהיר שיש לפני טיסה: פיתה ביד, בלי להמתין למלצר. הביטוח אם 17:30 מתהפך ל-18:15.", "search": "Souvlaki.gr Larnaca", "lat": 34.91125, "lng": 33.63642}, {"name": "Ocean Basket", "kind": "דגים ומאכלי ים", "area": "לרנקה · לכיוון פיניקודס", "why": "דגים לשיתוף במחיר ידוע מראש, וההזמנה יוצאת מהר. טוב כשרוצים לסיים את הטיול בדגים בלי להמר על זמן.", "search": "Ocean Basket Finikoudes Larnaca", "lat": 34.91536, "lng": 33.63782}]},notes:["⛽ המדיניות היא like-for-like ולא מלא-למלא: מחזירים את הרכב במפלס שבו קיבלתם אותו. לתדלק לפני ההחזרה, אחרת Sixt גובה לפי המחיר שלה","בלי כבודה רשומה: 19:30 ביטחון ל-22:05 זה נוח. אם מתעכבים - לדלג על הארוחה בפיניקודס","סלע אפרודיטה: 15 דק׳ עצירה מהכביש, חניה מעל הצוק"]},
   ],
   prep: [
     {task:"🏨 לבטל את Ajax Hotel",done:true,note:"✅ בוטל. הלינה עברה ללאונרדו (לילה 1) ו-WellClub (לילות 2-4)"},
@@ -2546,10 +2547,10 @@ window.seedCyprus = async function() {
     {task:"🤿 לוודא מול Alpha Divers שהמפגש במרינה ולא במשרד בפילה",done:true,note:"✅ אושר: הם במרינה, ובכל מקרה אוספים מהמלון ב-07:30"},
     {task:"🧭 לבקש מ-PR Rentals את אפליקציית הניווט שלהם בהגעה לדלפק",done:false,deadline:"2026-10-03",note:"Ploutarxos אישר שהיא מכסה את שבילי הפארק. שווה להתקין ולהוריד את המפות לפני שיוצאים לשטח"},
     {task:"🤿 לאשר שעה ופרטים מול Alpha Divers",done:true,note:"✅ אושר: איסוף מהמלון ב-07:30, הצלילות מהמרינה"},
-    {task:"🚗 לברר אם אורי יכול להתווסף כנהג - איתן לא יכול (בן 18)",done:false,deadline:"2026-09-28",note:"איתן נולד 8.9.2008 (18) - Sixt דורשת 21+, פסול. אורי נולד 17.8.2005 (21) - צריך רישיון מעל שנתיים + צפוי היטל נהג צעיר. חשוב במיוחד בגלל הנסיעה הלילית ב-2.10 אחרי הצלילות"},
+    {task:"🚗 לברר אם אורי יכול להתווסף כנהג - איתן לא יכול (בן 18)",done:false,deadline:"2026-09-28",note:"✅ הוואוצ׳ר מאשר: גיל מינימום 21, וכל נהג חייב להחזיק ברישיון מעל שנתיים. איתן נולד 8.9.2008 (18) ולכן פסול. אורי נולד 17.8.2005 (21) - כשיר רק אם רישיונו מעל שנתיים, וצפוי היטל נהג צעיר. חשוב במיוחד בגלל הנסיעה הלילית ב-2.10 אחרי הצלילות"},
     {task:"📄 לבדוק תוקף דרכונים",done:true,note:"✅ כולם תקפים לפי כרטיסי העלייה: רון 02/2029, אורי 08/2033, איתן 05/2027"},
     {task:"📄 לארוז רישיונות נהיגה מקוריים וכרטיסי PADI",done:false,deadline:"2026-09-28",note:"רישיון דיגיטלי או צילום לא מתקבלים ב-Sixt"},
-    {task:"💳 להכין לדלפק Sixt: כרטיס אשראי פיזי ע\"ש רון עם €800 פנוי + PIN, ואוצ׳ר מודפס",done:false,deadline:"2026-09-30",note:"כרטיסים נטענים/וירטואליים לא מתקבלים"},
+    {task:"💳 להכין לדלפק Sixt: כרטיס אשראי פיזי ע\"ש רון עם €800 פנוי + PIN, ואוצ׳ר מודפס",done:false,deadline:"2026-10-02",note:"כרטיסים נטענים/וירטואליים לא מתקבלים. הוואוצ׳ר מפרט מה נדרש בדלפק: רישיון נהיגה מקורי לכל נהג · דרכון · ואוצ׳ר מודפס או eVoucher · כרטיס טיסה בתוקף, שנדרש כשאוספים משדה תעופה · הכרטיס הפיזי עם ה-PIN"},{task:"🛡️ להחליט מראש על ההשתתפות העצמית של €800 ב-Sixt",done:false,deadline:"2026-10-02",note:"CDW וגניבה כלולים בוואוצ׳ר, אבל ההשתתפות העצמית היא €800 לנזק ו-€800 לגניבה, וזה בדיוק הפיקדון שייתפס. שלוש דרכים: לקחת את הסיכון · לקנות ביטול השתתפות בדלפק · או להסתמך על כיסוי CDW של כרטיס האשראי - ואז הוואוצ׳ר דורש מכתב מחברת האשראי שמאשר את הכיסוי, אחרת יתעקשו למכור את שלהם"},
     {task:"🗺️ להוריד מפת קפריסין אופליין ב-Google Maps + לשמור את נקודות הטיול",done:false,deadline:"2026-09-30",note:"My Maps לא עובד אופליין - חייב לשמור כל נקודה דרך שמור/רשימה"}
   ],
   estimates: [
@@ -3364,6 +3365,15 @@ async function fetchWeatherForTour(tour) {
 }
 
 // ---------- Bookings rendering ----------
+// A booking note is often the longest text in the app - the Sixt one carries the excess,
+// what the cover excludes, and what the counter asks for. As one paragraph on a phone
+// that is a wall nobody reads standing at a desk, so a note may break itself into lines
+// with \n and each line becomes its own row. Notes without one render exactly as before.
+function bookingNote(note) {
+  return String(note).split('\n').filter(l => l.trim())
+    .map(l => '<div class="booking-detail booking-note">' + linkPhones(l.trim()) + '</div>').join('');
+}
+
 function renderBookings(tour) {
   const b = tour.bookings || {};
   const container = document.getElementById('bookingsContent');
@@ -3387,7 +3397,7 @@ function renderBookings(tour) {
         (f.terminal ? '<div class="booking-detail"><strong>טרמינל:</strong> ' + f.terminal + '</div>' : '') +
         (f.pnr ? '<div class="booking-detail"><strong>קוד הזמנה:</strong> ' + f.pnr + '</div>' : '') +
         (f.passengers ? '<div class="booking-detail"><strong>נוסעים:</strong> ' + f.passengers + '</div>' : '') +
-        (f.note ? '<div class="booking-detail">' + linkPhones(f.note) + '</div>' : '') +
+        (f.note ? bookingNote(f.note) : '') +
         (f.doc_url ? '<a class="doc-link" href="' + f.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
     });
@@ -3409,7 +3419,7 @@ function renderBookings(tour) {
           h.lat + ',' + h.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
         '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="' + (h.lat && h.lng ? 'https://www.google.com/maps/dir/?api=1&destination=' + h.lat + ',' + h.lng : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(h.name + ' ' + (h.city||''))) + '" target="_blank">🗺️ נווט למלון</a></div>' +
         (h.phone ? '<div class="booking-detail"><strong>טלפון:</strong> ' + linkPhones(h.phone) + (waLink(h.phone) ? ' <a class="tel-link" style="border:0;" href="' + waLink(h.phone) + '" target="_blank">💬</a>' : '') + '</div>' : '') +
-        (h.note ? '<div class="booking-detail">' + linkPhones(h.note) + '</div>' : '') +
+        (h.note ? bookingNote(h.note) : '') +
         (h.doc_url ? '<a class="doc-link" href="' + h.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
     });
@@ -3424,7 +3434,7 @@ function renderBookings(tour) {
         (c.confirmation ? '<div class="booking-detail"><strong>אישור:</strong> ' + c.confirmation + '</div>' : '') +
         (c.lat && c.lng ? '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="#" onclick="showOnMap(' +
           c.lat + ',' + c.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
-        (c.note ? '<div class="booking-detail">' + linkPhones(c.note) + '</div>' : '') +
+        (c.note ? bookingNote(c.note) : '') +
         (c.doc_url ? '<a class="doc-link" href="' + c.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
     });
@@ -3440,7 +3450,7 @@ function renderBookings(tour) {
         (a.address ? '<div class="booking-detail">' + a.address + '</div>' : '') +
         (a.lat && a.lng ? '<div style="margin-top:8px;"><a class="timeline-nav-btn" href="#" onclick="showOnMap(' +
           a.lat + ',' + a.lng + ",'all');return false;\">📍 במפה שלנו</a></div>" : '') +
-        (a.note ? '<div class="booking-detail">' + linkPhones(a.note) + '</div>' : '') +
+        (a.note ? bookingNote(a.note) : '') +
         (a.doc_url ? '<a class="doc-link" href="' + a.doc_url + '" target="_blank">📄 המסמך ב-Drive ↗</a>' : '') +
         '</div>';
     });
