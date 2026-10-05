@@ -1349,7 +1349,12 @@ async function mapDeleteFile() {
 }
 
 function mapStyle(themes, sourceUrl) {
-  const layers = themes.default('protomaps', currentTheme() === 'light' ? 'light' : 'dark', 'he');
+  // The basemap is always the light one, whatever the app's theme is. The app is dark
+  // because it is read in a hotel room at night; the map is read outdoors, in Cyprus sun,
+  // on a quad bike - and a dark basemap there is a black rectangle with grey lines on it.
+  // The owner hit exactly that on the Akamas safari. A UI preference is not a navigation
+  // preference, so the map no longer inherits one.
+  const layers = themes.default('protomaps', 'light', 'he');
   // Dirt tracks and footpaths are in the data, but the stock theme draws them at zero
   // width below zoom 14 - invisible exactly where they matter, on the Troodos and
   // Pissouri routes. This redraws them brighter and from further out.
@@ -1604,11 +1609,8 @@ function applyTheme(mode) {
 function toggleTheme() {
   applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
   renderDrawerTheme();
-  // The map carries its own palette, so it has to be rebuilt to follow.
-  if (STATE.currentView === 'map') {
-    const tour = curTour();
-    if (tour) { mapStop(); renderMap(tour); }
-  }
+  // The basemap no longer follows the theme (see mapStyle), so there is nothing to
+  // rebuild here - only the app chrome around it changes.
 }
 
 // ---------- Offline state ----------
